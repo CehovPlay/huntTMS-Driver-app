@@ -7,6 +7,7 @@ import {
   Bell,
   Camera,
   ChevronRight,
+  ClipboardCheck,
   Clock,
   FileText,
   LogOut,
@@ -155,6 +156,23 @@ export default function Profile() {
             <Text className="font-sans text-sm text-muted-foreground">
               This week · {money(EARNINGS.gross)} · {EARNINGS.loads} loads
             </Text>
+          </View>
+          <ChevronRight size={18} color={C.mutedForeground} />
+        </Pressable>
+
+        {/* DVIR quick entry */}
+        <Pressable
+          onPress={() => router.push('/dvir')}
+          accessibilityRole="button"
+          accessibilityLabel="Vehicle inspection"
+          className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-90"
+        >
+          <View className="size-11 items-center justify-center rounded-2xl bg-accent">
+            <ClipboardCheck size={20} color={C.foreground} />
+          </View>
+          <View className="flex-1">
+            <Text className="font-sans-medium text-base text-foreground">Vehicle inspection</Text>
+            <Text className="font-sans text-sm text-muted-foreground">DVIR · pre / post-trip checklist</Text>
           </View>
           <ChevronRight size={18} color={C.mutedForeground} />
         </Pressable>
