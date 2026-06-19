@@ -7,8 +7,11 @@ import { ArrowLeft, ChevronRight, Clock, Package, TrendingUp, Wallet } from 'luc
 import { Pressable } from '@/components/pressable';
 import { C } from '@/lib/theme';
 import { EARNINGS, money } from '@/lib/earnings';
+import { useSettings } from '@/lib/settings';
+import { fmtMi } from '@/lib/units';
 
 export default function Earnings() {
+  const { units } = useSettings();
   const maxDay = Math.max(...EARNINGS.byDay.map((d) => d.v), 1);
   const maxIdx = EARNINGS.byDay.reduce((best, d, i, a) => (d.v > a[best].v ? i : best), 0);
   const [refreshing, setRefreshing] = useState(false);
@@ -108,8 +111,14 @@ export default function Earnings() {
         {/* stats */}
         <View className="flex-row gap-3">
           {[
-            { label: 'Miles', value: EARNINGS.miles.toLocaleString('en-US') },
-            { label: '$ / mile', value: `$${EARNINGS.perMile}` },
+            {
+              label: units === 'km' ? 'Km' : 'Miles',
+              value: (units === 'km' ? Math.round(EARNINGS.miles * 1.60934) : EARNINGS.miles).toLocaleString('en-US'),
+            },
+            {
+              label: units === 'km' ? '$ / km' : '$ / mile',
+              value: `$${units === 'km' ? (EARNINGS.perMile / 1.60934).toFixed(2) : EARNINGS.perMile}`,
+            },
             { label: 'Loads', value: String(EARNINGS.loads) },
           ].map((s) => (
             <View key={s.label} className="flex-1 items-center gap-1 rounded-3xl bg-background py-4">
@@ -133,7 +142,7 @@ export default function Earnings() {
                   <Text className="font-sans text-sm text-muted-foreground" numberOfLines={1}>
                     {p.route}
                   </Text>
-                  <Text className="font-sans text-xs text-muted-foreground">{p.miles} mi · {p.date}</Text>
+                  <Text className="font-sans text-xs text-muted-foreground">{fmtMi(p.miles, units)} · {p.date}</Text>
                 </View>
                 <Text className="font-sans-semibold text-base text-foreground">{money(p.amount)}</Text>
               </View>

@@ -24,7 +24,34 @@ import {
 
 import { ActiveLoadProvider } from '@/lib/active-load';
 import { NotificationProvider } from '@/lib/notifications';
+import { SettingsProvider, useSettings } from '@/lib/settings';
 import { initTelegram, syncTelegramBackButton } from '@/lib/telegram';
+
+// Theme-aware app shell — StatusBar + screen-transition background follow the
+// resolved color scheme so nothing flashes white in dark mode.
+function ThemedShell() {
+  const { scheme } = useSettings();
+  const pageBg = scheme === 'dark' ? '#0a0a0b' : '#ffffff';
+  return (
+    <>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: pageBg },
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      >
+        {/* iOS: camera & call slide up full-screen; confirm-scan as a sheet */}
+        <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="call" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="confirm-scan" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="navigate" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+      </Stack>
+    </>
+  );
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -72,25 +99,13 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ActiveLoadProvider>
-          <NotificationProvider>
-            <StatusBar style="dark" />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: '#ffffff' },
-                animation: 'slide_from_right',
-                gestureEnabled: true,
-              }}
-            >
-              {/* iOS: camera & call slide up full-screen; confirm-scan as a sheet */}
-              <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="call" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="confirm-scan" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="navigate" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-            </Stack>
-          </NotificationProvider>
-        </ActiveLoadProvider>
+        <SettingsProvider>
+          <ActiveLoadProvider>
+            <NotificationProvider>
+              <ThemedShell />
+            </NotificationProvider>
+          </ActiveLoadProvider>
+        </SettingsProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

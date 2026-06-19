@@ -1,4 +1,5 @@
 // Routing via OSRM (free, no key): multi-waypoint + alternatives + steps.
+import { fmtMeters } from './units';
 
 export type LatLng = { latitude: number; longitude: number };
 
@@ -19,7 +20,8 @@ export type RouteData = {
 
 export type Routes = { primary: RouteData; alt?: RouteData };
 
-export const milesText = (m: number) => `${(m / 1609.34).toFixed(m < 16093 ? 1 : 0)} mi`;
+// Distance label — respects the user's mi/km setting (via lib/units module value).
+export const milesText = (m: number) => fmtMeters(m);
 export const etaText = (s: number) => {
   const min = Math.round(s / 60);
   if (min < 60) return `${min} min`;

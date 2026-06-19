@@ -7,6 +7,8 @@ import { Bell, ChevronRight, Package, Search, X, Zap } from 'lucide-react-native
 import { Pressable } from '@/components/pressable';
 import { PressableScale } from '@/components/pressable-scale';
 import { haptics } from '@/lib/haptics';
+import { useSettings } from '@/lib/settings';
+import { fmtMi } from '@/lib/units';
 import { Logo } from '@/components/logo';
 import { useNotifications } from '@/lib/notifications';
 import { C } from '@/lib/theme';
@@ -63,6 +65,7 @@ const STATUS_BADGE: Record<TripStatus, { label: string; bg: string; color: strin
 
 function TripCard({ trip }: { trip: Trip }) {
   const badge = STATUS_BADGE[trip.status];
+  const { units } = useSettings();
   return (
     <PressableScale
       onPress={() => router.push({ pathname: '/load/[id]', params: { id: trip.id, variant: trip.status } })}
@@ -104,7 +107,7 @@ function TripCard({ trip }: { trip: Trip }) {
           {trip.miles ? (
             <View className="items-end">
               <Text className="font-sans text-xs text-muted-foreground">Distance</Text>
-              <Text className="font-sans-medium text-sm text-foreground">{trip.miles} mi</Text>
+              <Text className="font-sans-medium text-sm text-foreground">{fmtMi(trip.miles, units)}</Text>
             </View>
           ) : null}
         </View>
@@ -145,6 +148,7 @@ export default function LoadsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const { completedRefs } = useActiveLoad();
   const { unread } = useNotifications();
+  const { units } = useSettings();
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -316,7 +320,7 @@ export default function LoadsScreen() {
                 <View className="flex-row items-center gap-2">
                   <Text className="font-sans text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>
                     {offer.broker ?? 'Broker'}
-                    {offer.miles ? ` · ${offer.miles} mi` : ''}
+                    {offer.miles ? ` · ${fmtMi(offer.miles, units)}` : ''}
                   </Text>
                   <View className="flex-1" />
                   <View

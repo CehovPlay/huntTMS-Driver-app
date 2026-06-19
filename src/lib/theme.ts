@@ -1,9 +1,30 @@
-// Single source of truth for colors + shadows (Figma tokens).
-// Use these with inline `style` for color/shadow props — some NativeWind
-// color classes (bg-foreground, arbitrary [#hex] border/text, token/opacity)
-// silently don't render in this setup, so accents go through here.
+// Color palette for inline `style`/icon usage. The className tokens
+// (bg-background, text-foreground…) flip via CSS variables (see global.css);
+// this object mirrors them for the cases where we pass a color string directly.
+//
+// `C` is a live proxy: reading `C.foreground` returns the value for the current
+// theme. Components re-render on theme change (NativeWind re-renders className'd
+// trees + the SettingsProvider remounts on scheme change), so icon colors track
+// the theme without per-call-site hooks.
 
-export const C = {
+export type Palette = {
+  background: string;
+  foreground: string;
+  primary: string;
+  primaryForeground: string;
+  accent: string;
+  accentForeground: string;
+  mutedForeground: string;
+  border: string;
+  input: string;
+  teal: string;
+  purple: string;
+  destructive: string;
+  amber: string;
+  white: string;
+};
+
+export const lightColors: Palette = {
   background: '#ffffff',
   foreground: '#171717',
   primary: '#171717',
@@ -18,7 +39,42 @@ export const C = {
   destructive: '#ef4444',
   amber: '#fbbf24',
   white: '#ffffff',
-} as const;
+};
+
+export const darkColors: Palette = {
+  background: '#18181b',
+  foreground: '#fafafa',
+  primary: '#fafafa',
+  primaryForeground: '#18181b',
+  accent: '#0a0a0b',
+  accentForeground: '#fafafa',
+  mutedForeground: '#a1a1aa',
+  border: '#27272a',
+  input: '#27272a',
+  teal: '#2dd4bf',
+  purple: '#a78bfa',
+  destructive: '#f87171',
+  amber: '#fbbf24',
+  white: '#ffffff',
+};
+
+let _scheme: 'light' | 'dark' = 'light';
+export function setThemeScheme(scheme: 'light' | 'dark') {
+  _scheme = scheme;
+}
+export function getThemeScheme() {
+  return _scheme;
+}
+export function activePalette(): Palette {
+  return _scheme === 'dark' ? darkColors : lightColors;
+}
+
+// Proxy so existing `C.foreground` reads resolve against the active palette.
+export const C: Palette = new Proxy({} as Palette, {
+  get(_t, prop: string) {
+    return activePalette()[prop as keyof Palette];
+  },
+}) as Palette;
 
 // shadow/xs — Figma: 0 1 2 rgba(0,0,0,0.05)
 export const shadowXs = {

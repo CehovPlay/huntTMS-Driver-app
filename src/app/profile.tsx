@@ -13,12 +13,16 @@ import {
   LogOut,
   MapPin,
   Mic,
+  Moon,
   Phone,
+  Smartphone,
+  Sun,
   Truck,
   Wallet,
 } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
+import { useSettings, type ThemeMode } from '@/lib/settings';
 import { C } from '@/lib/theme';
 import { HOS, fmtHrs } from '@/lib/hos';
 import { EARNINGS, money } from '@/lib/earnings';
@@ -77,8 +81,15 @@ function DocRow({ doc }: { doc: Doc }) {
   );
 }
 
+const THEME_OPTS: { val: ThemeMode; label: string; icon: typeof Sun }[] = [
+  { val: 'system', label: 'System', icon: Smartphone },
+  { val: 'light', label: 'Light', icon: Sun },
+  { val: 'dark', label: 'Dark', icon: Moon },
+];
+
 export default function Profile() {
   const [prefs, setPrefs] = useState(NOTIFICATION_PREFS);
+  const { theme, setTheme, units, setUnits } = useSettings();
 
   const toggle = (key: string) =>
     setPrefs((p) => p.map((x) => (x.key === key ? { ...x, on: !x.on } : x)));
@@ -236,6 +247,55 @@ export default function Profile() {
           {VEHICLE_DOCS.map((d) => (
             <DocRow key={d.name} doc={d} />
           ))}
+        </Section>
+
+        {/* Appearance + units */}
+        <Section title="APPEARANCE">
+          <View className="gap-3 bg-background p-4">
+            <Text className="font-sans-medium text-base text-foreground">Theme</Text>
+            <View className="h-12 flex-row items-center rounded-2xl bg-accent p-1">
+              {THEME_OPTS.map(({ val, label, icon: Icon }) => {
+                const on = theme === val;
+                return (
+                  <Pressable
+                    key={val}
+                    onPress={() => setTheme(val)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: on }}
+                    className="h-full flex-1 flex-row items-center justify-center gap-1.5 rounded-xl"
+                    style={{ backgroundColor: on ? C.background : 'transparent' }}
+                  >
+                    <Icon size={15} color={on ? C.foreground : C.mutedForeground} />
+                    <Text className="font-sans-medium text-sm" style={{ color: on ? C.foreground : C.mutedForeground }}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+          <View className="gap-3 bg-background p-4">
+            <Text className="font-sans-medium text-base text-foreground">Distance units</Text>
+            <View className="h-12 flex-row items-center rounded-2xl bg-accent p-1">
+              {(['mi', 'km'] as const).map((u) => {
+                const on = units === u;
+                return (
+                  <Pressable
+                    key={u}
+                    onPress={() => setUnits(u)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: on }}
+                    className="h-full flex-1 items-center justify-center rounded-xl"
+                    style={{ backgroundColor: on ? C.background : 'transparent' }}
+                  >
+                    <Text className="font-sans-medium text-sm" style={{ color: on ? C.foreground : C.mutedForeground }}>
+                      {u === 'mi' ? 'Miles' : 'Kilometers'}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
         </Section>
 
         {/* Notifications */}

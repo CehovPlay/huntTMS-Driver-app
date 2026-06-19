@@ -1,4 +1,5 @@
 import { SvgXml } from 'react-native-svg';
+import { C } from '@/lib/theme';
 
 // huntTMS lockup (mark + wordmark) exported from Figma, backgrounds stripped.
 // viewBox tightly bounds the content (mark x96–126, wordmark x145–241).
@@ -21,5 +22,7 @@ const LOGO_SVG = `<svg viewBox="96 0 146 36" fill="none" xmlns="http://www.w3.or
 const RATIO = 146 / 36; // viewBox aspect
 
 export function Logo({ height = 36 }: { height?: number }) {
-  return <SvgXml xml={LOGO_SVG} height={height} width={height * RATIO} />;
+  // Tint the lockup with the active foreground so it stays visible in dark mode.
+  const xml = LOGO_SVG.replace(/#171717/g, C.foreground);
+  return <SvgXml xml={xml} height={height} width={height * RATIO} />;
 }
