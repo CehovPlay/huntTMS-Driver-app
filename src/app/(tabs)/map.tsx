@@ -10,6 +10,7 @@ import { locateOnce } from '@/lib/geo';
 import { Pressable } from '@/components/pressable';
 import { SwipeButton } from '@/components/swipe-button';
 import { UploadSheet } from '@/components/upload-sheet';
+import { DocUploadSheet } from '@/components/doc-upload-sheet';
 import { TripMap, type MapRoutes } from '@/components/trip-map';
 import { REQUIRED_DOCS, useActiveLoad } from '@/lib/active-load';
 import { useNotifications } from '@/lib/notifications';
@@ -22,10 +23,11 @@ const DOC_LABEL: Record<string, string> = {
 
 export default function MapScreen() {
   const load = CURRENT_LOAD;
-  const { stage, docs, advance, canDeliver } = useActiveLoad();
+  const { stage, docs, advance, canDeliver, addDoc } = useActiveLoad();
   const { notify } = useNotifications();
   const [sheet, setSheet] = useState(false);
   const [uploadType, setUploadType] = useState<string | undefined>(undefined);
+  const [pickupDocs, setPickupDocs] = useState(false);
   const [routes, setRoutes] = useState<MapRoutes | null>(null);
   const [selected, setSelected] = useState(0); // 0 = fastest, 1 = alt
   const [myLocation, setMyLocation] = useState<LatLng | null>(null);
@@ -64,16 +66,21 @@ export default function MapScreen() {
     };
   }, []);
 
+  const finishPickup = () => {
+    setPickupDocs(false);
+    advance();
+    notify({ type: 'success', title: 'Pickup confirmed', body: 'Status sent to dispatch · next: Delivery' });
+  };
+
   const onSwipe = () => {
     if (stage === 'delivery') {
-      // Docs are now mandatory AFTER the swipe — the Delivered screen blocks
+      // Docs are mandatory AFTER the swipe — the Delivered screen blocks
       // completion until BOL + POD are uploaded. Swipe itself is always allowed.
       advance();
       router.push('/delivered');
     } else {
-      // Pickup: documents are optional here — can be uploaded now or skipped.
-      advance();
-      notify({ type: 'success', title: 'Pickup confirmed', body: 'Status sent to dispatch · next: Delivery' });
+      // Pickup (arrived + loaded): collect pickup docs (BOL) — but skippable.
+      setPickupDocs(true);
     }
   };
 
@@ -222,6 +229,18 @@ export default function MapScreen() {
           setSheet(false);
           setUploadType(undefined);
         }}
+      />
+
+      {/* pickup documents — collected after "Picked up", but skippable */}
+      <DocUploadSheet
+        visible={pickupDocs}
+        title="Upload pickup documents"
+        onClose={() => setPickupDocs(false)}
+        onConfirm={() => {
+          addDoc('Bill of landing');
+          finishPickup();
+        }}
+        onSkip={finishPickup}
       />
     </View>
   );

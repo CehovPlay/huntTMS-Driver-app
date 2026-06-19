@@ -243,6 +243,19 @@ export function getLoadDetail(id: string): LoadDetail {
   });
   const pickup = trip.stops[0];
   const delivery = trip.stops[1] ?? trip.stops[0];
+  // The active/partial load shows its full multi-stop itinerary (synced with the
+  // Map tab + full-route map via NAV_STOPS); other loads show pickup + delivery.
+  const isActive = trip.id === '1832888' || trip.id === '#48213';
+  const stops: DetailStop[] = isActive
+    ? NAV_STOPS.map((s) => ({
+        type: s.kind === 'Pickup' ? 'Pick up' : 'Delivery',
+        address: `${s.address}, ${s.city}`,
+        date: s.date,
+        time: s.window,
+        doneAt: `${s.date} • ${s.window}`,
+        coordinate: s.coordinate,
+      }))
+    : [mk(pickup, 'Pick up'), mk(delivery, 'Delivery')];
   return {
     id: trip.id,
     status: 'Scheduled',
@@ -266,7 +279,7 @@ export function getLoadDetail(id: string): LoadDetail {
       hazmat: meta.hazmat ?? false,
       accessorials: meta.accessorials ?? [],
     },
-    stops: [mk(pickup, 'Pick up'), mk(delivery, 'Delivery')],
+    stops,
     miles: trip.miles ? `${trip.miles} mi` : undefined,
     partials: meta.partials ?? [],
   };
@@ -300,14 +313,18 @@ export type NavStop = {
   kind: 'Pickup' | 'Delivery';
   city: string;
   address: string;
+  date: string;
   window: string;
   coordinate: { latitude: number; longitude: number };
 };
 
+// Single source of truth for the active load's multi-stop itinerary (pickup +
+// 2 partial deliveries). Used by the load detail, the live Map tab and the
+// full-route map so they always stay in sync.
 export const NAV_STOPS: NavStop[] = [
-  { kind: 'Pickup', city: 'New Berlin, WI', address: '16875 W Ryerson Rd', window: '10:00 AM', coordinate: { latitude: 42.9912, longitude: -88.142 } },
-  { kind: 'Delivery', city: 'Milwaukee, WI', address: '2200 Warehouse Rd', window: '01:00 PM', coordinate: { latitude: 43.0389, longitude: -87.9065 } },
-  { kind: 'Delivery', city: 'Chicago, IL', address: '4200 Industrial Blvd', window: '06:00 PM', coordinate: { latitude: 41.8781, longitude: -87.6298 } },
+  { kind: 'Pickup', city: 'New Berlin, WI', address: '16875 W Ryerson Rd', date: '13 Mar 2026', window: '10:00 AM', coordinate: { latitude: 42.9912, longitude: -88.142 } },
+  { kind: 'Delivery', city: 'Milwaukee, WI', address: '2200 Warehouse Rd', date: '13 Mar 2026', window: '01:00 PM', coordinate: { latitude: 43.0389, longitude: -87.9065 } },
+  { kind: 'Delivery', city: 'Chicago, IL', address: '4200 Industrial Blvd', date: '14 Mar 2026', window: '06:00 PM', coordinate: { latitude: 41.8781, longitude: -87.6298 } },
 ];
 
 export const ROUTE: { latitude: number; longitude: number }[] = [

@@ -29,11 +29,13 @@ export function DocUploadSheet({
   title = 'Confirm document upload',
   onClose,
   onConfirm,
+  onSkip,
 }: {
   visible: boolean;
   title?: string;
   onClose: () => void;
   onConfirm: (count: number) => void;
+  onSkip?: () => void; // when provided, shows a "Skip for now" action (optional docs)
 }) {
   const [files, setFiles] = useState<DocFile[]>([]);
   const timers = useRef<Record<string, ReturnType<typeof setInterval>>>({});
@@ -200,6 +202,16 @@ export function DocUploadSheet({
                 <Plus size={18} color={C.foreground} />
                 <Text className="font-sans-medium text-base text-foreground">Add more</Text>
               </Pressable>
+              {onSkip ? (
+                <Pressable
+                  onPress={onSkip}
+                  accessibilityRole="button"
+                  accessibilityLabel="Skip for now"
+                  className="h-10 items-center justify-center active:opacity-60"
+                >
+                  <Text className="font-sans-medium text-sm text-muted-foreground">Skip for now</Text>
+                </Pressable>
+              ) : null}
             </View>
           </SafeAreaView>
         </View>

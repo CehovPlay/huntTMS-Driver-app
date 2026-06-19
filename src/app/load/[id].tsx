@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -20,13 +19,11 @@ import {
   Ruler,
   Scale,
   Thermometer,
-  Timer,
   Truck,
   User,
 } from 'lucide-react-native';
 
 import { getLoadDetail } from '@/lib/mock';
-import { openDirections } from '@/lib/directions';
 import { StopMiniMap } from '@/components/stop-mini-map';
 import { Pressable } from '@/components/pressable';
 import { SwipeButton } from '@/components/swipe-button';
@@ -71,9 +68,6 @@ export default function LoadDetailScreen() {
   const status = STATUS[variant];
   const d = load.details;
   const done = variant === 'delivered';
-
-  const [tab, setTab] = useState<'Pick up' | 'Delivery'>('Pick up');
-  const stop = load.stops.find((s) => s.type === tab) ?? load.stops[0];
 
   return (
     <View className="flex-1 bg-accent">
@@ -204,96 +198,63 @@ export default function LoadDetailScreen() {
           </View>
         ) : null}
 
-        {/* Locations — Pickup / Delivery toggle + mini-map */}
-        <View className="gap-3 rounded-3xl bg-background p-4">
-          <View className="h-16 flex-row items-center rounded-2xl bg-muted p-1">
-            {(['Pick up', 'Delivery'] as const).map((t) => {
-              const on = tab === t;
+        {/* Route — all pickup / delivery stops with dates */}
+        <View className="gap-4 rounded-3xl bg-background p-4">
+          <View className="flex-row items-center justify-between">
+            <Text className="font-sans-semibold text-base text-foreground">Route</Text>
+            <Text className="font-sans text-sm text-muted-foreground">
+              {load.stops.length} stops{load.miles ? ` · ${load.miles}` : ''}
+            </Text>
+          </View>
+
+          {/* itinerary timeline */}
+          <View>
+            {load.stops.map((s, i) => {
+              const isLast = i === load.stops.length - 1;
+              const isPickup = s.type === 'Pick up';
               return (
-                <Pressable
-                  key={t}
-                  onPress={() => setTab(t)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: on }}
-                  className="h-full flex-1 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: on ? C.primary : 'transparent' }}
-                >
-                  <Text className="font-sans-medium text-sm" style={{ color: on ? '#fafafa' : C.foreground }}>
-                    {t}
-                  </Text>
-                </Pressable>
+                <View key={i} className="flex-row gap-3">
+                  <View className="items-center" style={{ width: 24 }}>
+                    <View
+                      className="size-6 items-center justify-center rounded-full"
+                      style={{ backgroundColor: isPickup ? C.foreground : C.teal }}
+                    >
+                      <Text className="font-sans-semibold text-white" style={{ fontSize: 11 }}>{i + 1}</Text>
+                    </View>
+                    {!isLast ? <View style={{ flex: 1, width: 1, minHeight: 18, backgroundColor: C.border }} /> : null}
+                  </View>
+                  <View className={`flex-1 ${isLast ? '' : 'pb-4'}`}>
+                    <View className="flex-row items-center gap-2">
+                      <Text className="font-sans-medium text-xs" style={{ color: isPickup ? C.foreground : C.teal }}>
+                        {s.type}
+                      </Text>
+                      {done && s.doneAt ? <Check size={13} color={C.teal} /> : null}
+                    </View>
+                    <Text className="font-sans-medium text-base leading-6 text-foreground">{s.address}</Text>
+                    <View className="mt-0.5 flex-row items-center gap-1.5">
+                      <Calendar size={13} color={C.mutedForeground} />
+                      <Text className="font-sans text-sm text-muted-foreground">
+                        {s.date} · {s.time}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
               );
             })}
           </View>
 
-          <View className="gap-3">
-            <View className="flex-row items-center gap-3">
-              <MapPin size={20} color={C.mutedForeground} />
-              <View className="flex-1">
-                <Text className="font-sans text-xs text-muted-foreground">{tab} address</Text>
-                <Text className="font-sans-medium text-base leading-6 text-foreground">{stop.address}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center gap-3">
-              <Calendar size={20} color={C.mutedForeground} />
-              <View className="flex-1">
-                <Text className="font-sans text-xs text-muted-foreground">Appointment</Text>
-                <Text className="font-sans-medium text-base text-foreground">
-                  {stop.date} · {stop.time}
-                </Text>
-              </View>
-            </View>
-            {done && stop.doneAt ? (
-              <View className="flex-row items-center gap-3">
-                <Check size={20} color={C.teal} />
-                <View className="flex-1">
-                  <Text className="font-sans text-xs text-muted-foreground">
-                    {tab === 'Pick up' ? 'Picked up' : 'Delivered'}
-                  </Text>
-                  <Text className="font-sans-medium text-base" style={{ color: C.teal }}>
-                    {stop.doneAt}
-                  </Text>
-                </View>
-              </View>
-            ) : null}
-          </View>
-
-          {/* mini-map preview */}
+          {/* route preview → full-screen map */}
           <View className="overflow-hidden rounded-2xl" style={{ height: 150 }}>
-            <StopMiniMap key={tab} coordinate={stop.coordinate} pickup={tab === 'Pick up'} />
+            <StopMiniMap coordinate={load.stops[0].coordinate} pickup />
             <Pressable
-              onPress={() => router.push(variant === 'current' ? '/navigate' : '/map')}
+              onPress={() => router.push('/route-map')}
               accessibilityRole="button"
-              accessibilityLabel="Open full map"
-              className="absolute right-2 top-2 size-12 items-center justify-center rounded-full"
-              style={{ backgroundColor: C.primary }}
+              accessibilityLabel="View route on map"
+              className="absolute bottom-2 left-1/2 -ml-16 w-32 flex-row items-center justify-center gap-2 rounded-full bg-primary py-2.5 active:opacity-90"
             >
-              <Maximize2 size={16} color="#fafafa" />
+              <Maximize2 size={14} color={C.primaryForeground} />
+              <Text className="font-sans-medium text-sm text-primary-foreground">View on map</Text>
             </Pressable>
-          </View>
-
-          {/* External turn-by-turn (Apple Maps / Google / Waze) */}
-          <View className="flex-row gap-3">
-            <Pressable
-              onPress={() => openDirections(stop.coordinate, stop.address)}
-              accessibilityRole="button"
-              accessibilityLabel={`Get directions to ${tab} address`}
-              className="h-16 flex-1 flex-row items-center justify-center gap-2 rounded-2xl bg-accent active:opacity-80"
-            >
-              <Navigation2 size={18} color={C.foreground} />
-              <Text className="font-sans-medium text-base text-foreground">Directions</Text>
-            </Pressable>
-            {variant === 'current' ? (
-              <Pressable
-                onPress={() => router.push('/detention')}
-                accessibilityRole="button"
-                accessibilityLabel="Detention timer"
-                className="h-16 flex-1 flex-row items-center justify-center gap-2 rounded-2xl bg-accent active:opacity-80"
-              >
-                <Timer size={18} color={C.foreground} />
-                <Text className="font-sans-medium text-base text-foreground">Detention</Text>
-              </Pressable>
-            ) : null}
           </View>
         </View>
 
@@ -370,7 +331,7 @@ export default function LoadDetailScreen() {
       ) : variant === 'scheduled' ? (
         <SafeAreaView edges={['bottom']} className="bg-accent">
           <View className="px-4 pb-2 pt-2">
-            <SwipeButton label="Swipe to start route" onConfirm={() => router.replace('/map')} />
+            <SwipeButton label="Swipe to start trip" onConfirm={() => router.replace('/map')} />
           </View>
         </SafeAreaView>
       ) : variant === 'current' ? (

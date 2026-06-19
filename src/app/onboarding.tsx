@@ -14,7 +14,7 @@ type Slide = { icon: typeof Truck; title: string; body: string };
 
 const SLIDES: Slide[] = [
   { icon: Package, title: 'Your loads, organized', body: 'See scheduled and completed loads, accept new offers, and track every stop in one place.' },
-  { icon: Navigation2, title: 'Navigate & stay on time', body: 'Turn-by-turn directions, live ETA, and a detention timer at every stop.' },
+  { icon: Navigation2, title: 'Navigate & stay on time', body: 'Turn-by-turn navigation, your full route, and a live ETA to every stop.' },
   { icon: FileSignature, title: 'Paperwork made easy', body: 'Scan BOL / POD, capture the receiver’s signature, and message your dispatcher instantly.' },
 ];
 
