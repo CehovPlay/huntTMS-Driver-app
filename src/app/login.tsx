@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 
 import { Logo } from '@/components/logo';
@@ -29,25 +28,13 @@ export default function LogIn() {
 
   return (
     <View className="flex-1 bg-accent">
-      {/* faded map backdrop (matches Figma) */}
-      <View pointerEvents="none" className="absolute inset-0">
-        <Image
-          source={require('../../assets/images/login-map.png')}
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '66%' }}
-          resizeMode="cover"
-        />
-        {/* fade the map into the accent background top + bottom */}
-        <LinearGradient
-          colors={[C.accent, `${C.accent}00`]}
-          locations={[0, 0.3]}
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '40%' }}
-        />
-        <LinearGradient
-          colors={[`${C.accent}00`, C.accent]}
-          locations={[0, 0.5]}
-          style={{ position: 'absolute', left: 0, right: 0, top: '22%', bottom: 0 }}
-        />
-      </View>
+      {/* faded map backdrop — Figma background export (fades baked in) */}
+      <Image
+        source={require('../../assets/images/login-bg.png')}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }}
+        resizeMode="cover"
+        pointerEvents="none"
+      />
 
       <SafeAreaView edges={['top', 'bottom']} className="flex-1">
         <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
