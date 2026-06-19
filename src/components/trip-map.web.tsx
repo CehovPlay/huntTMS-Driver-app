@@ -26,6 +26,21 @@ function FitBounds({ routes }: { routes: MapRoutes | null }) {
   return null;
 }
 
+function RecenterMe({ at }: { at?: LatLng | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (at) map.setView(ll(at), 13, { animate: true });
+  }, [at, map]);
+  return null;
+}
+
+const myDotIcon = L.divIcon({
+  className: '',
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+  html: `<div style="width:20px;height:20px;border-radius:10px;border:2px solid #fff;background:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.25)"></div>`,
+});
+
 const stopIcon = (i: number) =>
   L.divIcon({
     className: '',
@@ -56,9 +71,10 @@ type Props = {
   selected: number;
   onSelect: (i: number) => void;
   active: boolean;
+  myLocation?: LatLng | null;
 };
 
-export function TripMap({ routes, selected, onSelect, active }: Props) {
+export function TripMap({ routes, selected, onSelect, active, myLocation }: Props) {
   const altDur = routes?.alt ? Math.max(routes.alt.duration, routes.fastest.duration * 1.1) : 0;
   const altDist = routes?.alt ? Math.max(routes.alt.distance, routes.fastest.distance * 1.05) : 0;
   const deadMid = routes?.deadhead ? mid(routes.deadhead.coords) : null;
@@ -75,6 +91,8 @@ export function TripMap({ routes, selected, onSelect, active }: Props) {
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <FitBounds routes={routes} />
+      <RecenterMe at={myLocation} />
+      {myLocation ? <Marker position={ll(myLocation)} icon={myDotIcon} /> : null}
 
       {active && routes?.deadhead ? (
         <Polyline positions={routes.deadhead.coords.map(ll)} pathOptions={{ color: DEAD, weight: 4, dashArray: '6 7' }} />

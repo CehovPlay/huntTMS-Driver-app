@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Web only: load Geist (variable woff2 from Google Fonts) under the exact family
+   names the app uses, so web matches the native build instead of falling back to
+   serif. Ignored on native (RN uses expo-font useFonts). */
+@font-face {
+  font-family: 'Geist_400Regular';
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/geist/v5/gyByhwUxId8gMHweElKvOg.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Geist_500Medium';
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/geist/v5/gyByhwUxId8gMHweElKvOg.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Geist_600SemiBold';
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/geist/v5/gyByhwUxId8gMHweElKvOg.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Geist_700Bold';
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/geist/v5/gyByhwUxId8gMHweElKvOg.woff2) format('woff2');
+}

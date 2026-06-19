@@ -20,11 +20,17 @@ type Props = {
   selected: number;
   onSelect: (i: number) => void;
   active: boolean;
+  myLocation?: LatLng | null;
 };
 
-export function TripMap({ routes, selected, onSelect, active }: Props) {
+export function TripMap({ routes, selected, onSelect, active, myLocation }: Props) {
   const mapRef = useRef<MapView>(null);
   const [drawn, setDrawn] = useState<LatLng[]>([]);
+
+  // recenter on the real device location when it's captured
+  useEffect(() => {
+    if (myLocation) mapRef.current?.animateCamera({ center: myLocation, zoom: 13 }, { duration: 600 });
+  }, [myLocation]);
 
   const sel = selected === 1 && routes?.alt ? routes.alt : routes?.fastest;
   const altDur = routes?.alt ? Math.max(routes.alt.duration, routes.fastest.duration * 1.1) : 0;
@@ -121,6 +127,12 @@ export function TripMap({ routes, selected, onSelect, active }: Props) {
           <Navigation2 size={18} color="#fff" fill="#fff" />
         </View>
       </Marker>
+
+      {myLocation ? (
+        <Marker coordinate={myLocation} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
+          <View className="size-5 rounded-full border-2 border-white" style={{ backgroundColor: '#2563eb', ...shadowSm }} />
+        </Marker>
+      ) : null}
     </MapView>
   );
 }

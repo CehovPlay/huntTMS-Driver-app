@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Check, Navigation2, Upload } from 'lucide-react-native';
+import { Check, LocateFixed, Navigation2, Upload } from 'lucide-react-native';
 
 import { CURRENT_LOAD, DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
-import { fetchRoutes } from '@/lib/route';
+import { fetchRoutes, type LatLng } from '@/lib/route';
+import { locateOnce } from '@/lib/geo';
 import { Pressable } from '@/components/pressable';
 import { SwipeButton } from '@/components/swipe-button';
 import { UploadSheet } from '@/components/upload-sheet';
@@ -27,9 +28,15 @@ export default function MapScreen() {
   const [uploadType, setUploadType] = useState<string | undefined>(undefined);
   const [routes, setRoutes] = useState<MapRoutes | null>(null);
   const [selected, setSelected] = useState(0); // 0 = fastest, 1 = alt
+  const [myLocation, setMyLocation] = useState<LatLng | null>(null);
 
   const stop = stage === 'pickup' ? load.pickup : load.delivery;
   const active = stage !== 'delivered';
+
+  const locateMe = async () => {
+    const loc = await locateOnce();
+    if (loc) setMyLocation(loc);
+  };
 
   // fetch deadhead (driver -> pickup) + loaded route (pickup -> deliveries) + a visual alternative
   useEffect(() => {
@@ -70,7 +77,20 @@ export default function MapScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <TripMap routes={routes} selected={selected} onSelect={setSelected} active={active} />
+      <TripMap routes={routes} selected={selected} onSelect={setSelected} active={active} myLocation={myLocation} />
+
+      {/* locate-me (real device GPS) */}
+      <SafeAreaView edges={['top']} pointerEvents="box-none" className="absolute inset-x-0 top-0 items-end">
+        <Pressable
+          onPress={locateMe}
+          accessibilityRole="button"
+          accessibilityLabel="Center on my location"
+          className="m-3 size-12 items-center justify-center rounded-full border border-border bg-background active:opacity-80"
+          style={shadowSm}
+        >
+          <LocateFixed size={20} color={C.foreground} />
+        </Pressable>
+      </SafeAreaView>
 
       {/* bottom card */}
       <SafeAreaView edges={['bottom']} className="mt-auto">
