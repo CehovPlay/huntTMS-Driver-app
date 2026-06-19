@@ -24,6 +24,7 @@ import {
 } from '@expo-google-fonts/geist';
 
 import { ActiveLoadProvider } from '@/lib/active-load';
+import { ExpensesProvider } from '@/lib/expenses';
 import { NotificationProvider } from '@/lib/notifications';
 import { SettingsProvider, useSettings } from '@/lib/settings';
 import { biometricAuth } from '@/lib/biometric';
@@ -152,9 +153,11 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <SettingsProvider>
           <ActiveLoadProvider>
-            <NotificationProvider>
-              <ThemedShell />
-            </NotificationProvider>
+            <ExpensesProvider>
+              <NotificationProvider>
+                <ThemedShell />
+              </NotificationProvider>
+            </ExpensesProvider>
           </ActiveLoadProvider>
         </SettingsProvider>
       </SafeAreaProvider>

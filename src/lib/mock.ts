@@ -39,6 +39,21 @@ export type LoadDetails = {
   coDriver: string;
   contact: { name: string; phone: string };
   comment?: string; // important highlighted note
+  // extended freight info
+  rate: string;
+  reference: string; // PRO / PO number
+  equipment: string; // trailer type
+  temp: string; // reefer temp or 'Dry'
+  pieces: string;
+  hazmat: boolean;
+  accessorials: string[];
+};
+
+export type PartialLoad = {
+  id: string;
+  commodity: string;
+  route: string;
+  weight: string;
 };
 
 export type LoadDetail = {
@@ -48,6 +63,8 @@ export type LoadDetail = {
   notes: { title: string; body: string }[];
   details: LoadDetails;
   stops: DetailStop[];
+  miles?: string;
+  partials: PartialLoad[];
 };
 
 // approximate city coordinates for mini-map previews (mock)
@@ -185,10 +202,19 @@ type DetailMeta = {
   plate?: string;
   coDriver?: string;
   contactName?: string;
+  rate?: string;
+  reference?: string;
+  temp?: string;
+  hazmat?: boolean;
+  accessorials?: string[];
+  partials?: PartialLoad[];
 };
 
 const DETAIL_META: Record<string, DetailMeta> = {
-  '1832888': { dispatcher: 'Edward Dean', phone: '+1 (417) 555-0142', pickup: '1575 Lebanon School Rd', delivery: '820 W Beach Dr', note: 'DO NOT LEAVE LOAD UNATTENDED', orderNo: '699567 7217 1255017439', commodity: 'Radlader CAT 906 + Ladegabel', weight: '42,000 lb', dimensions: '53 ft dry van', quantity: '2 units', plate: 'HB-S-6000', coDriver: 'Jimmy Schmidt', contactName: 'Marianne Holdenbrück' },
+  '1832888': { dispatcher: 'Edward Dean', phone: '+1 (417) 555-0142', pickup: '1575 Lebanon School Rd', delivery: '820 W Beach Dr', note: 'DO NOT LEAVE LOAD UNATTENDED', orderNo: '699567 7217 1255017439', commodity: 'Radlader CAT 906 + Ladegabel', weight: '42,000 lb', dimensions: '53 ft dry van', quantity: '2 units', plate: 'HB-S-6000', coDriver: 'Jimmy Schmidt', contactName: 'Marianne Holdenbrück', rate: '$1,490', reference: 'PRO 4471-8829', temp: 'Dry', hazmat: false, accessorials: ['Driver assist', 'Liftgate at delivery'], partials: [
+    { id: '1832890', commodity: 'Pallet jacks (4)', route: 'New Berlin, WI → Milwaukee, WI', weight: '3,200 lb' },
+    { id: '1832894', commodity: 'Auto parts — palletized', route: 'New Berlin, WI → Chicago, IL', weight: '6,800 lb' },
+  ] },
   '3307613': { dispatcher: 'Maria Lopez', phone: '+1 (816) 555-0188', pickup: '4200 Front St', delivery: '710 N Palafox St' },
   'TRIP-70527': { dispatcher: 'Carl Jensen', phone: '+1 (515) 555-0173', pickup: '2900 SE 6th Ave', delivery: '1500 Industrial Blvd', note: 'Appointment required — call on arrival' },
   '1071': { dispatcher: 'Dana White', phone: '+1 (712) 555-0119', pickup: '900 Commerce Dr', delivery: '4501 Choctaw Rd' },
@@ -196,7 +222,7 @@ const DETAIL_META: Record<string, DetailMeta> = {
   '1192034': { dispatcher: 'Dana White', phone: '+1 (214) 555-0101', pickup: '5550 Logistics Ct', delivery: '1700 Distribution Dr' },
   'TRIP-66120': { dispatcher: 'Maria Lopez', phone: '+1 (303) 555-0166', pickup: '800 Cargo Way', delivery: '2200 Warehouse Blvd' },
   '1180551': { dispatcher: 'Carl Jensen', phone: '+1 (602) 555-0177', pickup: '4100 Air Lane', delivery: '950 Vegas Logistics Dr' },
-  '#48213': { dispatcher: 'Edward Dean', phone: '+1 (551) 273-3628', pickup: '16875 W Ryerson Rd', delivery: '4200 Industrial Blvd', note: 'DO NOT LEAVE LOAD UNATTENDED', orderNo: '699567 7217 1255017439', commodity: 'Medical equipment — palletized', weight: '12,640 lb', dimensions: '48 × 40 × 60 in', quantity: '24 pallets', plate: 'HB-S-6000', coDriver: 'Jimmy Schmidt', contactName: 'Marianne Holdenbrück' },
+  '#48213': { dispatcher: 'Edward Dean', phone: '+1 (551) 273-3628', pickup: '16875 W Ryerson Rd', delivery: '4200 Industrial Blvd', note: 'DO NOT LEAVE LOAD UNATTENDED', orderNo: '699567 7217 1255017439', commodity: 'Medical equipment — palletized', weight: '12,640 lb', dimensions: '48 × 40 × 60 in', quantity: '24 pallets', plate: 'HB-S-6000', coDriver: 'Jimmy Schmidt', contactName: 'Marianne Holdenbrück', rate: '$1,490', reference: 'PRO 4471-8829', temp: 'Reefer · 36°F', hazmat: false, accessorials: ['Appointment required', 'Liftgate at delivery'] },
 };
 
 function allTrips(): Trip[] {
@@ -232,8 +258,17 @@ export function getLoadDetail(id: string): LoadDetail {
       coDriver: meta.coDriver ?? 'Jimmy Schmidt',
       contact: { name: meta.contactName ?? 'Marianne Holdenbrück', phone: meta.phone },
       comment: meta.note,
+      rate: meta.rate ?? '$1,250',
+      reference: meta.reference ?? 'PRO 0000-0000',
+      equipment: meta.dimensions ?? '53 ft dry van',
+      temp: meta.temp ?? 'Dry',
+      pieces: meta.quantity ?? '26 pallets',
+      hazmat: meta.hazmat ?? false,
+      accessorials: meta.accessorials ?? [],
     },
     stops: [mk(pickup, 'Pick up'), mk(delivery, 'Delivery')],
+    miles: trip.miles ? `${trip.miles} mi` : undefined,
+    partials: meta.partials ?? [],
   };
 }
 

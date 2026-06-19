@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Calendar,
   Check,
+  DollarSign,
   Hash,
   Layers,
   MapPin,
@@ -15,8 +16,10 @@ import {
   Navigation2,
   Package,
   Phone,
+  Route,
   Ruler,
   Scale,
+  Thermometer,
   Timer,
   Truck,
   User,
@@ -122,12 +125,39 @@ export default function LoadDetailScreen() {
               <Spec icon={Layers} label="Quantity" value={d.quantity} />
             </View>
             <View className="flex-row gap-3 border-t border-border py-3.5">
+              <Spec icon={DollarSign} label="Rate" value={d.rate} />
+              <Spec icon={Route} label="Distance" value={load.miles ?? '—'} />
+            </View>
+            <View className="flex-row gap-3 border-t border-border py-3.5">
+              <Spec icon={Hash} label="Reference" value={d.reference} />
+              <Spec icon={Thermometer} label="Temperature" value={d.temp} />
+            </View>
+            <View className="flex-row gap-3 border-t border-border py-3.5">
               <Spec icon={Truck} label="Plate" value={d.plate} />
               <Spec icon={User} label="Co-driver" value={d.coDriver} />
             </View>
             <View className="flex-row border-t border-border py-3.5">
-              <Spec icon={Ruler} label="Equipment" value={d.dimensions} />
+              <Spec icon={Ruler} label="Equipment" value={d.equipment} />
             </View>
+
+            {/* accessorials + hazmat */}
+            {d.accessorials.length > 0 || d.hazmat ? (
+              <View className="gap-2 border-t border-border pt-3.5">
+                <Text className="font-sans text-xs text-muted-foreground">Accessorials</Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {d.hazmat ? (
+                    <View className="rounded-full px-3 py-1" style={{ backgroundColor: `${C.destructive}1A` }}>
+                      <Text className="font-sans-medium text-xs" style={{ color: C.destructive }}>Hazmat</Text>
+                    </View>
+                  ) : null}
+                  {d.accessorials.map((a) => (
+                    <View key={a} className="rounded-full bg-accent px-3 py-1">
+                      <Text className="font-sans-medium text-xs text-foreground">{a}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : null}
           </View>
         </View>
 
@@ -142,6 +172,35 @@ export default function LoadDetailScreen() {
               <Text className="font-sans text-xs text-muted-foreground">Comment</Text>
               <Text className="font-sans-medium text-base leading-6 text-foreground">{d.comment}</Text>
             </View>
+          </View>
+        ) : null}
+
+        {/* Partial loads sharing this trailer */}
+        {load.partials.length > 0 ? (
+          <View className="gap-3 rounded-3xl bg-background p-4">
+            <View className="flex-row items-center gap-2">
+              <Layers size={18} color={C.purple} />
+              <Text className="flex-1 font-sans-semibold text-base text-foreground">Partial loads on this trailer</Text>
+              <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: `${C.purple}1A` }}>
+                <Text className="font-sans-medium text-xs" style={{ color: C.purple }}>{load.partials.length}</Text>
+              </View>
+            </View>
+            {load.partials.map((p) => (
+              <View key={p.id} className="flex-row items-center gap-3 rounded-2xl bg-accent p-3">
+                <View className="size-10 items-center justify-center rounded-2xl bg-background">
+                  <Package size={18} color={C.foreground} />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-sans-medium text-base text-foreground" numberOfLines={1}>
+                    #{p.id} · {p.commodity}
+                  </Text>
+                  <Text className="font-sans text-sm text-muted-foreground" numberOfLines={1}>
+                    {p.route}
+                  </Text>
+                </View>
+                <Text className="font-sans-medium text-sm text-foreground">{p.weight}</Text>
+              </View>
+            ))}
           </View>
         ) : null}
 

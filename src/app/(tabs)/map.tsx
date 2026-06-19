@@ -66,10 +66,12 @@ export default function MapScreen() {
 
   const onSwipe = () => {
     if (stage === 'delivery') {
-      if (!canDeliver) return; // safety: cannot close the load without required docs
+      // Docs are now mandatory AFTER the swipe — the Delivered screen blocks
+      // completion until BOL + POD are uploaded. Swipe itself is always allowed.
       advance();
       router.push('/delivered');
     } else {
+      // Pickup: documents are optional here — can be uploaded now or skipped.
       advance();
       notify({ type: 'success', title: 'Pickup confirmed', body: 'Status sent to dispatch · next: Delivery' });
     }
@@ -111,12 +113,13 @@ export default function MapScreen() {
                 <Text className="font-sans text-base text-foreground">{stop.address}</Text>
               </Pressable>
 
-              {/* delivery: required-docs gate; pickup: uploaded chips */}
+              {/* delivery: docs checklist (optional to pre-upload; mandatory on the
+                  Delivered step after the swipe); pickup: uploaded chips + skip hint */}
               {stage === 'delivery' ? (
                 <View className="gap-2.5 rounded-2xl bg-accent p-3.5">
                   <View className="flex-row items-center justify-between">
-                    <Text className="font-sans-medium text-xs text-muted-foreground">REQUIRED DOCUMENTS</Text>
-                    <Text className="font-sans-medium text-xs" style={{ color: canDeliver ? C.teal : C.amber }}>
+                    <Text className="font-sans-medium text-xs text-muted-foreground">DOCUMENTS</Text>
+                    <Text className="font-sans-medium text-xs" style={{ color: canDeliver ? C.teal : C.mutedForeground }}>
                       {REQUIRED_DOCS.filter((d) => docs.includes(d)).length}/{REQUIRED_DOCS.length}
                     </Text>
                   </View>
@@ -155,16 +158,23 @@ export default function MapScreen() {
                     );
                   })}
                 </View>
-              ) : docs.length > 0 ? (
-                <View className="flex-row flex-wrap gap-2">
-                  {docs.map((d) => (
-                    <View key={d} className="flex-row items-center gap-1.5 rounded-full bg-accent px-3 py-1">
-                      <Check size={14} color={C.teal} />
-                      <Text className="font-sans-medium text-xs text-foreground">{d}</Text>
+              ) : (
+                <View className="gap-2">
+                  {docs.length > 0 ? (
+                    <View className="flex-row flex-wrap gap-2">
+                      {docs.map((d) => (
+                        <View key={d} className="flex-row items-center gap-1.5 rounded-full bg-accent px-3 py-1">
+                          <Check size={14} color={C.teal} />
+                          <Text className="font-sans-medium text-xs text-foreground">{d}</Text>
+                        </View>
+                      ))}
                     </View>
-                  ))}
+                  ) : null}
+                  <Text className="font-sans text-xs text-muted-foreground">
+                    Documents are optional at pickup — upload now or skip; they’re required at delivery.
+                  </Text>
                 </View>
-              ) : null}
+              )}
 
               {/* navigate + upload */}
               <View className="flex-row gap-2">
@@ -194,11 +204,10 @@ export default function MapScreen() {
                 variant="light"
                 label={stage === 'pickup' ? 'Swipe to Picked up' : 'Swipe to Delivered'}
                 onConfirm={onSwipe}
-                disabled={stage === 'delivery' && !canDeliver}
               />
-              {stage === 'delivery' && !canDeliver ? (
+              {stage === 'delivery' ? (
                 <Text className="-mt-1 text-center font-sans text-xs text-muted-foreground">
-                  Upload all required documents to mark delivered
+                  You’ll confirm BOL + POD on the next step
                 </Text>
               ) : null}
             </>

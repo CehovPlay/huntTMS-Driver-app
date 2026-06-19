@@ -1,72 +1,126 @@
-import { useEffect } from 'react';
-import { Text, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Check, FileCheck } from 'lucide-react-native';
+import { Check, MapPin } from 'lucide-react-native';
 
 import { CURRENT_LOAD } from '@/lib/mock';
 import { Pressable } from '@/components/pressable';
-import { useActiveLoad } from '@/lib/active-load';
+import { UploadSheet } from '@/components/upload-sheet';
+import { REQUIRED_DOCS, useActiveLoad } from '@/lib/active-load';
+import { C } from '@/lib/theme';
 
+const DOC_LABEL: Record<string, string> = {
+  'Bill of landing': 'Bill of Lading (BOL)',
+  'Proof of delivery': 'Proof of Delivery (POD)',
+};
+
+// Mandatory documents step after the delivery swipe — completion is blocked
+// until every required document is uploaded.
 export default function Delivered() {
-  const { docs, reset, markDelivered } = useActiveLoad();
+  const { docs, canDeliver, reset, markDelivered } = useActiveLoad();
+  const [sheet, setSheet] = useState(false);
+  const [uploadType, setUploadType] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
+  const complete = () => {
+    if (!canDeliver) return;
     markDelivered(CURRENT_LOAD.reference);
-  }, []);
-
-  const done = () => {
     reset();
     router.replace('/loads');
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-1 items-center justify-center gap-6 px-8">
-        {/* success mark */}
-        <View
-          className="size-20 items-center justify-center rounded-full"
-          style={{ backgroundColor: 'rgba(13,148,136,0.12)' }}
-        >
-          <View
-            className="size-14 items-center justify-center rounded-full"
-            style={{ backgroundColor: '#0d9488' }}
-          >
-            <Check size={30} color="#ffffff" strokeWidth={3} />
-          </View>
+    <View className="flex-1 bg-accent">
+      <SafeAreaView edges={['top']} className="border-b border-border bg-background">
+        <View className="h-12 items-center justify-center">
+          <Text className="font-sans-semibold text-base text-foreground">Complete delivery</Text>
         </View>
+      </SafeAreaView>
 
-        <View className="items-center gap-2">
-          <Text className="font-sans-semibold text-2xl text-foreground">Load delivered</Text>
-          <Text className="text-center font-sans text-base text-muted-foreground">
-            Load {CURRENT_LOAD.reference} completed.{'\n'}All documents uploaded.
+      <ScrollView contentContainerClassName="gap-5 p-4 pb-10" showsVerticalScrollIndicator={false}>
+        {/* arrived */}
+        <View className="items-center gap-3 rounded-3xl bg-background py-8">
+          <View className="size-16 items-center justify-center rounded-full" style={{ backgroundColor: `${C.teal}1F` }}>
+            <MapPin size={30} color={C.teal} />
+          </View>
+          <Text className="font-sans-semibold text-xl text-foreground">Arrived at delivery</Text>
+          <Text className="px-8 text-center font-sans text-base leading-6 text-muted-foreground">
+            Upload the required documents to close load {CURRENT_LOAD.reference}.
           </Text>
         </View>
 
-        {/* uploaded docs summary */}
-        {docs.length > 0 ? (
-          <View className="w-full gap-2 rounded-3xl border border-border bg-background p-4">
-            {docs.map((d) => (
-              <View key={d} className="flex-row items-center gap-3">
-                <FileCheck size={18} color="#0d9488" />
-                <Text className="flex-1 font-sans text-base text-foreground">{d}</Text>
-                <Check size={16} color="#0d9488" />
-              </View>
-            ))}
+        {/* mandatory documents */}
+        <View className="gap-2">
+          <View className="flex-row items-center justify-between px-1">
+            <Text className="font-sans-medium text-sm text-muted-foreground">REQUIRED DOCUMENTS</Text>
+            <Text className="font-sans-medium text-sm" style={{ color: canDeliver ? C.teal : C.amber }}>
+              {REQUIRED_DOCS.filter((d) => docs.includes(d)).length}/{REQUIRED_DOCS.length}
+            </Text>
           </View>
-        ) : null}
-      </View>
+          <View className="gap-px overflow-hidden rounded-3xl bg-background">
+            {REQUIRED_DOCS.map((d) => {
+              const up = docs.includes(d);
+              return (
+                <Pressable
+                  key={d}
+                  onPress={() => {
+                    if (up) return;
+                    if (d === 'Proof of delivery') {
+                      router.push('/signature');
+                      return;
+                    }
+                    setUploadType(d);
+                    setSheet(true);
+                  }}
+                  accessibilityRole={up ? undefined : 'button'}
+                  accessibilityLabel={up ? `${DOC_LABEL[d] ?? d} uploaded` : `Upload ${DOC_LABEL[d] ?? d}`}
+                  className="flex-row items-center gap-3 bg-background p-4 active:opacity-80"
+                >
+                  <View
+                    className="size-6 items-center justify-center rounded-full"
+                    style={{ backgroundColor: up ? C.teal : 'transparent', borderWidth: up ? 0 : 1.5, borderColor: C.border }}
+                  >
+                    {up ? <Check size={14} color="#fff" strokeWidth={3} /> : null}
+                  </View>
+                  <Text className="flex-1 font-sans-medium text-base text-foreground">{DOC_LABEL[d] ?? d}</Text>
+                  <Text className="font-sans-medium text-sm" style={{ color: up ? C.teal : C.foreground }}>
+                    {up ? 'Uploaded' : 'Upload'}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </ScrollView>
 
-      <SafeAreaView edges={['bottom']}>
-        <View className="px-5 pb-2 pt-3">
+      <SafeAreaView edges={['bottom']} className="bg-accent">
+        <View className="gap-1 px-4 pb-2 pt-2">
           <Pressable
-            onPress={done}
-            className="h-16 flex-row items-center justify-center rounded-2xl bg-primary active:opacity-90"
+            onPress={complete}
+            disabled={!canDeliver}
+            accessibilityRole="button"
+            accessibilityLabel="Complete delivery"
+            className="h-16 items-center justify-center rounded-2xl bg-primary"
+            style={{ opacity: canDeliver ? 1 : 0.4 }}
           >
-            <Text className="font-sans-medium text-base text-primary-foreground">Done</Text>
+            <Text className="font-sans-medium text-base text-primary-foreground">Complete delivery</Text>
           </Pressable>
+          {!canDeliver ? (
+            <Text className="text-center font-sans text-xs text-muted-foreground">
+              Upload BOL + POD to complete the load
+            </Text>
+          ) : null}
         </View>
       </SafeAreaView>
-    </SafeAreaView>
+
+      <UploadSheet
+        visible={sheet}
+        presetType={uploadType}
+        onClose={() => {
+          setSheet(false);
+          setUploadType(undefined);
+        }}
+      />
+    </View>
   );
 }

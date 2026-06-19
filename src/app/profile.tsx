@@ -3,6 +3,7 @@ import { Alert, Linking, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {
+  AlertTriangle,
   ArrowLeft,
   Bell,
   Camera,
@@ -15,6 +16,7 @@ import {
   Mic,
   Moon,
   Phone,
+  ReceiptText,
   Smartphone,
   Sun,
   Truck,
@@ -149,6 +151,40 @@ export default function Profile() {
           <View className="flex-1">
             <Text className="font-sans-medium text-base text-foreground">Vehicle inspection</Text>
             <Text className="font-sans text-sm text-muted-foreground">DVIR · pre / post-trip checklist</Text>
+          </View>
+          <ChevronRight size={18} color={C.mutedForeground} />
+        </Pressable>
+
+        {/* Expenses quick entry */}
+        <Pressable
+          onPress={() => router.push('/expenses')}
+          accessibilityRole="button"
+          accessibilityLabel="Expenses"
+          className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-90"
+        >
+          <View className="size-11 items-center justify-center rounded-2xl bg-accent">
+            <ReceiptText size={20} color={C.foreground} />
+          </View>
+          <View className="flex-1">
+            <Text className="font-sans-medium text-base text-foreground">Expenses</Text>
+            <Text className="font-sans text-sm text-muted-foreground">Fuel, tolls, repairs · attach receipts</Text>
+          </View>
+          <ChevronRight size={18} color={C.mutedForeground} />
+        </Pressable>
+
+        {/* Report a problem */}
+        <Pressable
+          onPress={() => router.push('/report-issue')}
+          accessibilityRole="button"
+          accessibilityLabel="Report a problem"
+          className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-90"
+        >
+          <View className="size-11 items-center justify-center rounded-2xl" style={{ backgroundColor: `${C.destructive}14` }}>
+            <AlertTriangle size={20} color={C.destructive} />
+          </View>
+          <View className="flex-1">
+            <Text className="font-sans-medium text-base text-foreground">Report a problem</Text>
+            <Text className="font-sans text-sm text-muted-foreground">Breakdown, flat tire, accident…</Text>
           </View>
           <ChevronRight size={18} color={C.mutedForeground} />
         </Pressable>
