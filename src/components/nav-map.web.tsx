@@ -55,7 +55,7 @@ export function NavMap({ coords, here, onPress }: Props) {
       zoom={16}
       zoomControl={false}
       attributionControl={false}
-      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <Follow here={here} />

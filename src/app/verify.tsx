@@ -8,7 +8,7 @@ import { Logo } from '@/components/logo';
 import { Pressable } from '@/components/pressable';
 import { C, shadowXs } from '@/lib/theme';
 
-const CODE_LENGTH = 6;
+const CODE_LENGTH = 5;
 
 export default function EnterCode() {
   const [code, setCode] = useState('');
@@ -90,7 +90,7 @@ export default function EnterCode() {
                     return (
                       <View
                         key={i}
-                        className="h-16 flex-1 items-center justify-center rounded-2xl border bg-background"
+                        className="aspect-square flex-1 items-center justify-center rounded-2xl border bg-background"
                         style={{ borderColor, ...shadowXs }}
                       >
                         <Text className="font-sans-semibold text-2xl text-foreground">{d}</Text>

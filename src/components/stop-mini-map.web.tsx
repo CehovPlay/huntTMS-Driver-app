@@ -23,7 +23,7 @@ export function StopMiniMap({ coordinate, pickup }: { coordinate: LatLng; pickup
       dragging={false}
       scrollWheelZoom={false}
       doubleClickZoom={false}
-      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <Marker position={[coordinate.latitude, coordinate.longitude]} icon={pin(pickup)} />

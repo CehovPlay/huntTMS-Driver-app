@@ -208,8 +208,8 @@ export default function LoadDetailScreen() {
           </View>
         </View>
 
-        {/* Dispatcher + facility contact */}
-        <View className="gap-px overflow-hidden rounded-3xl bg-background">
+        {/* Dispatcher */}
+        <View className="overflow-hidden rounded-3xl bg-background">
           <View className="flex-row items-center gap-3 bg-background p-4">
             <View className="size-10 items-center justify-center rounded-full" style={{ backgroundColor: C.primary }}>
               <Text className="font-sans-semibold text-sm text-primary-foreground">
@@ -237,23 +237,6 @@ export default function LoadDetailScreen() {
               <Phone size={20} color="#171717" />
             </Pressable>
           </View>
-          <View className="flex-row items-center gap-3 bg-background p-4">
-            <View className="size-10 items-center justify-center rounded-full bg-accent">
-              <User size={18} color={C.foreground} />
-            </View>
-            <View className="flex-1">
-              <Text className="font-sans text-xs text-muted-foreground">Facility contact</Text>
-              <Text className="font-sans-medium text-base text-foreground">{d.contact.name}</Text>
-            </View>
-            <Pressable
-              onPress={() => router.push('/call')}
-              accessibilityRole="button"
-              accessibilityLabel={`Call ${d.contact.name}`}
-              className="size-12 items-center justify-center rounded-2xl bg-accent active:opacity-80"
-            >
-              <Phone size={20} color="#171717" />
-            </Pressable>
-          </View>
         </View>
 
         {/* Notes */}
@@ -268,22 +251,27 @@ export default function LoadDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Footer action (varies by status) */}
+      {/* Footer action (varies by status) — padding on an inner View (SafeAreaView
+          inset padding overrides className horizontal padding on web) */}
       {variant === 'scheduled' ? (
-        <SafeAreaView edges={['bottom']} className="bg-accent px-4 pt-2">
-          <SwipeButton label="Swipe to start route" onConfirm={() => router.replace('/map')} />
+        <SafeAreaView edges={['bottom']} className="bg-accent">
+          <View className="px-4 pb-2 pt-2">
+            <SwipeButton label="Swipe to start route" onConfirm={() => router.replace('/map')} />
+          </View>
         </SafeAreaView>
       ) : variant === 'current' ? (
-        <SafeAreaView edges={['bottom']} className="bg-accent px-4 pt-2">
-          <Pressable
-            onPress={() => router.replace('/map')}
-            accessibilityRole="button"
-            accessibilityLabel="Open map"
-            className="h-16 flex-row items-center justify-center gap-2 rounded-2xl bg-primary active:opacity-90"
-          >
-            <Navigation2 size={18} color="#fafafa" fill="#fafafa" />
-            <Text className="font-sans-medium text-base text-primary-foreground">Open map</Text>
-          </Pressable>
+        <SafeAreaView edges={['bottom']} className="bg-accent">
+          <View className="px-4 pb-2 pt-2">
+            <Pressable
+              onPress={() => router.replace('/map')}
+              accessibilityRole="button"
+              accessibilityLabel="Open map"
+              className="h-16 flex-row items-center justify-center gap-2 rounded-2xl bg-primary active:opacity-90"
+            >
+              <Navigation2 size={18} color="#fafafa" fill="#fafafa" />
+              <Text className="font-sans-medium text-base text-primary-foreground">Open map</Text>
+            </Pressable>
+          </View>
         </SafeAreaView>
       ) : (
         <SafeAreaView edges={['bottom']} className="bg-accent" />
