@@ -1,0 +1,64 @@
+import { useEffect, useRef } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
+import { Navigation2 } from 'lucide-react-native';
+
+import { DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
+import { type LatLng } from '@/lib/route';
+import { C } from '@/lib/theme';
+
+function bearing(a: LatLng, b: LatLng) {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const toDeg = (r: number) => (r * 180) / Math.PI;
+  const y = Math.sin(toRad(b.longitude - a.longitude)) * Math.cos(toRad(b.latitude));
+  const x =
+    Math.cos(toRad(a.latitude)) * Math.sin(toRad(b.latitude)) -
+    Math.sin(toRad(a.latitude)) * Math.cos(toRad(b.latitude)) * Math.cos(toRad(b.longitude - a.longitude));
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+type Props = {
+  coords: LatLng[];
+  here: LatLng;
+  headingTo: LatLng;
+  onPress?: (c: LatLng) => void;
+};
+
+export function NavMap({ coords, here, headingTo, onPress }: Props) {
+  const mapRef = useRef<MapView>(null);
+
+  // close follow-cam locked at a fixed altitude above the puck
+  useEffect(() => {
+    mapRef.current?.animateCamera(
+      { center: here, pitch: 60, altitude: 320, zoom: 18, heading: bearing(here, headingTo) },
+      { duration: 380 },
+    );
+  }, [here, headingTo]);
+
+  return (
+    <MapView
+      ref={mapRef}
+      provider={PROVIDER_DEFAULT}
+      style={StyleSheet.absoluteFill}
+      showsCompass={false}
+      showsBuildings
+      pitchEnabled
+      onPress={(e) => onPress?.(e.nativeEvent.coordinate)}
+      initialRegion={{ latitude: DRIVER_LOCATION.latitude, longitude: DRIVER_LOCATION.longitude, latitudeDelta: 0.02, longitudeDelta: 0.02 }}
+    >
+      {coords.length ? <Polyline coordinates={coords} strokeColor="#1e9df1" strokeWidth={8} /> : null}
+      {NAV_STOPS.map((s, i) => (
+        <Marker key={i} coordinate={s.coordinate} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
+          <View className="size-7 items-center justify-center rounded-full border-2 border-white" style={{ backgroundColor: i === 0 ? C.teal : C.foreground }}>
+            <Text className="font-sans-bold text-xs text-white">{i + 1}</Text>
+          </View>
+        </Marker>
+      ))}
+      <Marker coordinate={here} anchor={{ x: 0.5, y: 0.5 }} flat rotation={0}>
+        <View className="size-10 items-center justify-center rounded-full border-[3px] border-white bg-[#1e9df1]" style={{ shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4 }}>
+          <Navigation2 size={20} color="#fff" fill="#fff" />
+        </View>
+      </Marker>
+    </MapView>
+  );
+}

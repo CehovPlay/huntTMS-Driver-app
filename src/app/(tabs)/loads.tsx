@@ -1,0 +1,262 @@
+import { useState } from 'react';
+import { Pressable as RNPressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import { Bell, ChevronRight, Package } from 'lucide-react-native';
+
+import { Pressable } from '@/components/pressable';
+import { Logo } from '@/components/logo';
+import { useNotifications } from '@/lib/notifications';
+import { C } from '@/lib/theme';
+import {
+  COMPLETED_TRIPS,
+  DELIVERED_CURRENT,
+  SCHEDULED_TRIPS,
+  type Trip,
+  type TripStatus,
+  type TripStop,
+} from '@/lib/mock';
+import { useActiveLoad } from '@/lib/active-load';
+
+function StopRow({ stop, isFirst, isLast }: { stop: TripStop; isFirst: boolean; isLast: boolean }) {
+  return (
+    <View className="w-full flex-row items-stretch gap-3">
+      {/* timeline column */}
+      <View className="w-5 items-center">
+        <View className={`w-px flex-1 ${isFirst ? '' : 'border-l border-dashed border-border'}`} />
+        <View className="size-[18px] items-center justify-center rounded-full border-[5px] border-muted-foreground/40 bg-background">
+          <View className="size-1.5 rounded-full bg-muted-foreground" />
+        </View>
+        <View className={`w-px flex-1 ${isLast ? '' : 'border-l border-dashed border-border'}`} />
+      </View>
+
+      {/* date + place pill */}
+      <View className="flex-1 py-2">
+        <View className="flex-row items-center gap-3 rounded-2xl bg-accent px-4 py-2">
+          <View className="items-center justify-center">
+            <Text className="font-sans-medium text-2xl leading-none text-foreground">{stop.day}</Text>
+            <Text className="font-sans-medium text-xs leading-4 text-foreground">{stop.month}</Text>
+          </View>
+          <View className="flex-1">
+            <Text className="font-sans-medium text-lg leading-7 text-foreground">{stop.city}</Text>
+            <View className="mt-0.5 self-start rounded-full bg-background px-2.5 py-0.5">
+              <Text className="font-sans-medium text-xs text-foreground">
+                {stop.time}
+                {stop.timeEnd ? ` – ${stop.timeEnd}` : ''}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const STATUS_BADGE: Record<TripStatus, { label: string; bg: string; color: string } | null> = {
+  scheduled: null,
+  current: { label: 'Current load', bg: '#fbbf24', color: '#171717' },
+  tonu: { label: 'Canceled', bg: '#ef4444', color: '#ffffff' },
+  delivered: { label: 'Delivered', bg: '#0d9488', color: '#ffffff' },
+};
+
+function TripCard({ trip }: { trip: Trip }) {
+  const badge = STATUS_BADGE[trip.status];
+  return (
+    <Pressable
+      onPress={() => router.push({ pathname: '/load/[id]', params: { id: trip.id, variant: trip.status } })}
+      className="w-full gap-2 rounded-3xl bg-background p-4 active:opacity-90"
+    >
+      {/* title */}
+      <View className="flex-row items-center gap-3">
+        <View className="flex-1 flex-row items-center gap-2">
+          <Package size={20} color="#171717" />
+          <Text className="font-sans-medium text-base text-foreground">{trip.id}</Text>
+          {trip.partial ? (
+            <Text className="flex-1 font-sans-semibold text-base text-purple">{trip.partial}</Text>
+          ) : null}
+          {badge ? (
+            <View className="rounded-full px-3 py-1" style={{ backgroundColor: badge.bg }}>
+              <Text className="font-sans-medium text-xs" style={{ color: badge.color }}>
+                {badge.label}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+        <ChevronRight size={20} color="#171717" />
+      </View>
+
+      {/* stops timeline */}
+      <View>
+        {trip.stops.map((stop, i) => (
+          <StopRow key={i} stop={stop} isFirst={i === 0} isLast={i === trip.stops.length - 1} />
+        ))}
+      </View>
+
+      {/* footer: broker + distance */}
+      {trip.broker || trip.miles ? (
+        <View className="mt-1 flex-row border-t border-border pt-3">
+          <View className="flex-1">
+            <Text className="font-sans text-xs text-muted-foreground">Broker</Text>
+            <Text className="font-sans-medium text-sm text-foreground">{trip.broker ?? '—'}</Text>
+          </View>
+          {trip.miles ? (
+            <View className="items-end">
+              <Text className="font-sans text-xs text-muted-foreground">Distance</Text>
+              <Text className="font-sans-medium text-sm text-foreground">{trip.miles} mi</Text>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+    </Pressable>
+  );
+}
+
+const MONTHS: Record<string, number> = {
+  JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5, JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11,
+};
+function tripDate(t: Trip) {
+  const s = t.stops[0];
+  return new Date(2026, MONTHS[s.month] ?? 0, parseInt(s.day, 10) || 1);
+}
+const BUCKETS = ['Today', 'Tomorrow', 'This week', 'Later'] as const;
+function bucketOf(anchorMs: number, t: Trip) {
+  const diff = Math.round((tripDate(t).getTime() - anchorMs) / 86_400_000);
+  if (diff <= 0) return 'Today';
+  if (diff === 1) return 'Tomorrow';
+  if (diff <= 7) return 'This week';
+  return 'Later';
+}
+
+export default function LoadsScreen() {
+  const [tab, setTab] = useState<'scheduled' | 'completed'>('scheduled');
+  const { completedRefs } = useActiveLoad();
+  const { unread } = useNotifications();
+
+  // delivered active load(s) surface at the top of Completed
+  const delivered = completedRefs.includes(DELIVERED_CURRENT.id) ? [DELIVERED_CURRENT] : [];
+  const completed = [...delivered, ...COMPLETED_TRIPS];
+
+  // Scheduled is grouped by pickup day; anchored to the current load so it reads as "Today".
+  const anchorMs = tripDate(
+    SCHEDULED_TRIPS.find((t) => t.status === 'current') ?? SCHEDULED_TRIPS[0],
+  ).getTime();
+  const groups = BUCKETS.map((label) => ({
+    label,
+    trips: SCHEDULED_TRIPS.filter((t) => bucketOf(anchorMs, t) === label),
+  })).filter((g) => g.trips.length > 0);
+
+  const empty = tab === 'completed' && completed.length === 0;
+
+  return (
+    <View className="flex-1 bg-accent">
+      {/* Header */}
+      <SafeAreaView edges={['top']} className="rounded-b-3xl border-b border-border bg-background">
+        <View className="gap-4 px-5 pb-5 pt-3">
+          <View className="flex-row items-center gap-3 pl-1">
+            <View className="flex-1">
+              <Logo height={24} />
+            </View>
+            <Pressable
+              onPress={() => router.push('/notifications')}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+              className="size-12 items-center justify-center rounded-full active:opacity-70"
+            >
+              <Bell size={20} color={C.foreground} />
+              {unread > 0 ? (
+                <View
+                  className="absolute right-1 top-1 size-4 items-center justify-center rounded-full"
+                  style={{ backgroundColor: C.destructive }}
+                >
+                  <Text className="font-sans-semibold text-[10px] text-white">{unread}</Text>
+                </View>
+              ) : null}
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/profile')}
+              accessibilityRole="button"
+              accessibilityLabel="Profile"
+              className="size-12 items-center justify-center rounded-full active:opacity-70"
+              style={{ backgroundColor: '#171717' }}
+            >
+              <Text className="font-sans-semibold text-xs text-primary-foreground">DC</Text>
+            </Pressable>
+          </View>
+
+          {/* segmented tabs — raw RN Pressable + inline styles (no className / css-interop on this dynamic re-render path) */}
+          <View
+            style={{
+              height: 64,
+              flexDirection: 'row',
+              alignItems: 'center',
+              borderRadius: 16,
+              backgroundColor: C.accent,
+              padding: 4,
+            }}
+          >
+            {(['scheduled', 'completed'] as const).map((t) => {
+              const on = tab === t;
+              return (
+                <RNPressable
+                  key={t}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                    setTab(t);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
+                  hitSlop={8}
+                  style={{
+                    flex: 1,
+                    height: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 14,
+                    backgroundColor: on ? C.background : 'transparent',
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: 'Geist_500Medium',
+                      fontSize: 14,
+                      color: on ? C.foreground : C.mutedForeground,
+                    }}
+                  >
+                    {t === 'scheduled' ? 'Scheduled' : 'Completed'}
+                  </Text>
+                </RNPressable>
+              );
+            })}
+          </View>
+        </View>
+      </SafeAreaView>
+
+      {/* Body — plain views, no layout animations (avoids the device-only reanimated crash) */}
+      <ScrollView
+        contentContainerClassName="gap-3 p-4"
+        contentContainerStyle={empty ? { flex: 1 } : undefined}
+        showsVerticalScrollIndicator={false}
+      >
+        {tab === 'scheduled' ? (
+          groups.map((g) => (
+            <View key={g.label} className="gap-3">
+              <Text className="px-1 font-sans-medium text-sm text-muted-foreground">{g.label}</Text>
+              {g.trips.map((trip) => (
+                <TripCard key={trip.id} trip={trip} />
+              ))}
+            </View>
+          ))
+        ) : empty ? (
+          <View className="flex-1 items-center justify-center gap-2 pb-24">
+            <Package size={32} color="#d4d4d4" />
+            <Text className="font-sans text-base text-muted-foreground">No completed loads</Text>
+          </View>
+        ) : (
+          completed.map((trip) => <TripCard key={trip.id} trip={trip} />)
+        )}
+      </ScrollView>
+    </View>
+  );
+}
