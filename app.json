@@ -23,7 +23,7 @@
       "package": "com.huntms.driverapp"
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -60,7 +60,8 @@
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": false
+      "reactCompiler": false,
+      "baseUrl": "/huntTMS-Driver-app"
     }
   }
 }
