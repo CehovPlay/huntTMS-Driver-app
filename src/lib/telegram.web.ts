@@ -36,9 +36,12 @@ function applyTelegram() {
   const tg = getTelegramWebApp();
   if (!tg) return;
   try { tg.ready?.(); } catch {}
+  // Expand to full height, but NOT requestFullscreen — fullscreen makes Telegram
+  // overlay floating ⌄/⋯ controls on top of our header. expand() gives the height
+  // without the overlapping chrome.
   try { tg.expand?.(); } catch {}
-  // Bot API 8.0+: true edge-to-edge full screen (falls back to expand on older clients)
-  try { tg.requestFullscreen?.(); } catch {}
+  // We use the app's own in-screen back buttons; hide Telegram's native one.
+  try { tg.BackButton?.hide?.(); } catch {}
   // Keep Telegram's chrome matching the app's light theme
   try { tg.setHeaderColor?.('#ffffff'); } catch {}
   try { tg.setBackgroundColor?.('#ffffff'); } catch {}

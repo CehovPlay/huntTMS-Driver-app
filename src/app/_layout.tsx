@@ -2,7 +2,7 @@ import '../global.css';
 
 import { useCallback, useEffect, useState } from 'react';
 import { AppState, ScrollView, Text, View, Text as RNText } from 'react-native';
-import { Stack, router, usePathname, type ErrorBoundaryProps } from 'expo-router';
+import { Stack, type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Lock } from 'lucide-react-native';
 
@@ -27,7 +27,7 @@ import { ActiveLoadProvider } from '@/lib/active-load';
 import { NotificationProvider } from '@/lib/notifications';
 import { SettingsProvider, useSettings } from '@/lib/settings';
 import { biometricAuth } from '@/lib/biometric';
-import { initTelegram, syncTelegramBackButton } from '@/lib/telegram';
+import { initTelegram } from '@/lib/telegram';
 import { Pressable } from '@/components/pressable';
 import { Logo } from '@/components/logo';
 import { C } from '@/lib/theme';
@@ -144,12 +144,6 @@ export default function RootLayout() {
   useEffect(() => {
     initTelegram();
   }, []);
-
-  // Show Telegram's native BackButton on any non-root screen; tap goes back.
-  const pathname = usePathname();
-  useEffect(() => {
-    syncTelegramBackButton(router.canGoBack(), () => router.back());
-  }, [pathname]);
 
   // Keep the navigator mounted while fonts load (native splash stays up until
   // hideAsync), so deep links never hit a missing navigation context.

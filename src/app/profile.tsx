@@ -8,7 +8,6 @@ import {
   Camera,
   ChevronRight,
   ClipboardCheck,
-  Clock,
   FileText,
   Fingerprint,
   LogOut,
@@ -19,15 +18,12 @@ import {
   Smartphone,
   Sun,
   Truck,
-  Wallet,
 } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import { useSettings, type ThemeMode } from '@/lib/settings';
 import { biometricAvailable } from '@/lib/biometric';
 import { C } from '@/lib/theme';
-import { HOS, fmtHrs } from '@/lib/hos';
-import { EARNINGS, money } from '@/lib/earnings';
 import {
   CO_DRIVER,
   DRIVER,
@@ -91,7 +87,7 @@ const THEME_OPTS: { val: ThemeMode; label: string; icon: typeof Sun }[] = [
 
 export default function Profile() {
   const [prefs, setPrefs] = useState(NOTIFICATION_PREFS);
-  const { theme, setTheme, units, setUnits, appLock, setAppLock } = useSettings();
+  const { theme, setTheme, appLock, setAppLock } = useSettings();
   const [bio, setBio] = useState<{ available: boolean; label: string }>({ available: false, label: 'Face ID' });
 
   useEffect(() => {
@@ -139,44 +135,6 @@ export default function Profile() {
             <Text className="font-sans text-sm text-muted-foreground">{DRIVER.cdl}</Text>
           </View>
         </View>
-
-        {/* Hours of Service quick entry */}
-        <Pressable
-          onPress={() => router.push('/hos')}
-          accessibilityRole="button"
-          accessibilityLabel="Hours of Service"
-          className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-90"
-        >
-          <View className="size-11 items-center justify-center rounded-2xl bg-accent">
-            <Clock size={20} color={C.foreground} />
-          </View>
-          <View className="flex-1">
-            <Text className="font-sans-medium text-base text-foreground">Hours of Service</Text>
-            <Text className="font-sans text-sm text-muted-foreground">
-              {HOS.current} · {fmtHrs(HOS.clocks[0].maxH - HOS.clocks[0].usedH)} drive left
-            </Text>
-          </View>
-          <ChevronRight size={18} color={C.mutedForeground} />
-        </Pressable>
-
-        {/* Earnings quick entry */}
-        <Pressable
-          onPress={() => router.push('/earnings')}
-          accessibilityRole="button"
-          accessibilityLabel="Earnings"
-          className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-90"
-        >
-          <View className="size-11 items-center justify-center rounded-2xl bg-accent">
-            <Wallet size={20} color={C.foreground} />
-          </View>
-          <View className="flex-1">
-            <Text className="font-sans-medium text-base text-foreground">Earnings</Text>
-            <Text className="font-sans text-sm text-muted-foreground">
-              This week · {money(EARNINGS.gross)} · {EARNINGS.loads} loads
-            </Text>
-          </View>
-          <ChevronRight size={18} color={C.mutedForeground} />
-        </Pressable>
 
         {/* DVIR quick entry */}
         <Pressable
@@ -281,28 +239,6 @@ export default function Profile() {
               })}
             </View>
           </View>
-          <View className="gap-3 bg-background p-4">
-            <Text className="font-sans-medium text-base text-foreground">Distance units</Text>
-            <View className="h-12 flex-row items-center rounded-2xl bg-accent p-1">
-              {(['mi', 'km'] as const).map((u) => {
-                const on = units === u;
-                return (
-                  <Pressable
-                    key={u}
-                    onPress={() => setUnits(u)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: on }}
-                    className="h-full flex-1 items-center justify-center rounded-xl"
-                    style={{ backgroundColor: on ? C.background : 'transparent' }}
-                  >
-                    <Text className="font-sans-medium text-sm" style={{ color: on ? C.foreground : C.mutedForeground }}>
-                      {u === 'mi' ? 'Miles' : 'Kilometers'}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
         </Section>
 
         {/* Security — only when the device has enrolled biometrics */}
@@ -319,7 +255,8 @@ export default function Profile() {
               <Switch
                 value={appLock}
                 onValueChange={setAppLock}
-                trackColor={{ true: C.primary, false: C.border }}
+                trackColor={{ true: C.foreground, false: C.border }}
+                thumbColor={C.white}
                 ios_backgroundColor={C.border}
               />
             </View>
@@ -337,8 +274,9 @@ export default function Profile() {
               <Switch
                 value={p.on}
                 onValueChange={() => toggle(p.key)}
-                trackColor={{ true: C.primary, false: '#e5e5e5' }}
-                ios_backgroundColor="#e5e5e5"
+                trackColor={{ true: C.foreground, false: C.border }}
+                thumbColor={C.white}
+                ios_backgroundColor={C.border}
               />
             </View>
           ))}

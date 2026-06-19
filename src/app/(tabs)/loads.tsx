@@ -71,23 +71,27 @@ function TripCard({ trip }: { trip: Trip }) {
       onPress={() => router.push({ pathname: '/load/[id]', params: { id: trip.id, variant: trip.status } })}
       className="w-full gap-2 rounded-3xl bg-background p-4 active:opacity-90"
     >
-      {/* title */}
-      <View className="flex-row items-center gap-3">
-        <View className="flex-1 flex-row items-center gap-2">
-          <Package size={20} color="#171717" />
-          <Text className="font-sans-medium text-base text-foreground">{trip.id}</Text>
-          {trip.partial ? (
-            <Text className="flex-1 font-sans-semibold text-base text-purple">{trip.partial}</Text>
-          ) : null}
+      {/* title — single stable row; partial indicator drops to its own line */}
+      <View className="gap-1">
+        <View className="flex-row items-center gap-2">
+          <Package size={20} color={C.foreground} />
+          <Text numberOfLines={1} className="flex-1 font-sans-medium text-base text-foreground">
+            {trip.id}
+          </Text>
           {badge ? (
             <View className="rounded-full px-3 py-1" style={{ backgroundColor: badge.bg }}>
-              <Text className="font-sans-medium text-xs" style={{ color: badge.color }}>
+              <Text numberOfLines={1} className="font-sans-medium text-xs" style={{ color: badge.color }}>
                 {badge.label}
               </Text>
             </View>
           ) : null}
+          <ChevronRight size={20} color={C.mutedForeground} />
         </View>
-        <ChevronRight size={20} color="#171717" />
+        {trip.partial ? (
+          <Text numberOfLines={1} className="font-sans-medium text-sm text-purple">
+            {trip.partial}
+          </Text>
+        ) : null}
       </View>
 
       {/* stops timeline */}

@@ -36,14 +36,23 @@ function ConvCard({ conv }: { conv: Conversation }) {
       className="flex-row gap-3 rounded-3xl bg-background p-4 active:opacity-90"
     >
       {/* avatar + online dot */}
-      <View>
+      <View style={{ position: 'relative', alignSelf: 'flex-start' }}>
         <View className="size-12 items-center justify-center rounded-full" style={{ backgroundColor: C.primary }}>
           <Text className="font-sans-semibold text-base text-primary-foreground">{conv.dispatcher.initials}</Text>
         </View>
         {conv.dispatcher.online ? (
           <View
-            className="absolute size-4 rounded-full border-[3px] border-background"
-            style={{ backgroundColor: C.teal, bottom: -1, right: -1 }}
+            style={{
+              position: 'absolute',
+              bottom: -1,
+              right: -1,
+              width: 15,
+              height: 15,
+              borderRadius: 8,
+              backgroundColor: C.teal,
+              borderWidth: 3,
+              borderColor: C.background,
+            }}
           />
         ) : null}
       </View>
