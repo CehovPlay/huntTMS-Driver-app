@@ -127,6 +127,11 @@ export default function MapScreen() {
                         key={d}
                         onPress={() => {
                           if (up) return;
+                          // PoD is captured as a receiver signature; BOL via the upload sheet.
+                          if (d === 'Proof of delivery') {
+                            router.push('/signature');
+                            return;
+                          }
                           setUploadType(d);
                           setSheet(true);
                         }}
