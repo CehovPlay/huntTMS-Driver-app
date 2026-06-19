@@ -11,7 +11,7 @@ import { useSettings } from '@/lib/settings';
 import { fmtMi } from '@/lib/units';
 import { Logo } from '@/components/logo';
 import { useNotifications } from '@/lib/notifications';
-import { C } from '@/lib/theme';
+import { C, shadowXs } from '@/lib/theme';
 import {
   COMPLETED_TRIPS,
   DELIVERED_CURRENT,
@@ -230,11 +230,11 @@ export default function LoadsScreen() {
           {/* segmented tabs — raw RN Pressable + inline styles (no className / css-interop on this dynamic re-render path) */}
           <View
             style={{
-              height: 64,
+              height: 44,
               flexDirection: 'row',
               alignItems: 'center',
-              borderRadius: 16,
-              backgroundColor: C.accent,
+              borderRadius: 12,
+              backgroundColor: C.muted,
               padding: 4,
             }}
           >
@@ -255,8 +255,9 @@ export default function LoadsScreen() {
                     height: '100%',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    borderRadius: 14,
+                    borderRadius: 8,
                     backgroundColor: on ? C.background : 'transparent',
+                    ...(on ? shadowXs : null),
                   }}
                 >
                   <Text

@@ -10,7 +10,7 @@ import { locateOnce } from '@/lib/geo';
 import { Pressable } from '@/components/pressable';
 import { SwipeButton } from '@/components/swipe-button';
 import { UploadSheet } from '@/components/upload-sheet';
-import { DocUploadSheet } from '@/components/doc-upload-sheet';
+import { DocsFlowSheet } from '@/components/docs-flow-sheet';
 import { TripMap, type MapRoutes } from '@/components/trip-map';
 import { REQUIRED_DOCS, useActiveLoad } from '@/lib/active-load';
 import { useNotifications } from '@/lib/notifications';
@@ -232,15 +232,16 @@ export default function MapScreen() {
       />
 
       {/* pickup documents — collected after "Picked up", but skippable */}
-      <DocUploadSheet
+      <DocsFlowSheet
         visible={pickupDocs}
+        required={['Bill of landing']}
+        labels={DOC_LABEL}
+        uploaded={docs}
         title="Upload pickup documents"
-        onClose={() => setPickupDocs(false)}
-        onConfirm={() => {
-          addDoc('Bill of landing');
-          finishPickup();
-        }}
+        onUpload={addDoc}
+        onConfirm={finishPickup}
         onSkip={finishPickup}
+        onClose={() => setPickupDocs(false)}
       />
     </View>
   );

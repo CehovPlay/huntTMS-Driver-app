@@ -43,6 +43,19 @@
   background-color: rgb(10 10 11);
 }
 
+/* Prevent the page from scrolling sideways when an input is focused in the
+   Telegram / iOS webview (was shifting the whole layout left). */
+html,
+body,
+#root {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+* {
+  /* keep focus rings off native inputs that we already style */
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Web only — native uses expo-font. The per-weight family names (Geist_400Regular…)
    weren't resolving on web (serif fallback), so we load Geist once as a variable
    font and remap the NativeWind font utilities to it, with a real sans-serif

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Linking, ScrollView, Switch, Text, View } from 'react-native';
+import { Alert, Linking, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
+import { Switch } from '@/components/switch';
 import { useSettings, type ThemeMode } from '@/lib/settings';
 import { biometricAvailable } from '@/lib/biometric';
 import { C } from '@/lib/theme';
@@ -288,13 +289,7 @@ export default function Profile() {
                 <Text className="font-sans-medium text-base text-foreground">Unlock with {bio.label}</Text>
                 <Text className="font-sans text-sm text-muted-foreground">Require {bio.label} to open the app</Text>
               </View>
-              <Switch
-                value={appLock}
-                onValueChange={setAppLock}
-                trackColor={{ true: C.foreground, false: C.border }}
-                thumbColor={C.white}
-                ios_backgroundColor={C.border}
-              />
+              <Switch value={appLock} onValueChange={setAppLock} />
             </View>
           </Section>
         ) : null}
@@ -307,13 +302,7 @@ export default function Profile() {
                 <Text className="font-sans-medium text-base text-foreground">{p.label}</Text>
                 <Text className="font-sans text-sm text-muted-foreground">{p.desc}</Text>
               </View>
-              <Switch
-                value={p.on}
-                onValueChange={() => toggle(p.key)}
-                trackColor={{ true: C.foreground, false: C.border }}
-                thumbColor={C.white}
-                ios_backgroundColor={C.border}
-              />
+              <Switch value={p.on} onValueChange={() => toggle(p.key)} />
             </View>
           ))}
         </Section>

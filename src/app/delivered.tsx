@@ -6,7 +6,7 @@ import { Check, MapPin } from 'lucide-react-native';
 
 import { CURRENT_LOAD } from '@/lib/mock';
 import { Pressable } from '@/components/pressable';
-import { DocUploadSheet } from '@/components/doc-upload-sheet';
+import { DocsFlowSheet } from '@/components/docs-flow-sheet';
 import { REQUIRED_DOCS, useActiveLoad } from '@/lib/active-load';
 import { C } from '@/lib/theme';
 
@@ -19,7 +19,8 @@ const DOC_LABEL: Record<string, string> = {
 // until every required document is uploaded.
 export default function Delivered() {
   const { docs, canDeliver, reset, markDelivered, addDoc } = useActiveLoad();
-  const [activeDoc, setActiveDoc] = useState<string | undefined>(undefined);
+  // The upload modal pops up on arrival (and can be reopened from the list).
+  const [sheetOpen, setSheetOpen] = useState(true);
 
   const complete = () => {
     if (!canDeliver) return;
@@ -64,7 +65,7 @@ export default function Delivered() {
                   key={d}
                   onPress={() => {
                     if (up) return;
-                    setActiveDoc(d);
+                    setSheetOpen(true);
                   }}
                   accessibilityRole={up ? undefined : 'button'}
                   accessibilityLabel={up ? `${DOC_LABEL[d] ?? d} uploaded` : `Upload ${DOC_LABEL[d] ?? d}`}
@@ -107,14 +108,15 @@ export default function Delivered() {
         </View>
       </SafeAreaView>
 
-      <DocUploadSheet
-        visible={!!activeDoc}
-        title={activeDoc ? `Upload ${DOC_LABEL[activeDoc] ?? activeDoc}` : 'Confirm document upload'}
-        onClose={() => setActiveDoc(undefined)}
-        onConfirm={() => {
-          if (activeDoc) addDoc(activeDoc);
-          setActiveDoc(undefined);
-        }}
+      <DocsFlowSheet
+        visible={sheetOpen}
+        required={[...REQUIRED_DOCS]}
+        labels={DOC_LABEL}
+        uploaded={docs}
+        title="Upload delivery documents"
+        onUpload={addDoc}
+        onConfirm={() => setSheetOpen(false)}
+        onClose={() => setSheetOpen(false)}
       />
     </View>
   );

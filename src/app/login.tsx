@@ -70,8 +70,8 @@ export default function LogIn() {
 
               <View className="w-full gap-2">
                 <View
-                  className="h-14 flex-row items-center gap-3 bg-background px-4"
-                  style={{ borderRadius: 10, borderWidth: 1, borderColor: error ? C.destructive : C.input, ...shadowXs }}
+                  className="h-16 flex-row items-center gap-3 rounded-2xl border bg-background px-4"
+                  style={{ borderColor: error ? C.destructive : C.input, ...shadowXs }}
                 >
                   <Text className="font-sans text-base text-foreground">+1</Text>
                   <TextInput
@@ -96,8 +96,8 @@ export default function LogIn() {
               </View>
 
               <Pressable
-                className="h-14 w-full flex-row items-center justify-center bg-primary active:opacity-90"
-                style={{ borderRadius: 10, ...shadowXs }}
+                className="h-16 w-full flex-row items-center justify-center rounded-2xl bg-primary active:opacity-90"
+                style={shadowXs}
                 onPress={submit}
                 accessibilityRole="button"
                 accessibilityLabel="Sign in"
