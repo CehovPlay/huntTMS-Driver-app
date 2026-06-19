@@ -42,19 +42,21 @@ export default function ConfirmScan() {
       </View>
 
       {/* actions */}
-      <SafeAreaView edges={['bottom']} className="gap-3 px-5 pt-3">
-        <Pressable
-          onPress={onContinue}
-          className="h-16 flex-row items-center justify-center rounded-2xl bg-primary active:opacity-90"
-        >
-          <Text className="font-sans-medium text-base text-primary-foreground">Continue</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => router.replace({ pathname: '/scan', params: { type: type ?? '' } })}
-          className="h-16 flex-row items-center justify-center rounded-2xl bg-accent active:opacity-80"
-        >
-          <Text className="font-sans-medium text-base text-foreground">Try again</Text>
-        </Pressable>
+      <SafeAreaView edges={['bottom']}>
+        <View className="gap-3 px-5 pb-2 pt-3">
+          <Pressable
+            onPress={onContinue}
+            className="h-16 flex-row items-center justify-center rounded-2xl bg-primary active:opacity-90"
+          >
+            <Text className="font-sans-medium text-base text-primary-foreground">Continue</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.replace({ pathname: '/scan', params: { type: type ?? '' } })}
+            className="h-16 flex-row items-center justify-center rounded-2xl bg-accent active:opacity-80"
+          >
+            <Text className="font-sans-medium text-base text-foreground">Try again</Text>
+          </Pressable>
+        </View>
       </SafeAreaView>
     </SafeAreaView>
   );

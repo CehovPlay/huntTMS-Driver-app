@@ -33,7 +33,7 @@ export default function Call() {
   return (
     <View className="flex-1" style={{ backgroundColor: '#0c0c0c' }}>
       <StatusBar style="light" />
-      <SafeAreaView className="flex-1 items-center px-8 pb-6 pt-8">
+      <SafeAreaView className="flex-1 items-center pb-6 pt-8">
         {/* caller — centered in available space */}
         <View className="flex-1 items-center justify-center gap-5">
           <View
@@ -53,7 +53,7 @@ export default function Call() {
         </View>
 
         {/* controls — pinned at bottom */}
-        <View className="gap-6" style={{ width: '100%' }}>
+        <View className="gap-6 px-8" style={{ width: '100%' }}>
           <View className="flex-row">
             <CallBtn active={muted} onPress={() => setMuted((m) => !m)} icon={muted ? MicOff : Mic} label="Mute" />
             <CallBtn active={speaker} onPress={() => setSpeaker((s) => !s)} icon={Volume2} label="Speaker" />

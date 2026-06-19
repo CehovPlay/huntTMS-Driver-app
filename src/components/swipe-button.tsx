@@ -1,4 +1,4 @@
-import { Platform, Text, View, type LayoutChangeEvent } from 'react-native';
+import { View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
@@ -12,8 +12,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ArrowRight } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-
-import { Pressable } from '@/components/pressable';
 
 const TRACK_H = 62;
 const PAD = 5;
@@ -82,28 +80,6 @@ export function SwipeButton({ label, onConfirm, variant = 'dark', disabled = fal
   const labelStyle = useAnimatedStyle(() => ({
     opacity: interpolate(x.value, [0, maxX.value * 0.6], [1, 0], Extrapolation.CLAMP),
   }));
-
-  // Web/Telegram: pan-gesture + absolute thumb is unreliable in the browser, so
-  // degrade to a tap-to-confirm button (same look, same action).
-  if (Platform.OS === 'web') {
-    return (
-      <Pressable
-        onPress={disabled ? undefined : confirmWithHaptic}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        accessibilityState={{ disabled }}
-        className="flex-row items-center justify-center gap-2 rounded-2xl px-2"
-        style={{ height: TRACK_H, backgroundColor: c.track, opacity: disabled ? 0.45 : 1 }}
-      >
-        <View className="items-center justify-center rounded-xl" style={{ width: THUMB, height: THUMB, backgroundColor: c.thumb }}>
-          <ArrowRight size={20} color={c.icon} />
-        </View>
-        <Text className="flex-1 text-center font-sans-medium text-base" style={{ color: c.text, marginLeft: -THUMB }}>
-          {label}
-        </Text>
-      </Pressable>
-    );
-  }
 
   return (
     <View

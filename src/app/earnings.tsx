@@ -1,5 +1,4 @@
 import { ScrollView, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, ChevronRight, Clock, Package, TrendingUp, Wallet } from 'lucide-react-native';
@@ -28,7 +27,7 @@ export default function Earnings() {
 
       <ScrollView contentContainerClassName="gap-5 p-4 pb-10" showsVerticalScrollIndicator={false}>
         {/* this week */}
-        <Animated.View entering={FadeInDown.duration(300)} className="gap-3 rounded-3xl bg-background p-5">
+        <View className="gap-3 rounded-3xl bg-background p-5">
           <View className="flex-row items-center justify-between">
             <Text className="font-sans-medium text-sm text-muted-foreground">This week · {EARNINGS.week}</Text>
             <View className="flex-row items-center gap-1 rounded-full px-2.5 py-1" style={{ backgroundColor: `${C.teal}1A` }}>
@@ -70,10 +69,10 @@ export default function Earnings() {
               );
             })}
           </View>
-        </Animated.View>
+        </View>
 
         {/* active time + deliveries */}
-        <Animated.View entering={FadeInDown.delay(60).duration(300)} className="flex-row gap-3">
+        <View className="flex-row gap-3">
           <View className="flex-1 flex-row items-center gap-3 rounded-3xl bg-background p-4">
             <View className="size-10 items-center justify-center rounded-2xl bg-accent">
               <Clock size={18} color={C.foreground} />
@@ -92,10 +91,10 @@ export default function Earnings() {
               <Text className="font-sans text-xs text-muted-foreground">Deliveries</Text>
             </View>
           </View>
-        </Animated.View>
+        </View>
 
         {/* stats */}
-        <Animated.View entering={FadeInDown.delay(120).duration(300)} className="flex-row gap-3">
+        <View className="flex-row gap-3">
           {[
             { label: 'Miles', value: EARNINGS.miles.toLocaleString('en-US') },
             { label: '$ / mile', value: `$${EARNINGS.perMile}` },
@@ -106,10 +105,10 @@ export default function Earnings() {
               <Text className="font-sans text-xs text-muted-foreground">{s.label}</Text>
             </View>
           ))}
-        </Animated.View>
+        </View>
 
         {/* paid loads */}
-        <Animated.View entering={FadeInDown.delay(180).duration(300)} className="gap-2">
+        <View className="gap-2">
           <Text className="px-1 font-sans-medium text-sm text-muted-foreground">PAID LOADS</Text>
           <View className="gap-px overflow-hidden rounded-3xl bg-background">
             {EARNINGS.paid.map((p) => (
@@ -128,7 +127,7 @@ export default function Earnings() {
               </View>
             ))}
           </View>
-        </Animated.View>
+        </View>
       </ScrollView>
     </View>
   );

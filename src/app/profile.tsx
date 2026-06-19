@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Alert, Linking, ScrollView, Switch, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {
@@ -52,10 +51,10 @@ let sectionOrder = 0;
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   const delay = (sectionOrder++ % 7) * 55;
   return (
-    <Animated.View entering={FadeInDown.delay(delay).duration(300)} className="gap-2">
+    <View className="gap-2">
       <Text className="px-1 font-sans-medium text-sm text-muted-foreground">{title}</Text>
       <View className="gap-px overflow-hidden rounded-3xl bg-background">{children}</View>
-    </Animated.View>
+    </View>
   );
 }
 

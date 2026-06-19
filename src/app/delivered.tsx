@@ -57,13 +57,15 @@ export default function Delivered() {
         ) : null}
       </View>
 
-      <SafeAreaView edges={['bottom']} className="px-5 pt-3">
-        <Pressable
-          onPress={done}
-          className="h-16 flex-row items-center justify-center rounded-2xl bg-primary active:opacity-90"
-        >
-          <Text className="font-sans-medium text-base text-primary-foreground">Done</Text>
-        </Pressable>
+      <SafeAreaView edges={['bottom']}>
+        <View className="px-5 pb-2 pt-3">
+          <Pressable
+            onPress={done}
+            className="h-16 flex-row items-center justify-center rounded-2xl bg-primary active:opacity-90"
+          >
+            <Text className="font-sans-medium text-base text-primary-foreground">Done</Text>
+          </Pressable>
+        </View>
       </SafeAreaView>
     </SafeAreaView>
   );

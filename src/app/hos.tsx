@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
@@ -58,17 +57,17 @@ export default function Hos() {
 
       <ScrollView contentContainerClassName="gap-5 p-4 pb-10" showsVerticalScrollIndicator={false}>
         {/* big remaining drive */}
-        <Animated.View entering={FadeInDown.duration(300)} className="items-center gap-1 rounded-3xl bg-background p-6">
+        <View className="items-center gap-1 rounded-3xl bg-background p-6">
           <Text className="font-sans-medium text-sm text-muted-foreground">Drive time remaining</Text>
           <Text className="font-sans-bold text-foreground" style={{ fontSize: 44 }}>{fmtHrs(driveLeft)}</Text>
           <View className="mt-1 flex-row items-center gap-2 rounded-full px-3 py-1" style={{ backgroundColor: `${colorFor(status)}1A` }}>
             <View className="size-2 rounded-full" style={{ backgroundColor: colorFor(status) }} />
             <Text className="font-sans-medium text-sm" style={{ color: colorFor(status) }}>{status}</Text>
           </View>
-        </Animated.View>
+        </View>
 
         {/* status selector */}
-        <Animated.View entering={FadeInDown.delay(60).duration(300)} className="gap-2">
+        <View className="gap-2">
           <Text className="px-1 font-sans-medium text-sm text-muted-foreground">DUTY STATUS</Text>
           <View className="flex-row gap-2">
             {DUTY.map((d) => {
@@ -88,20 +87,20 @@ export default function Hos() {
               );
             })}
           </View>
-        </Animated.View>
+        </View>
 
         {/* clocks */}
-        <Animated.View entering={FadeInDown.delay(120).duration(300)} className="gap-2">
+        <View className="gap-2">
           <Text className="px-1 font-sans-medium text-sm text-muted-foreground">CLOCKS</Text>
           <View className="gap-px overflow-hidden rounded-3xl bg-background">
             {HOS.clocks.map((c) => (
               <Clock key={c.label} {...c} />
             ))}
           </View>
-        </Animated.View>
+        </View>
 
         {/* today log */}
-        <Animated.View entering={FadeInDown.delay(180).duration(300)} className="gap-2">
+        <View className="gap-2">
           <Text className="px-1 font-sans-medium text-sm text-muted-foreground">TODAY'S LOG</Text>
           <View className="gap-px overflow-hidden rounded-3xl bg-background">
             {HOS.today.map((seg, i) => (
@@ -114,7 +113,7 @@ export default function Hos() {
               </View>
             ))}
           </View>
-        </Animated.View>
+        </View>
       </ScrollView>
     </View>
   );
