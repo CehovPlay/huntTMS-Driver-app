@@ -6,7 +6,7 @@ import { Check, MapPin } from 'lucide-react-native';
 
 import { CURRENT_LOAD } from '@/lib/mock';
 import { Pressable } from '@/components/pressable';
-import { UploadSheet } from '@/components/upload-sheet';
+import { DocUploadSheet } from '@/components/doc-upload-sheet';
 import { REQUIRED_DOCS, useActiveLoad } from '@/lib/active-load';
 import { C } from '@/lib/theme';
 
@@ -18,9 +18,8 @@ const DOC_LABEL: Record<string, string> = {
 // Mandatory documents step after the delivery swipe — completion is blocked
 // until every required document is uploaded.
 export default function Delivered() {
-  const { docs, canDeliver, reset, markDelivered } = useActiveLoad();
-  const [sheet, setSheet] = useState(false);
-  const [uploadType, setUploadType] = useState<string | undefined>(undefined);
+  const { docs, canDeliver, reset, markDelivered, addDoc } = useActiveLoad();
+  const [activeDoc, setActiveDoc] = useState<string | undefined>(undefined);
 
   const complete = () => {
     if (!canDeliver) return;
@@ -65,12 +64,7 @@ export default function Delivered() {
                   key={d}
                   onPress={() => {
                     if (up) return;
-                    if (d === 'Proof of delivery') {
-                      router.push('/signature');
-                      return;
-                    }
-                    setUploadType(d);
-                    setSheet(true);
+                    setActiveDoc(d);
                   }}
                   accessibilityRole={up ? undefined : 'button'}
                   accessibilityLabel={up ? `${DOC_LABEL[d] ?? d} uploaded` : `Upload ${DOC_LABEL[d] ?? d}`}
@@ -113,12 +107,13 @@ export default function Delivered() {
         </View>
       </SafeAreaView>
 
-      <UploadSheet
-        visible={sheet}
-        presetType={uploadType}
-        onClose={() => {
-          setSheet(false);
-          setUploadType(undefined);
+      <DocUploadSheet
+        visible={!!activeDoc}
+        title={activeDoc ? `Upload ${DOC_LABEL[activeDoc] ?? activeDoc}` : 'Confirm document upload'}
+        onClose={() => setActiveDoc(undefined)}
+        onConfirm={() => {
+          if (activeDoc) addDoc(activeDoc);
+          setActiveDoc(undefined);
         }}
       />
     </View>

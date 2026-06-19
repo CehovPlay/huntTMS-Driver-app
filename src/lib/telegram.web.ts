@@ -15,6 +15,8 @@ type TgBackButton = {
   offClick?: (cb: () => void) => void;
 };
 
+type TgInset = { top?: number; bottom?: number; left?: number; right?: number };
+
 type TgWebApp = {
   ready?: () => void;
   expand?: () => void;
@@ -22,9 +24,30 @@ type TgWebApp = {
   setHeaderColor?: (c: string) => void;
   setBackgroundColor?: (c: string) => void;
   disableVerticalSwipes?: () => void;
+  onEvent?: (event: string, cb: () => void) => void;
+  safeAreaInset?: TgInset;
+  contentSafeAreaInset?: TgInset;
   HapticFeedback?: TgHaptic;
   BackButton?: TgBackButton;
 };
+
+// In fullscreen, Telegram floats ⌄/⋯ controls over the top of the webview.
+// Pad the app below them using the device safe area + Telegram's content inset,
+// so our header is never obscured. (Insets arrive async, hence the listeners.)
+function applyInsets() {
+  const tg = getTelegramWebApp();
+  if (!tg) return;
+  const sa = tg.safeAreaInset || {};
+  const ca = tg.contentSafeAreaInset || {};
+  const top = (sa.top || 0) + (ca.top || 0);
+  const bottom = (sa.bottom || 0) + (ca.bottom || 0);
+  const root = document.getElementById('root');
+  if (root) {
+    root.style.boxSizing = 'border-box';
+    root.style.paddingTop = `${top}px`;
+    root.style.paddingBottom = `${bottom}px`;
+  }
+}
 
 let started = false;
 
@@ -36,10 +59,9 @@ function applyTelegram() {
   const tg = getTelegramWebApp();
   if (!tg) return;
   try { tg.ready?.(); } catch {}
-  // Expand to full height, but NOT requestFullscreen — fullscreen makes Telegram
-  // overlay floating ⌄/⋯ controls on top of our header. expand() gives the height
-  // without the overlapping chrome.
   try { tg.expand?.(); } catch {}
+  // Full screen edge-to-edge; we pad content below the floating ⌄/⋯ via insets.
+  try { tg.requestFullscreen?.(); } catch {}
   // We use the app's own in-screen back buttons; hide Telegram's native one.
   try { tg.BackButton?.hide?.(); } catch {}
   // Keep Telegram's chrome matching the app's light theme
@@ -47,6 +69,15 @@ function applyTelegram() {
   try { tg.setBackgroundColor?.('#ffffff'); } catch {}
   // A swipe-down shouldn't close the app while the driver is mid-task
   try { tg.disableVerticalSwipes?.(); } catch {}
+
+  // Track Telegram's safe-area / content insets so nothing hides under its UI.
+  applyInsets();
+  try {
+    tg.onEvent?.('safeAreaChanged', applyInsets);
+    tg.onEvent?.('contentSafeAreaChanged', applyInsets);
+    tg.onEvent?.('fullscreenChanged', applyInsets);
+    tg.onEvent?.('viewportChanged', applyInsets);
+  } catch {}
 }
 
 export function initTelegram(): void {
