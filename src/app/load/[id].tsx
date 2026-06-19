@@ -17,6 +17,7 @@ import {
   Phone,
   Ruler,
   Scale,
+  Timer,
   Truck,
   User,
 } from 'lucide-react-native';
@@ -213,15 +214,28 @@ export default function LoadDetailScreen() {
           </View>
 
           {/* External turn-by-turn (Apple Maps / Google / Waze) */}
-          <Pressable
-            onPress={() => openDirections(stop.coordinate, stop.address)}
-            accessibilityRole="button"
-            accessibilityLabel={`Get directions to ${tab} address`}
-            className="h-16 flex-row items-center justify-center gap-2 rounded-2xl bg-accent active:opacity-80"
-          >
-            <Navigation2 size={18} color={C.foreground} />
-            <Text className="font-sans-medium text-base text-foreground">Get directions</Text>
-          </Pressable>
+          <View className="flex-row gap-3">
+            <Pressable
+              onPress={() => openDirections(stop.coordinate, stop.address)}
+              accessibilityRole="button"
+              accessibilityLabel={`Get directions to ${tab} address`}
+              className="h-16 flex-1 flex-row items-center justify-center gap-2 rounded-2xl bg-accent active:opacity-80"
+            >
+              <Navigation2 size={18} color={C.foreground} />
+              <Text className="font-sans-medium text-base text-foreground">Directions</Text>
+            </Pressable>
+            {variant === 'current' ? (
+              <Pressable
+                onPress={() => router.push('/detention')}
+                accessibilityRole="button"
+                accessibilityLabel="Detention timer"
+                className="h-16 flex-1 flex-row items-center justify-center gap-2 rounded-2xl bg-accent active:opacity-80"
+              >
+                <Timer size={18} color={C.foreground} />
+                <Text className="font-sans-medium text-base text-foreground">Detention</Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
 
         {/* Dispatcher */}
