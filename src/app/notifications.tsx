@@ -1,15 +1,21 @@
-import { ScrollView, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useCallback, useState } from 'react';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, BellOff } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
+import { PressableScale } from '@/components/pressable-scale';
 import { C } from '@/lib/theme';
 import { useNotifications, NOTIF_ICONS } from '@/lib/notifications';
 
 export default function Notifications() {
   const { feed, unread, markAllRead } = useNotifications();
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
 
   return (
     <View className="flex-1 bg-accent">
@@ -18,13 +24,15 @@ export default function Notifications() {
           <Pressable
             onPress={() => router.back()}
             hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
             className="flex-row items-center gap-1.5 active:opacity-60"
           >
             <ArrowLeft size={20} color={C.foreground} />
             <Text className="font-sans-medium text-base text-foreground">Back</Text>
           </Pressable>
           {unread > 0 ? (
-            <Pressable onPress={markAllRead} hitSlop={8} className="active:opacity-60">
+            <Pressable onPress={markAllRead} hitSlop={8} accessibilityRole="button" accessibilityLabel="Mark all read" className="active:opacity-60">
               <Text className="font-sans-medium text-sm" style={{ color: C.teal }}>
                 Read all
               </Text>
@@ -47,12 +55,18 @@ export default function Notifications() {
           <Text className="font-sans text-base text-muted-foreground">No notifications</Text>
         </View>
       ) : (
-        <ScrollView contentContainerClassName="gap-2 p-4" showsVerticalScrollIndicator={false}>
-          {feed.map((n, i) => {
+        <ScrollView
+          contentContainerClassName="gap-2 p-4"
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.mutedForeground} colors={[C.foreground]} />
+          }
+        >
+          {feed.map((n) => {
             const { icon: Icon, color } = NOTIF_ICONS[n.type];
             return (
-              <Animated.View key={n.id} entering={FadeInDown.delay(i * 50).duration(280)}>
-              <Pressable
+              <PressableScale
+                key={n.id}
                 onPress={() => n.href && router.push(n.href as never)}
                 className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-90"
               >
@@ -69,8 +83,7 @@ export default function Notifications() {
                   <Text className="font-sans text-xs text-muted-foreground">{n.time}</Text>
                 </View>
                 {!n.read ? <View className="size-2.5 rounded-full" style={{ backgroundColor: C.teal }} /> : null}
-              </Pressable>
-              </Animated.View>
+              </PressableScale>
             );
           })}
         </ScrollView>

@@ -1,10 +1,11 @@
-import { ScrollView, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useCallback, useState } from 'react';
+import { RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Bell, Check, CheckCheck, FileText, Image as ImageIcon, MapPin, Mic, Package } from 'lucide-react-native';
+import { Bell, Check, CheckCheck, FileText, Image as ImageIcon, MapPin, Mic, Package, Search, X } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
+import { PressableScale } from '@/components/pressable-scale';
 import { Logo } from '@/components/logo';
 import { useNotifications } from '@/lib/notifications';
 import { C } from '@/lib/theme';
@@ -28,7 +29,7 @@ function ConvCard({ conv }: { conv: Conversation }) {
   const pill = STATUS_PILL[conv.load.status];
   const KindIcon = KIND_ICON[conv.lastKind];
   return (
-    <Pressable
+    <PressableScale
       onPress={() => router.push({ pathname: '/chat', params: { id: conv.id } })}
       accessibilityRole="button"
       accessibilityLabel={`Chat with ${conv.dispatcher.name}, load ${conv.load.id}${conv.unread ? `, ${conv.unread} unread` : ''}`}
@@ -98,12 +99,28 @@ function ConvCard({ conv }: { conv: Conversation }) {
           ) : null}
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
 export default function MessagesScreen() {
   const { unread } = useNotifications();
+  const [query, setQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
+
+  const q = query.trim().toLowerCase();
+  const list = CONVERSATIONS.filter(
+    (c) =>
+      !q ||
+      c.dispatcher.name.toLowerCase().includes(q) ||
+      c.load.id.toLowerCase().includes(q) ||
+      c.load.route.toLowerCase().includes(q),
+  );
 
   return (
     <View className="flex-1 bg-accent">
@@ -143,15 +160,46 @@ export default function MessagesScreen() {
           </View>
 
           <Text className="px-1 font-sans-semibold text-2xl text-foreground">Chats</Text>
+
+          {/* search */}
+          <View className="h-12 flex-row items-center gap-2 rounded-2xl bg-accent px-3.5">
+            <Search size={18} color={C.mutedForeground} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search by dispatcher, load, route"
+              placeholderTextColor={C.mutedForeground}
+              className="flex-1 font-sans text-base text-foreground"
+              style={{ paddingVertical: 0 }}
+              returnKeyType="search"
+            />
+            {query ? (
+              <Pressable onPress={() => setQuery('')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Clear search">
+                <X size={16} color={C.mutedForeground} />
+              </Pressable>
+            ) : null}
+          </View>
         </View>
       </SafeAreaView>
 
-      <ScrollView contentContainerClassName="gap-3 p-4" showsVerticalScrollIndicator={false}>
-        {CONVERSATIONS.map((conv, i) => (
-          <Animated.View key={conv.id} entering={FadeInDown.delay(i * 55).duration(300)}>
-            <ConvCard conv={conv} />
-          </Animated.View>
-        ))}
+      <ScrollView
+        contentContainerClassName="gap-3 p-4"
+        contentContainerStyle={list.length === 0 ? { flex: 1 } : undefined}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.mutedForeground} colors={[C.foreground]} />
+        }
+      >
+        {list.length === 0 ? (
+          <View className="flex-1 items-center justify-center gap-2 pb-24">
+            <Search size={32} color="#d4d4d4" />
+            <Text className="font-sans text-base text-muted-foreground">
+              {query ? `No chats match “${query}”` : 'No chats yet'}
+            </Text>
+          </View>
+        ) : (
+          list.map((conv) => <ConvCard key={conv.id} conv={conv} />)
+        )}
       </ScrollView>
     </View>
   );

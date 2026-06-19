@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { Pressable as RNPressable, ScrollView, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Pressable as RNPressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Bell, ChevronRight, Package } from 'lucide-react-native';
+import { Bell, ChevronRight, Package, Search, X } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
+import { PressableScale } from '@/components/pressable-scale';
 import { Logo } from '@/components/logo';
 import { useNotifications } from '@/lib/notifications';
 import { C } from '@/lib/theme';
@@ -63,7 +64,7 @@ const STATUS_BADGE: Record<TripStatus, { label: string; bg: string; color: strin
 function TripCard({ trip }: { trip: Trip }) {
   const badge = STATUS_BADGE[trip.status];
   return (
-    <Pressable
+    <PressableScale
       onPress={() => router.push({ pathname: '/load/[id]', params: { id: trip.id, variant: trip.status } })}
       className="w-full gap-2 rounded-3xl bg-background p-4 active:opacity-90"
     >
@@ -108,7 +109,7 @@ function TripCard({ trip }: { trip: Trip }) {
           ) : null}
         </View>
       ) : null}
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -128,14 +129,32 @@ function bucketOf(anchorMs: number, t: Trip) {
   return 'Later';
 }
 
+function matchesQuery(t: Trip, q: string) {
+  const s = q.trim().toLowerCase();
+  if (!s) return true;
+  return (
+    t.id.toLowerCase().includes(s) ||
+    (t.broker ?? '').toLowerCase().includes(s) ||
+    t.stops.some((st) => st.city.toLowerCase().includes(s))
+  );
+}
+
 export default function LoadsScreen() {
   const [tab, setTab] = useState<'scheduled' | 'completed'>('scheduled');
+  const [query, setQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
   const { completedRefs } = useActiveLoad();
   const { unread } = useNotifications();
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // mock: pretend to re-fetch; replace with query invalidation when API lands
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
+
   // delivered active load(s) surface at the top of Completed
   const delivered = completedRefs.includes(DELIVERED_CURRENT.id) ? [DELIVERED_CURRENT] : [];
-  const completed = [...delivered, ...COMPLETED_TRIPS];
+  const completed = [...delivered, ...COMPLETED_TRIPS].filter((t) => matchesQuery(t, query));
 
   // Scheduled is grouped by pickup day; anchored to the current load so it reads as "Today".
   const anchorMs = tripDate(
@@ -143,10 +162,10 @@ export default function LoadsScreen() {
   ).getTime();
   const groups = BUCKETS.map((label) => ({
     label,
-    trips: SCHEDULED_TRIPS.filter((t) => bucketOf(anchorMs, t) === label),
+    trips: SCHEDULED_TRIPS.filter((t) => bucketOf(anchorMs, t) === label && matchesQuery(t, query)),
   })).filter((g) => g.trips.length > 0);
 
-  const empty = tab === 'completed' && completed.length === 0;
+  const empty = tab === 'completed' ? completed.length === 0 : groups.length === 0;
 
   return (
     <View className="flex-1 bg-accent">
@@ -230,6 +249,25 @@ export default function LoadsScreen() {
               );
             })}
           </View>
+
+          {/* search */}
+          <View className="h-12 flex-row items-center gap-2 rounded-2xl bg-accent px-3.5">
+            <Search size={18} color={C.mutedForeground} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search loads, city, broker"
+              placeholderTextColor={C.mutedForeground}
+              className="flex-1 font-sans text-base text-foreground"
+              style={{ paddingVertical: 0 }}
+              returnKeyType="search"
+            />
+            {query ? (
+              <Pressable onPress={() => setQuery('')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Clear search">
+                <X size={16} color={C.mutedForeground} />
+              </Pressable>
+            ) : null}
+          </View>
         </View>
       </SafeAreaView>
 
@@ -238,8 +276,18 @@ export default function LoadsScreen() {
         contentContainerClassName="gap-3 p-4"
         contentContainerStyle={empty ? { flex: 1 } : undefined}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.mutedForeground} colors={[C.foreground]} />
+        }
       >
-        {tab === 'scheduled' ? (
+        {empty ? (
+          <View className="flex-1 items-center justify-center gap-2 pb-24">
+            <Package size={32} color="#d4d4d4" />
+            <Text className="font-sans text-base text-muted-foreground">
+              {query ? `No loads match “${query}”` : `No ${tab} loads`}
+            </Text>
+          </View>
+        ) : tab === 'scheduled' ? (
           groups.map((g) => (
             <View key={g.label} className="gap-3">
               <Text className="px-1 font-sans-medium text-sm text-muted-foreground">{g.label}</Text>
@@ -248,11 +296,6 @@ export default function LoadsScreen() {
               ))}
             </View>
           ))
-        ) : empty ? (
-          <View className="flex-1 items-center justify-center gap-2 pb-24">
-            <Package size={32} color="#d4d4d4" />
-            <Text className="font-sans text-base text-muted-foreground">No completed loads</Text>
-          </View>
         ) : (
           completed.map((trip) => <TripCard key={trip.id} trip={trip} />)
         )}

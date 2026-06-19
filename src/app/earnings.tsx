@@ -1,4 +1,5 @@
-import { ScrollView, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, ChevronRight, Clock, Package, TrendingUp, Wallet } from 'lucide-react-native';
@@ -10,6 +11,11 @@ import { EARNINGS, money } from '@/lib/earnings';
 export default function Earnings() {
   const maxDay = Math.max(...EARNINGS.byDay.map((d) => d.v), 1);
   const maxIdx = EARNINGS.byDay.reduce((best, d, i, a) => (d.v > a[best].v ? i : best), 0);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
 
   return (
     <View className="flex-1 bg-accent">
@@ -25,7 +31,13 @@ export default function Earnings() {
         </View>
       </SafeAreaView>
 
-      <ScrollView contentContainerClassName="gap-5 p-4 pb-10" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerClassName="gap-5 p-4 pb-10"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.mutedForeground} colors={[C.foreground]} />
+        }
+      >
         {/* this week */}
         <View className="gap-3 rounded-3xl bg-background p-5">
           <View className="flex-row items-center justify-between">
