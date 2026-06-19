@@ -11,7 +11,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { ArrowRight } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { haptics } from '@/lib/haptics';
 
 const TRACK_H = 62;
 const PAD = 5;
@@ -44,7 +44,7 @@ export function SwipeButton({ label, onConfirm, variant = 'dark', disabled = fal
   };
 
   const confirmWithHaptic = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    haptics.success();
     onConfirm();
   };
 

@@ -2,7 +2,18 @@
 // app to full screen so it doesn't open as a small bottom sheet in Telegram.
 // Outside Telegram (plain browser) every call no-ops gracefully.
 
-let started = false;
+type TgHaptic = {
+  impactOccurred?: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
+  notificationOccurred?: (type: 'error' | 'success' | 'warning') => void;
+  selectionChanged?: () => void;
+};
+
+type TgBackButton = {
+  show?: () => void;
+  hide?: () => void;
+  onClick?: (cb: () => void) => void;
+  offClick?: (cb: () => void) => void;
+};
 
 type TgWebApp = {
   ready?: () => void;
@@ -11,11 +22,18 @@ type TgWebApp = {
   setHeaderColor?: (c: string) => void;
   setBackgroundColor?: (c: string) => void;
   disableVerticalSwipes?: () => void;
+  HapticFeedback?: TgHaptic;
+  BackButton?: TgBackButton;
 };
 
+let started = false;
+
+export function getTelegramWebApp(): TgWebApp | undefined {
+  return (window as unknown as { Telegram?: { WebApp?: TgWebApp } }).Telegram?.WebApp;
+}
+
 function applyTelegram() {
-  const tg: TgWebApp | undefined = (window as unknown as { Telegram?: { WebApp?: TgWebApp } })
-    .Telegram?.WebApp;
+  const tg = getTelegramWebApp();
   if (!tg) return;
   try { tg.ready?.(); } catch {}
   try { tg.expand?.(); } catch {}
@@ -55,4 +73,21 @@ export function initTelegram(): void {
   s.async = false;
   s.onload = applyTelegram;
   document.head.appendChild(s);
+}
+
+// --- Telegram BackButton, synced with the router -------------------------
+// We keep a single handler registered so navigation owns the native back arrow.
+let backHandler: (() => void) | null = null;
+
+export function syncTelegramBackButton(visible: boolean, onBack: () => void): void {
+  const tg = getTelegramWebApp();
+  const bb = tg?.BackButton;
+  if (!bb) return;
+  try {
+    if (backHandler) bb.offClick?.(backHandler);
+    backHandler = onBack;
+    bb.onClick?.(backHandler);
+    if (visible) bb.show?.();
+    else bb.hide?.();
+  } catch {}
 }

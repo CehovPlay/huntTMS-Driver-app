@@ -2,11 +2,11 @@ import { useRef, useState } from 'react';
 import { GestureResponderEvent, LayoutChangeEvent, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import Svg, { Path } from 'react-native-svg';
 import { ArrowLeft, Eraser } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
+import { haptics } from '@/lib/haptics';
 import { C } from '@/lib/theme';
 import { useActiveLoad } from '@/lib/active-load';
 
@@ -47,7 +47,7 @@ export default function Signature() {
   const hasInk = paths.length > 0 || cur.current.length > 0;
 
   const confirm = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    haptics.success();
     addDoc('Proof of delivery');
     router.back();
   };

@@ -2,11 +2,11 @@ import { useCallback, useState } from 'react';
 import { Pressable as RNPressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import { Bell, ChevronRight, Package, Search, X, Zap } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import { PressableScale } from '@/components/pressable-scale';
+import { haptics } from '@/lib/haptics';
 import { Logo } from '@/components/logo';
 import { useNotifications } from '@/lib/notifications';
 import { C } from '@/lib/theme';
@@ -236,7 +236,7 @@ export default function LoadsScreen() {
                 <RNPressable
                   key={t}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                    haptics.selection();
                     setTab(t);
                   }}
                   accessibilityRole="button"

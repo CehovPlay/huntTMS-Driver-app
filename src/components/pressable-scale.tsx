@@ -1,8 +1,8 @@
 import { type ReactNode } from 'react';
 import { type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 import { Pressable as RNPressable, type PressableProps } from 'react-native';
+import { haptics } from '@/lib/haptics';
 
 const SPRING = { damping: 18, stiffness: 320, mass: 0.5 };
 
@@ -21,7 +21,7 @@ export function PressableScale({ children, onPress, scaleTo = 0.97, wrapperStyle
   const aStyle = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
 
   const handlePress: PressableProps['onPress'] = (e) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    haptics.light();
     onPress?.(e);
   };
 

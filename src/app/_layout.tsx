@@ -2,7 +2,7 @@ import '../global.css';
 
 import { useEffect } from 'react';
 import { ScrollView, Text, View, Text as RNText } from 'react-native';
-import { Stack, type ErrorBoundaryProps } from 'expo-router';
+import { Stack, router, usePathname, type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 // Dynamic Type: respect the user's font size but cap it so fixed-height layouts
@@ -24,7 +24,7 @@ import {
 
 import { ActiveLoadProvider } from '@/lib/active-load';
 import { NotificationProvider } from '@/lib/notifications';
-import { initTelegram } from '@/lib/telegram';
+import { initTelegram, syncTelegramBackButton } from '@/lib/telegram';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -60,6 +60,12 @@ export default function RootLayout() {
   useEffect(() => {
     initTelegram();
   }, []);
+
+  // Show Telegram's native BackButton on any non-root screen; tap goes back.
+  const pathname = usePathname();
+  useEffect(() => {
+    syncTelegramBackButton(router.canGoBack(), () => router.back());
+  }, [pathname]);
 
   // Keep the navigator mounted while fonts load (native splash stays up until
   // hideAsync), so deep links never hit a missing navigation context.

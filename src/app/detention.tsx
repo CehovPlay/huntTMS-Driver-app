@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import { ArrowLeft, MapPin, TimerReset } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
+import { haptics } from '@/lib/haptics';
 import { C } from '@/lib/theme';
 
 // Free wait time before detention accrues, and the hourly rate after that.
@@ -41,7 +41,7 @@ export default function Detention() {
   const freeLeftSec = Math.max(0, freeSec - elapsedSec);
 
   const start = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    haptics.medium();
     setArrivedAt(Date.now());
     setNow(Date.now());
   };

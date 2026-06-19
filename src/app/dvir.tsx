@@ -2,10 +2,10 @@ import { useMemo, useState } from 'react';
 import { ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import { ArrowLeft, Check, ClipboardCheck, TriangleAlert } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
+import { haptics } from '@/lib/haptics';
 import { C } from '@/lib/theme';
 import { DVIR_ALL_ITEMS, DVIR_SECTIONS } from '@/lib/dvir';
 
@@ -25,7 +25,7 @@ export default function Dvir() {
   const safe = defects.length === 0;
 
   const submit = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    haptics.success();
     setDone(true);
   };
 

@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import { ArrowLeft, Check, CreditCard, Zap } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
+import { haptics } from '@/lib/haptics';
 import { C } from '@/lib/theme';
 import { CASHOUT, money, type CashoutMethod } from '@/lib/earnings';
 
@@ -18,7 +18,7 @@ export default function CashOut() {
   const receive = CASHOUT.available - fee;
 
   const confirm = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    haptics.success();
     setDone(true);
   };
 

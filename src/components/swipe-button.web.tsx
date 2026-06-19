@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Text, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
+import { haptics } from '@/lib/haptics';
 
 const TRACK_H = 62;
 const PAD = 5;
@@ -39,6 +40,7 @@ export function SwipeButton({ label, onConfirm, variant = 'dark', disabled = fal
     if (disabled) return;
     if (maxX > 0 && x > maxX * 0.85) {
       setX(maxX);
+      haptics.success();
       onConfirm();
       setTimeout(() => setX(0), 240);
     } else {
