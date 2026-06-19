@@ -22,14 +22,16 @@ import {
 } from 'lucide-react-native';
 
 import { getLoadDetail } from '@/lib/mock';
+import { openDirections } from '@/lib/directions';
 import { StopMiniMap } from '@/components/stop-mini-map';
 import { Pressable } from '@/components/pressable';
 import { SwipeButton } from '@/components/swipe-button';
 import { C, shadowSm } from '@/lib/theme';
 
-type Variant = 'scheduled' | 'current' | 'delivered' | 'tonu';
+type Variant = 'offered' | 'scheduled' | 'current' | 'delivered' | 'tonu';
 
 const STATUS: Record<Variant, { label: string; bg: string; color: string }> = {
+  offered: { label: 'New offer', bg: '#7a5af8', color: '#ffffff' },
   scheduled: { label: 'Scheduled', bg: '#f5f5f5', color: '#737373' },
   current: { label: 'Current load', bg: '#fbbf24', color: '#171717' },
   delivered: { label: 'Delivered', bg: '#0d9488', color: '#ffffff' },
@@ -55,7 +57,10 @@ function Spec({ icon: Icon, label, value }: { icon: typeof Hash; label: string; 
 export default function LoadDetailScreen() {
   const { id, variant: variantParam } = useLocalSearchParams<{ id: string; variant?: string }>();
   const variant: Variant =
-    variantParam === 'current' || variantParam === 'delivered' || variantParam === 'tonu'
+    variantParam === 'current' ||
+    variantParam === 'delivered' ||
+    variantParam === 'tonu' ||
+    variantParam === 'offered'
       ? variantParam
       : 'scheduled';
   const load = getLoadDetail(id ?? '');
@@ -206,6 +211,17 @@ export default function LoadDetailScreen() {
               <Maximize2 size={16} color="#fafafa" />
             </Pressable>
           </View>
+
+          {/* External turn-by-turn (Apple Maps / Google / Waze) */}
+          <Pressable
+            onPress={() => openDirections(stop.coordinate, stop.address)}
+            accessibilityRole="button"
+            accessibilityLabel={`Get directions to ${tab} address`}
+            className="h-16 flex-row items-center justify-center gap-2 rounded-2xl bg-accent active:opacity-80"
+          >
+            <Navigation2 size={18} color={C.foreground} />
+            <Text className="font-sans-medium text-base text-foreground">Get directions</Text>
+          </Pressable>
         </View>
 
         {/* Dispatcher */}
@@ -253,7 +269,32 @@ export default function LoadDetailScreen() {
 
       {/* Footer action (varies by status) — padding on an inner View (SafeAreaView
           inset padding overrides className horizontal padding on web) */}
-      {variant === 'scheduled' ? (
+      {variant === 'offered' ? (
+        <SafeAreaView edges={['bottom']} className="border-t border-border bg-background">
+          <View className="gap-2 px-4 pb-2 pt-3">
+            <View className="flex-row items-center justify-center gap-1.5 pb-1">
+              <Text className="font-sans text-sm text-muted-foreground">Respond before</Text>
+              <Text className="font-sans-semibold text-sm text-foreground">4:30 PM</Text>
+            </View>
+            <SwipeButton
+              label="Swipe to accept load"
+              onConfirm={() =>
+                router.replace({ pathname: '/load/[id]', params: { id: id ?? '', variant: 'scheduled' } })
+              }
+            />
+            <Pressable
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="Decline load"
+              className="h-16 flex-row items-center justify-center gap-2 rounded-2xl bg-accent active:opacity-80"
+            >
+              <Text className="font-sans-medium text-base" style={{ color: C.destructive }}>
+                Decline
+              </Text>
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      ) : variant === 'scheduled' ? (
         <SafeAreaView edges={['bottom']} className="bg-accent">
           <View className="px-4 pb-2 pt-2">
             <SwipeButton label="Swipe to start route" onConfirm={() => router.replace('/map')} />

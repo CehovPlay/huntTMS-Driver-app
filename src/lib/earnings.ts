@@ -28,3 +28,16 @@ export const EARNINGS = {
 };
 
 export const money = (n: number) => `$${n.toLocaleString('en-US')}`;
+
+// Cash-out — mock payout options + destination.
+export const CASHOUT = {
+  available: EARNINGS.available,
+  destination: { label: 'Debit card', last4: '4291' },
+  methods: [
+    { id: 'instant', label: 'Instant', sub: 'Arrives in minutes', feePct: 0.015 },
+    { id: 'standard', label: 'Standard', sub: '1–3 business days', feePct: 0 },
+  ],
+} as const;
+
+export type CashoutMethod = (typeof CASHOUT.methods)[number]['id'];
+

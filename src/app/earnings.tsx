@@ -51,7 +51,7 @@ export default function Earnings() {
 
           {/* cash out */}
           <Pressable
-            onPress={() => {}}
+            onPress={() => router.push('/cash-out')}
             accessibilityRole="button"
             accessibilityLabel={`Cash out ${money(EARNINGS.available)}`}
             className="h-16 flex-row items-center justify-center gap-2 rounded-2xl bg-accent active:opacity-80"

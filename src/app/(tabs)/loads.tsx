@@ -3,7 +3,7 @@ import { Pressable as RNPressable, RefreshControl, ScrollView, Text, TextInput, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Bell, ChevronRight, Package, Search, X } from 'lucide-react-native';
+import { Bell, ChevronRight, Package, Search, X, Zap } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import { PressableScale } from '@/components/pressable-scale';
@@ -167,6 +167,10 @@ export default function LoadsScreen() {
 
   const empty = tab === 'completed' ? completed.length === 0 : groups.length === 0;
 
+  // A pending load offer the dispatcher just sent — taps through to Accept/Decline.
+  const offer = SCHEDULED_TRIPS.find((t) => t.status === 'scheduled');
+  const showOffer = tab === 'scheduled' && !query && !!offer;
+
   return (
     <View className="flex-1 bg-accent">
       {/* Pinned brand row only — the tabs + search scroll with the list below */}
@@ -291,6 +295,40 @@ export default function LoadsScreen() {
           </View>
         ) : (
           <View className="gap-3 p-4">
+            {showOffer && offer ? (
+              <PressableScale
+                onPress={() =>
+                  router.push({ pathname: '/load/[id]', params: { id: offer.id, variant: 'offered' } })
+                }
+                accessibilityRole="button"
+                accessibilityLabel={`New load offer ${offer.id}`}
+                className="gap-2 rounded-3xl p-4 active:opacity-90"
+                style={{ backgroundColor: C.purple }}
+              >
+                <View className="flex-row items-center gap-2">
+                  <Zap size={16} color="#ffffff" fill="#ffffff" />
+                  <Text className="flex-1 font-sans-semibold text-sm text-white">New load offer</Text>
+                  <Text className="font-sans-medium text-xs" style={{ color: 'rgba(255,255,255,0.8)' }}>{offer.id}</Text>
+                </View>
+                <Text className="font-sans-medium text-base text-white" numberOfLines={1}>
+                  {offer.stops[0]?.city} → {offer.stops[offer.stops.length - 1]?.city}
+                </Text>
+                <View className="flex-row items-center gap-2">
+                  <Text className="font-sans text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                    {offer.broker ?? 'Broker'}
+                    {offer.miles ? ` · ${offer.miles} mi` : ''}
+                  </Text>
+                  <View className="flex-1" />
+                  <View
+                    className="flex-row items-center gap-1 rounded-full px-3 py-1"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+                  >
+                    <Text className="font-sans-medium text-xs text-white">Review</Text>
+                    <ChevronRight size={14} color="#ffffff" />
+                  </View>
+                </View>
+              </PressableScale>
+            ) : null}
             {tab === 'scheduled'
               ? groups.map((g) => (
                   <View key={g.label} className="gap-3">
