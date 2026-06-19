@@ -15,14 +15,21 @@ type SettingsValue = {
   scheme: 'light' | 'dark'; // resolved (system → device/Telegram)
   units: Units;
   locale: Locale;
+  onboarded: boolean;
   setTheme: (m: ThemeMode) => void;
   setUnits: (u: Units) => void;
   setLocale: (l: Locale) => void;
+  setOnboarded: (v: boolean) => void;
 };
 
 const Ctx = createContext<SettingsValue | null>(null);
 
-const KEYS = { theme: 'huntms.theme', units: 'huntms.units', locale: 'huntms.locale' } as const;
+const KEYS = {
+  theme: 'huntms.theme',
+  units: 'huntms.units',
+  locale: 'huntms.locale',
+  onboarded: 'huntms.onboarded',
+} as const;
 
 function load<T extends string>(key: string, fallback: T): T {
   if (Platform.OS !== 'web' || typeof localStorage === 'undefined') return fallback;
@@ -52,6 +59,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>(() => load<ThemeMode>(KEYS.theme, 'system'));
   const [units, setUnitsState] = useState<Units>(() => load<Units>(KEYS.units, 'mi'));
   const [locale, setLocaleState] = useState<Locale>(() => load<Locale>(KEYS.locale, 'en'));
+  const [onboarded, setOnboardedState] = useState<boolean>(() => load(KEYS.onboarded, '') === '1');
   const [sysScheme, setSysScheme] = useState<'light' | 'dark'>(() =>
     Platform.OS === 'web' || Platform.OS === 'ios' || Platform.OS === 'android' ? systemScheme() : 'light',
   );
@@ -98,9 +106,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setLocaleState(l);
     save(KEYS.locale, l);
   };
+  const setOnboarded = (v: boolean) => {
+    setOnboardedState(v);
+    save(KEYS.onboarded, v ? '1' : '');
+  };
 
   return (
-    <Ctx.Provider value={{ theme, scheme, units, locale, setTheme, setUnits, setLocale }}>
+    <Ctx.Provider
+      value={{ theme, scheme, units, locale, onboarded, setTheme, setUnits, setLocale, setOnboarded }}
+    >
       {children}
     </Ctx.Provider>
   );
