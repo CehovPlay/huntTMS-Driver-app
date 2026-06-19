@@ -16,10 +16,12 @@ type SettingsValue = {
   units: Units;
   locale: Locale;
   onboarded: boolean;
+  appLock: boolean;
   setTheme: (m: ThemeMode) => void;
   setUnits: (u: Units) => void;
   setLocale: (l: Locale) => void;
   setOnboarded: (v: boolean) => void;
+  setAppLock: (v: boolean) => void;
 };
 
 const Ctx = createContext<SettingsValue | null>(null);
@@ -29,6 +31,7 @@ const KEYS = {
   units: 'huntms.units',
   locale: 'huntms.locale',
   onboarded: 'huntms.onboarded',
+  appLock: 'huntms.applock',
 } as const;
 
 function load<T extends string>(key: string, fallback: T): T {
@@ -60,6 +63,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [units, setUnitsState] = useState<Units>(() => load<Units>(KEYS.units, 'mi'));
   const [locale, setLocaleState] = useState<Locale>(() => load<Locale>(KEYS.locale, 'en'));
   const [onboarded, setOnboardedState] = useState<boolean>(() => load(KEYS.onboarded, '') === '1');
+  const [appLock, setAppLockState] = useState<boolean>(() => load(KEYS.appLock, '') === '1');
   const [sysScheme, setSysScheme] = useState<'light' | 'dark'>(() =>
     Platform.OS === 'web' || Platform.OS === 'ios' || Platform.OS === 'android' ? systemScheme() : 'light',
   );
@@ -110,10 +114,26 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setOnboardedState(v);
     save(KEYS.onboarded, v ? '1' : '');
   };
+  const setAppLock = (v: boolean) => {
+    setAppLockState(v);
+    save(KEYS.appLock, v ? '1' : '');
+  };
 
   return (
     <Ctx.Provider
-      value={{ theme, scheme, units, locale, onboarded, setTheme, setUnits, setLocale, setOnboarded }}
+      value={{
+        theme,
+        scheme,
+        units,
+        locale,
+        onboarded,
+        appLock,
+        setTheme,
+        setUnits,
+        setLocale,
+        setOnboarded,
+        setAppLock,
+      }}
     >
       {children}
     </Ctx.Provider>

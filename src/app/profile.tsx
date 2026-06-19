@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Linking, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -10,6 +10,7 @@ import {
   ClipboardCheck,
   Clock,
   FileText,
+  Fingerprint,
   LogOut,
   MapPin,
   Mic,
@@ -23,6 +24,7 @@ import {
 
 import { Pressable } from '@/components/pressable';
 import { useSettings, type ThemeMode } from '@/lib/settings';
+import { biometricAvailable } from '@/lib/biometric';
 import { C } from '@/lib/theme';
 import { HOS, fmtHrs } from '@/lib/hos';
 import { EARNINGS, money } from '@/lib/earnings';
@@ -89,7 +91,12 @@ const THEME_OPTS: { val: ThemeMode; label: string; icon: typeof Sun }[] = [
 
 export default function Profile() {
   const [prefs, setPrefs] = useState(NOTIFICATION_PREFS);
-  const { theme, setTheme, units, setUnits } = useSettings();
+  const { theme, setTheme, units, setUnits, appLock, setAppLock } = useSettings();
+  const [bio, setBio] = useState<{ available: boolean; label: string }>({ available: false, label: 'Face ID' });
+
+  useEffect(() => {
+    biometricAvailable().then(setBio);
+  }, []);
 
   const toggle = (key: string) =>
     setPrefs((p) => p.map((x) => (x.key === key ? { ...x, on: !x.on } : x)));
@@ -297,6 +304,27 @@ export default function Profile() {
             </View>
           </View>
         </Section>
+
+        {/* Security — only when the device has enrolled biometrics */}
+        {bio.available ? (
+          <Section title="SECURITY">
+            <View className="flex-row items-center gap-3 bg-background px-4 py-3">
+              <View className="size-10 items-center justify-center rounded-2xl bg-accent">
+                <Fingerprint size={18} color={C.foreground} />
+              </View>
+              <View className="flex-1">
+                <Text className="font-sans-medium text-base text-foreground">Unlock with {bio.label}</Text>
+                <Text className="font-sans text-sm text-muted-foreground">Require {bio.label} to open the app</Text>
+              </View>
+              <Switch
+                value={appLock}
+                onValueChange={setAppLock}
+                trackColor={{ true: C.primary, false: C.border }}
+                ios_backgroundColor={C.border}
+              />
+            </View>
+          </Section>
+        ) : null}
 
         {/* Notifications */}
         <Section title="NOTIFICATIONS">

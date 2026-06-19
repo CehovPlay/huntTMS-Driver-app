@@ -1,9 +1,10 @@
 import '../global.css';
 
-import { useEffect } from 'react';
-import { ScrollView, Text, View, Text as RNText } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState, ScrollView, Text, View, Text as RNText } from 'react-native';
 import { Stack, router, usePathname, type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Lock } from 'lucide-react-native';
 
 // Dynamic Type: respect the user's font size but cap it so fixed-height layouts
 // (buttons, badges, tab bar) don't break at the largest accessibility sizes.
@@ -25,7 +26,61 @@ import {
 import { ActiveLoadProvider } from '@/lib/active-load';
 import { NotificationProvider } from '@/lib/notifications';
 import { SettingsProvider, useSettings } from '@/lib/settings';
+import { biometricAuth } from '@/lib/biometric';
 import { initTelegram, syncTelegramBackButton } from '@/lib/telegram';
+import { Pressable } from '@/components/pressable';
+import { Logo } from '@/components/logo';
+import { C } from '@/lib/theme';
+
+// Biometric app-lock gate. When enabled in Settings, the app locks on launch and
+// whenever it returns from the background; Face/Touch ID (or web no-op) unlocks.
+function LockScreen({ onUnlock }: { onUnlock: () => void }) {
+  return (
+    <View className="flex-1 items-center justify-center gap-6 bg-background px-10">
+      <Logo height={26} />
+      <View className="size-20 items-center justify-center rounded-full bg-accent">
+        <Lock size={30} color={C.foreground} />
+      </View>
+      <Text className="text-center font-sans-semibold text-xl text-foreground">App locked</Text>
+      <Pressable
+        onPress={onUnlock}
+        accessibilityRole="button"
+        accessibilityLabel="Unlock"
+        className="h-16 w-full items-center justify-center rounded-2xl bg-primary active:opacity-90"
+      >
+        <Text className="font-sans-medium text-base text-primary-foreground">Unlock</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function BiometricGate({ children }: { children: React.ReactNode }) {
+  const { appLock } = useSettings();
+  const [locked, setLocked] = useState(appLock);
+
+  useEffect(() => {
+    setLocked(appLock);
+  }, [appLock]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'background' && appLock) setLocked(true);
+    });
+    return () => sub.remove();
+  }, [appLock]);
+
+  const unlock = useCallback(async () => {
+    const ok = await biometricAuth('Unlock huntTMS Driver');
+    if (ok) setLocked(false);
+  }, []);
+
+  useEffect(() => {
+    if (locked) unlock();
+  }, [locked, unlock]);
+
+  if (!locked) return <>{children}</>;
+  return <LockScreen onUnlock={unlock} />;
+}
 
 // Theme-aware app shell — StatusBar + screen-transition background follow the
 // resolved color scheme so nothing flashes white in dark mode.
@@ -35,20 +90,22 @@ function ThemedShell() {
   return (
     <>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: pageBg },
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-        }}
-      >
-        {/* iOS: camera & call slide up full-screen; confirm-scan as a sheet */}
-        <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="call" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="confirm-scan" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="navigate" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-      </Stack>
+      <BiometricGate>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: pageBg },
+            animation: 'slide_from_right',
+            gestureEnabled: true,
+          }}
+        >
+          {/* iOS: camera & call slide up full-screen; confirm-scan as a sheet */}
+          <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="call" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="confirm-scan" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="navigate" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+        </Stack>
+      </BiometricGate>
     </>
   );
 }
