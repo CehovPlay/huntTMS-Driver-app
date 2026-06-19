@@ -169,41 +169,52 @@ export default function LoadsScreen() {
 
   return (
     <View className="flex-1 bg-accent">
-      {/* Header */}
-      <SafeAreaView edges={['top']} className="rounded-b-3xl border-b border-border bg-background">
-        <View className="gap-4 px-5 pb-5 pt-3">
-          <View className="flex-row items-center gap-3 pl-1">
-            <View className="flex-1">
-              <Logo height={24} />
-            </View>
-            <Pressable
-              onPress={() => router.push('/notifications')}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
-              className="size-12 items-center justify-center rounded-full active:opacity-70"
-            >
-              <Bell size={20} color={C.foreground} />
-              {unread > 0 ? (
-                <View
-                  className="absolute right-1 top-1 size-4 items-center justify-center rounded-full"
-                  style={{ backgroundColor: C.destructive }}
-                >
-                  <Text className="font-sans-semibold text-[10px] text-white">{unread}</Text>
-                </View>
-              ) : null}
-            </Pressable>
-            <Pressable
-              onPress={() => router.push('/profile')}
-              accessibilityRole="button"
-              accessibilityLabel="Profile"
-              className="size-12 items-center justify-center rounded-full active:opacity-70"
-              style={{ backgroundColor: '#171717' }}
-            >
-              <Text className="font-sans-semibold text-xs text-primary-foreground">DC</Text>
-            </Pressable>
+      {/* Pinned brand row only — the tabs + search scroll with the list below */}
+      <SafeAreaView edges={['top']} className="bg-background">
+        <View className="flex-row items-center gap-3 px-5 pb-2 pt-3 pl-6">
+          <View className="flex-1">
+            <Logo height={24} />
           </View>
+          <Pressable
+            onPress={() => router.push('/notifications')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+            className="size-12 items-center justify-center rounded-full active:opacity-70"
+          >
+            <Bell size={20} color={C.foreground} />
+            {unread > 0 ? (
+              <View
+                className="absolute right-1 top-1 size-4 items-center justify-center rounded-full"
+                style={{ backgroundColor: C.destructive }}
+              >
+                <Text className="font-sans-semibold text-[10px] text-white">{unread}</Text>
+              </View>
+            ) : null}
+          </Pressable>
+          <Pressable
+            onPress={() => router.push('/profile')}
+            accessibilityRole="button"
+            accessibilityLabel="Profile"
+            className="size-12 items-center justify-center rounded-full active:opacity-70"
+            style={{ backgroundColor: '#171717' }}
+          >
+            <Text className="font-sans-semibold text-xs text-primary-foreground">DC</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
 
+      {/* Body — plain views, no layout animations (avoids the device-only reanimated crash) */}
+      <ScrollView
+        contentContainerClassName="pb-4"
+        contentContainerStyle={empty ? { flexGrow: 1 } : undefined}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.mutedForeground} colors={[C.foreground]} />
+        }
+      >
+        {/* tabs + search — now part of the scroll content */}
+        <View className="gap-4 rounded-b-3xl border-b border-border bg-background px-5 pb-5 pt-1">
           {/* segmented tabs — raw RN Pressable + inline styles (no className / css-interop on this dynamic re-render path) */}
           <View
             style={{
@@ -269,17 +280,8 @@ export default function LoadsScreen() {
             ) : null}
           </View>
         </View>
-      </SafeAreaView>
 
-      {/* Body — plain views, no layout animations (avoids the device-only reanimated crash) */}
-      <ScrollView
-        contentContainerClassName="gap-3 p-4"
-        contentContainerStyle={empty ? { flex: 1 } : undefined}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.mutedForeground} colors={[C.foreground]} />
-        }
-      >
+        {/* list */}
         {empty ? (
           <View className="flex-1 items-center justify-center gap-2 pb-24">
             <Package size={32} color="#d4d4d4" />
@@ -287,17 +289,19 @@ export default function LoadsScreen() {
               {query ? `No loads match “${query}”` : `No ${tab} loads`}
             </Text>
           </View>
-        ) : tab === 'scheduled' ? (
-          groups.map((g) => (
-            <View key={g.label} className="gap-3">
-              <Text className="px-1 font-sans-medium text-sm text-muted-foreground">{g.label}</Text>
-              {g.trips.map((trip) => (
-                <TripCard key={trip.id} trip={trip} />
-              ))}
-            </View>
-          ))
         ) : (
-          completed.map((trip) => <TripCard key={trip.id} trip={trip} />)
+          <View className="gap-3 p-4">
+            {tab === 'scheduled'
+              ? groups.map((g) => (
+                  <View key={g.label} className="gap-3">
+                    <Text className="px-1 font-sans-medium text-sm text-muted-foreground">{g.label}</Text>
+                    {g.trips.map((trip) => (
+                      <TripCard key={trip.id} trip={trip} />
+                    ))}
+                  </View>
+                ))
+              : completed.map((trip) => <TripCard key={trip.id} trip={trip} />)}
+          </View>
         )}
       </ScrollView>
     </View>

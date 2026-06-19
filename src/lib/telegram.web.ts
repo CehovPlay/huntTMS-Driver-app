@@ -1,0 +1,58 @@
+// Web/Telegram Mini App init. Loads the Telegram WebApp SDK and expands the
+// app to full screen so it doesn't open as a small bottom sheet in Telegram.
+// Outside Telegram (plain browser) every call no-ops gracefully.
+
+let started = false;
+
+type TgWebApp = {
+  ready?: () => void;
+  expand?: () => void;
+  requestFullscreen?: () => void;
+  setHeaderColor?: (c: string) => void;
+  setBackgroundColor?: (c: string) => void;
+  disableVerticalSwipes?: () => void;
+};
+
+function applyTelegram() {
+  const tg: TgWebApp | undefined = (window as unknown as { Telegram?: { WebApp?: TgWebApp } })
+    .Telegram?.WebApp;
+  if (!tg) return;
+  try { tg.ready?.(); } catch {}
+  try { tg.expand?.(); } catch {}
+  // Bot API 8.0+: true edge-to-edge full screen (falls back to expand on older clients)
+  try { tg.requestFullscreen?.(); } catch {}
+  // Keep Telegram's chrome matching the app's light theme
+  try { tg.setHeaderColor?.('#ffffff'); } catch {}
+  try { tg.setBackgroundColor?.('#ffffff'); } catch {}
+  // A swipe-down shouldn't close the app while the driver is mid-task
+  try { tg.disableVerticalSwipes?.(); } catch {}
+}
+
+export function initTelegram(): void {
+  if (started || typeof document === 'undefined') return;
+  started = true;
+
+  // App-like viewport: cover the notch, no pinch-zoom
+  const vp = document.querySelector('meta[name="viewport"]');
+  if (vp) {
+    vp.setAttribute(
+      'content',
+      'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover',
+    );
+  }
+  // Kill the browser's overscroll bounce so it feels native inside Telegram
+  document.documentElement.style.overscrollBehavior = 'none';
+  if (document.body) document.body.style.overscrollBehavior = 'none';
+
+  // Already injected (e.g. by a host page)?
+  if ((window as unknown as { Telegram?: unknown }).Telegram) {
+    applyTelegram();
+    return;
+  }
+
+  const s = document.createElement('script');
+  s.src = 'https://telegram.org/js/telegram-web-app.js';
+  s.async = false;
+  s.onload = applyTelegram;
+  document.head.appendChild(s);
+}

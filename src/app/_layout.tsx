@@ -24,6 +24,7 @@ import {
 
 import { ActiveLoadProvider } from '@/lib/active-load';
 import { NotificationProvider } from '@/lib/notifications';
+import { initTelegram } from '@/lib/telegram';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -54,6 +55,11 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) SplashScreen.hideAsync();
   }, [loaded]);
+
+  // Telegram Mini App: expand to full screen on web (no-op on native / plain web)
+  useEffect(() => {
+    initTelegram();
+  }, []);
 
   // Keep the navigator mounted while fonts load (native splash stays up until
   // hideAsync), so deep links never hit a missing navigation context.
