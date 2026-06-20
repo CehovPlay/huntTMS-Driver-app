@@ -27,6 +27,9 @@ import { getLoadDetail } from '@/lib/mock';
 import { StopMiniMap } from '@/components/stop-mini-map';
 import { Pressable } from '@/components/pressable';
 import { SwipeButton } from '@/components/swipe-button';
+import { Skeleton } from '@/components/skeleton';
+import { ErrorState } from '@/components/error-state';
+import { useMockQuery } from '@/lib/use-mock-query';
 import { C, shadowSm } from '@/lib/theme';
 
 type Variant = 'offered' | 'scheduled' | 'current' | 'delivered' | 'tonu';
@@ -55,8 +58,38 @@ function Spec({ icon: Icon, label, value }: { icon: typeof Hash; label: string; 
   );
 }
 
+function DetailSkeleton() {
+  return (
+    <View className="gap-3 p-4">
+      <View className="gap-4 rounded-3xl bg-background p-4">
+        <View className="flex-row items-center gap-3">
+          <Skeleton width={48} height={48} radius={16} />
+          <View className="flex-1 gap-2">
+            <Skeleton width={50} height={12} />
+            <Skeleton width="70%" height={18} />
+          </View>
+          <Skeleton width={70} height={24} radius={12} />
+        </View>
+        {[0, 1, 2].map((i) => (
+          <View key={i} className="flex-row gap-3 border-t border-border pt-3.5">
+            <Skeleton width="45%" height={36} />
+            <Skeleton width="45%" height={36} />
+          </View>
+        ))}
+      </View>
+      <View className="gap-4 rounded-3xl bg-background p-4">
+        <Skeleton width={120} height={16} />
+        <Skeleton width="100%" height={48} radius={12} />
+        <Skeleton width="100%" height={48} radius={12} />
+        <Skeleton width="100%" height={150} radius={16} />
+      </View>
+    </View>
+  );
+}
+
 export default function LoadDetailScreen() {
   const { id, variant: variantParam } = useLocalSearchParams<{ id: string; variant?: string }>();
+  const q = useMockQuery();
   const variant: Variant =
     variantParam === 'current' ||
     variantParam === 'delivered' ||
@@ -92,6 +125,13 @@ export default function LoadDetailScreen() {
       </SafeAreaView>
 
       {/* Body */}
+      {q.loading ? (
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+          <DetailSkeleton />
+        </ScrollView>
+      ) : q.error ? (
+        <ErrorState onRetry={q.refetch} />
+      ) : (
       <ScrollView className="flex-1" contentContainerClassName="gap-3 p-4 pb-4" showsVerticalScrollIndicator={false}>
         {/* Shipment / order spec */}
         <View className="rounded-3xl bg-background p-4">
@@ -300,10 +340,11 @@ export default function LoadDetailScreen() {
           ))}
         </View>
       </ScrollView>
+      )}
 
       {/* Footer action (varies by status) — padding on an inner View (SafeAreaView
           inset padding overrides className horizontal padding on web) */}
-      {variant === 'offered' ? (
+      {!q.loading && !q.error && (variant === 'offered' ? (
         <SafeAreaView edges={['bottom']} className="border-t border-border bg-background">
           <View className="gap-2 px-4 pb-2 pt-3">
             <View className="flex-row items-center justify-center gap-1.5 pb-1">
@@ -350,7 +391,7 @@ export default function LoadDetailScreen() {
         </SafeAreaView>
       ) : (
         <SafeAreaView edges={['bottom']} className="bg-accent" />
-      )}
+      ))}
     </View>
   );
 }

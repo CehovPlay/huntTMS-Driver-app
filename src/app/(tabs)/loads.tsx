@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Pressable as RNPressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -6,8 +6,11 @@ import { Bell, ChevronRight, Package, Search, X, Zap } from 'lucide-react-native
 
 import { Pressable } from '@/components/pressable';
 import { PressableScale } from '@/components/pressable-scale';
+import { Skeleton } from '@/components/skeleton';
+import { ErrorState } from '@/components/error-state';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/lib/settings';
+import { useMockQuery } from '@/lib/use-mock-query';
 import { fmtMi } from '@/lib/units';
 import { Logo } from '@/components/logo';
 import { useNotifications } from '@/lib/notifications';
@@ -123,6 +126,33 @@ function TripCard({ trip }: { trip: Trip }) {
   );
 }
 
+function TripCardSkeleton() {
+  return (
+    <View className="w-full gap-3 rounded-3xl bg-background p-4">
+      <View className="flex-row items-center gap-2">
+        <Skeleton width={20} height={20} radius={6} />
+        <Skeleton width={120} height={16} />
+        <View className="flex-1" />
+        <Skeleton width={20} height={20} radius={10} />
+      </View>
+      <View className="gap-3 pl-2">
+        <View className="flex-row items-center gap-3">
+          <Skeleton width={18} height={18} radius={9} />
+          <Skeleton width="70%" height={44} radius={16} />
+        </View>
+        <View className="flex-row items-center gap-3">
+          <Skeleton width={18} height={18} radius={9} />
+          <Skeleton width="55%" height={44} radius={16} />
+        </View>
+      </View>
+      <View className="mt-1 flex-row justify-between border-t border-border pt-3">
+        <Skeleton width={90} height={28} radius={6} />
+        <Skeleton width={60} height={28} radius={6} />
+      </View>
+    </View>
+  );
+}
+
 const MONTHS: Record<string, number> = {
   JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5, JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11,
 };
@@ -152,16 +182,10 @@ function matchesQuery(t: Trip, q: string) {
 export default function LoadsScreen() {
   const [tab, setTab] = useState<'scheduled' | 'completed'>('scheduled');
   const [query, setQuery] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
+  const q = useMockQuery();
   const { completedRefs } = useActiveLoad();
   const { unread } = useNotifications();
   const { units } = useSettings();
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    // mock: pretend to re-fetch; replace with query invalidation when API lands
-    setTimeout(() => setRefreshing(false), 800);
-  }, []);
 
   // delivered active load(s) surface at the top of Completed
   const delivered = completedRefs.includes(DELIVERED_CURRENT.id) ? [DELIVERED_CURRENT] : [];
@@ -222,10 +246,10 @@ export default function LoadsScreen() {
       {/* Body — plain views, no layout animations (avoids the device-only reanimated crash) */}
       <ScrollView
         contentContainerClassName="pb-4"
-        contentContainerStyle={empty ? { flexGrow: 1 } : undefined}
+        contentContainerStyle={q.error || (!q.loading && empty) ? { flexGrow: 1 } : undefined}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.mutedForeground} colors={[C.foreground]} />
+          <RefreshControl refreshing={q.refreshing} onRefresh={q.refetch} tintColor={C.mutedForeground} colors={[C.foreground]} />
         }
       >
         {/* tabs + search — now part of the scroll content */}
@@ -298,7 +322,15 @@ export default function LoadsScreen() {
         </View>
 
         {/* list */}
-        {empty ? (
+        {q.loading ? (
+          <View className="gap-3 p-4">
+            {[0, 1, 2].map((i) => (
+              <TripCardSkeleton key={i} />
+            ))}
+          </View>
+        ) : q.error ? (
+          <ErrorState onRetry={q.refetch} />
+        ) : empty ? (
           <View className="flex-1 items-center justify-center gap-2 pb-24">
             <Package size={32} color={C.border} />
             <Text className="font-sans text-base text-muted-foreground">

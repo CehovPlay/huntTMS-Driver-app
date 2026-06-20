@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -6,7 +6,10 @@ import { Bell, Check, CheckCheck, FileText, Image as ImageIcon, MapPin, Mic, Pac
 
 import { Pressable } from '@/components/pressable';
 import { PressableScale } from '@/components/pressable-scale';
+import { Skeleton } from '@/components/skeleton';
+import { ErrorState } from '@/components/error-state';
 import { Logo } from '@/components/logo';
+import { useMockQuery } from '@/lib/use-mock-query';
 import { useNotifications } from '@/lib/notifications';
 import { C } from '@/lib/theme';
 import { CONVERSATIONS, type Conversation, type ConvStatus } from '@/lib/chat';
@@ -112,15 +115,24 @@ function ConvCard({ conv }: { conv: Conversation }) {
   );
 }
 
+function ConvCardSkeleton() {
+  return (
+    <View className="flex-row gap-3 rounded-3xl bg-background p-4">
+      <Skeleton width={48} height={48} radius={24} />
+      <View className="flex-1 gap-2">
+        <Skeleton width="60%" height={16} />
+        <Skeleton width="80%" height={14} />
+        <Skeleton width="90%" height={14} />
+        <Skeleton width="50%" height={14} />
+      </View>
+    </View>
+  );
+}
+
 export default function MessagesScreen() {
   const { unread } = useNotifications();
   const [query, setQuery] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
-  }, []);
+  const mq = useMockQuery();
 
   const q = query.trim().toLowerCase();
   const list = CONVERSATIONS.filter(
@@ -193,13 +205,17 @@ export default function MessagesScreen() {
 
       <ScrollView
         contentContainerClassName="gap-3 p-4"
-        contentContainerStyle={list.length === 0 ? { flex: 1 } : undefined}
+        contentContainerStyle={mq.error || (!mq.loading && list.length === 0) ? { flex: 1 } : undefined}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.mutedForeground} colors={[C.foreground]} />
+          <RefreshControl refreshing={mq.refreshing} onRefresh={mq.refetch} tintColor={C.mutedForeground} colors={[C.foreground]} />
         }
       >
-        {list.length === 0 ? (
+        {mq.loading ? (
+          [0, 1, 2, 3].map((i) => <ConvCardSkeleton key={i} />)
+        ) : mq.error ? (
+          <ErrorState onRetry={mq.refetch} />
+        ) : list.length === 0 ? (
           <View className="flex-1 items-center justify-center gap-2 pb-24">
             <Search size={32} color={C.border} />
             <Text className="font-sans text-base text-muted-foreground">

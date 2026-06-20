@@ -20,11 +20,13 @@ import {
   Smartphone,
   Sun,
   Truck,
+  WifiOff,
 } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import { Switch } from '@/components/switch';
 import { useSettings, type ThemeMode } from '@/lib/settings';
+import { useOffline, setOffline } from '@/lib/use-mock-query';
 import { biometricAvailable } from '@/lib/biometric';
 import { C } from '@/lib/theme';
 import {
@@ -91,6 +93,7 @@ const THEME_OPTS: { val: ThemeMode; label: string; icon: typeof Sun }[] = [
 export default function Profile() {
   const [prefs, setPrefs] = useState(NOTIFICATION_PREFS);
   const { theme, setTheme, appLock, setAppLock } = useSettings();
+  const offline = useOffline();
   const [bio, setBio] = useState<{ available: boolean; label: string }>({ available: false, label: 'Face ID' });
 
   useEffect(() => {
@@ -330,6 +333,20 @@ export default function Profile() {
         <Text className="-mt-3 px-1 font-sans text-xs text-muted-foreground">
           Tap any item to manage access in iOS Settings.
         </Text>
+
+        {/* Demo — simulate a failed fetch to preview loading/error states */}
+        <Section title="DEMO">
+          <View className="flex-row items-center gap-3 bg-background px-4 py-3">
+            <View className="size-10 items-center justify-center rounded-2xl bg-accent">
+              <WifiOff size={18} color={C.foreground} />
+            </View>
+            <View className="flex-1">
+              <Text className="font-sans-medium text-base text-foreground">Simulate offline</Text>
+              <Text className="font-sans text-sm text-muted-foreground">Force load failures to preview error states</Text>
+            </View>
+            <Switch value={offline} onValueChange={setOffline} />
+          </View>
+        </Section>
 
         {/* Sign out */}
         <Pressable
