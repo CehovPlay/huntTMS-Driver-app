@@ -65,6 +65,7 @@ export type LoadDetail = {
   stops: DetailStop[];
   miles?: string;
   partials: PartialLoad[];
+  tonu?: { fee: string; reason: string; canceledAt: string }; // present for canceled (TONU) loads
 };
 
 // approximate city coordinates for mini-map previews (mock)
@@ -282,6 +283,10 @@ export function getLoadDetail(id: string): LoadDetail {
     stops,
     miles: trip.miles ? `${trip.miles} mi` : undefined,
     partials: meta.partials ?? [],
+    tonu:
+      trip.status === 'tonu'
+        ? { fee: '$150.00', reason: 'Canceled by broker before pickup', canceledAt: '20 MAR 2026 · 8:12 AM' }
+        : undefined,
   };
 }
 

@@ -148,7 +148,7 @@ export default function Navigate() {
               onPress={togglePause}
               accessibilityRole="button"
               accessibilityLabel={paused ? 'Resume navigation' : 'Pause navigation'}
-              className="h-12 flex-row items-center gap-1.5 rounded-full px-5"
+              className="h-12 flex-row items-center gap-1.5 rounded-full px-5 active:opacity-80"
               style={{ backgroundColor: C.background, ...SHADOW }}
             >
               {paused ? <Play size={16} color={C.foreground} fill={C.foreground} /> : null}

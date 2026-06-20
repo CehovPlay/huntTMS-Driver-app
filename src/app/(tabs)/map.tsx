@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Check, LocateFixed, Navigation2, Upload } from 'lucide-react-native';
+import { Check, Clock, LocateFixed, Navigation2, Upload } from 'lucide-react-native';
 
 import { CURRENT_LOAD, DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
-import { fetchRoutes, type LatLng } from '@/lib/route';
+import { fetchRoutes, etaText, milesText, type LatLng } from '@/lib/route';
 import { locateOnce } from '@/lib/geo';
 import { Pressable } from '@/components/pressable';
 import { SwipeButton } from '@/components/swipe-button';
@@ -87,6 +87,22 @@ export default function MapScreen() {
   return (
     <View className="flex-1 bg-background">
       <TripMap routes={routes} selected={selected} onSelect={setSelected} active={active} myLocation={myLocation} />
+
+      {/* ETA pill (remaining time + distance for the active route) */}
+      {active && routes?.fastest ? (
+        <SafeAreaView edges={['top']} pointerEvents="none" className="absolute inset-x-0 top-0 items-center">
+          <View
+            className="m-3 flex-row items-center gap-2 rounded-full bg-background px-4 py-2"
+            style={shadowSm}
+            accessibilityLabel={`Estimated ${etaText(routes.fastest.duration)}, ${milesText(routes.fastest.distance)} remaining`}
+          >
+            <Clock size={15} color={C.teal} />
+            <Text className="font-sans-semibold text-sm text-foreground">{etaText(routes.fastest.duration)}</Text>
+            <View className="size-1 rounded-full" style={{ backgroundColor: C.mutedForeground }} />
+            <Text className="font-sans text-sm text-muted-foreground">{milesText(routes.fastest.distance)}</Text>
+          </View>
+        </SafeAreaView>
+      ) : null}
 
       {/* locate-me (real device GPS) */}
       <SafeAreaView edges={['top']} pointerEvents="box-none" className="absolute inset-x-0 top-0 items-end">

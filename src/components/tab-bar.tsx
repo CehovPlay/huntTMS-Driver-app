@@ -50,7 +50,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             accessibilityRole="tab"
             accessibilityLabel={label}
             accessibilityState={{ selected: focused }}
-            className="flex-1 border-t border-border px-5 pb-1 pt-[9px]"
+            className="flex-1 border-t border-border px-5 pb-1 pt-[9px] active:opacity-60"
           >
             <View
               className={`h-[62px] items-center justify-center gap-1 rounded-xl px-4 ${

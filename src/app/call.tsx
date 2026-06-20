@@ -91,7 +91,7 @@ function CallBtn({
       accessibilityRole="button"
       accessibilityState={{ selected: !!active }}
       accessibilityLabel={label}
-      className="flex-1 items-center gap-2"
+      className="flex-1 items-center gap-2 active:opacity-70"
     >
       <View
         className="size-16 items-center justify-center rounded-full"

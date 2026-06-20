@@ -219,7 +219,7 @@ export default function Chat() {
       {/* Header */}
       <SafeAreaView edges={['top']} className="border-b border-border bg-background">
         <View className="h-14 flex-row items-center gap-3 px-3">
-          <Pressable onPress={() => router.back()} hitSlop={6} accessibilityRole="button" accessibilityLabel="Back" className="size-12 items-center justify-center rounded-2xl active:bg-accent">
+          <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Back" className="size-12 items-center justify-center rounded-2xl active:bg-accent">
             <ArrowLeft size={20} color={C.foreground} />
           </Pressable>
           <View className="size-10 items-center justify-center rounded-full" style={{ backgroundColor: C.primary }}>
@@ -234,10 +234,10 @@ export default function Chat() {
               </Text>
             </View>
           </View>
-          <Pressable onPress={() => router.push('/call')} hitSlop={6} accessibilityRole="button" accessibilityLabel="Call dispatcher" className="size-12 items-center justify-center rounded-full active:bg-accent">
+          <Pressable onPress={() => router.push('/call')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Call dispatcher" className="size-12 items-center justify-center rounded-full active:bg-accent">
             <Phone size={20} color={C.foreground} />
           </Pressable>
-          <Pressable onPress={() => router.push({ pathname: '/call', params: { video: '1' } })} hitSlop={6} accessibilityRole="button" accessibilityLabel="Video call" className="size-12 items-center justify-center rounded-full active:bg-accent">
+          <Pressable onPress={() => router.push({ pathname: '/call', params: { video: '1' } })} hitSlop={8} accessibilityRole="button" accessibilityLabel="Video call" className="size-12 items-center justify-center rounded-full active:bg-accent">
             <Video size={20} color={C.foreground} />
           </Pressable>
         </View>

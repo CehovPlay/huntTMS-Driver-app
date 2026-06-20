@@ -26,7 +26,13 @@ export default function Scan() {
         >
           <Text className="font-sans-medium text-base text-primary-foreground">Grant access</Text>
         </Pressable>
-        <Pressable onPress={() => router.back()}>
+        <Pressable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Cancel"
+          hitSlop={8}
+          className="py-2 active:opacity-60"
+        >
           <Text className="font-sans text-base text-muted-foreground">Cancel</Text>
         </Pressable>
       </View>
@@ -51,7 +57,7 @@ export default function Scan() {
             accessibilityRole="button"
             accessibilityLabel="Close camera"
             hitSlop={8}
-            className="size-12 items-center justify-center rounded-full bg-black/40"
+            className="size-12 items-center justify-center rounded-full bg-black/40 active:opacity-70"
           >
             <X size={22} color="#fff" />
           </Pressable>

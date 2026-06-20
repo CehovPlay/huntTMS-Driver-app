@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeft,
+  Ban,
   Calendar,
   Check,
   DollarSign,
@@ -133,6 +134,41 @@ export default function LoadDetailScreen() {
         <ErrorState onRetry={q.refetch} />
       ) : (
       <ScrollView className="flex-1" contentContainerClassName="gap-3 p-4 pb-4" showsVerticalScrollIndicator={false}>
+        {/* TONU — canceled load: cancellation summary + the no-use fee owed to the driver */}
+        {variant === 'tonu' && load.tonu ? (
+          <View className="gap-3 rounded-3xl bg-background p-4">
+            <View className="flex-row items-center gap-3">
+              <View className="size-12 items-center justify-center rounded-2xl" style={{ backgroundColor: `${C.destructive}1A` }}>
+                <Ban size={22} color={C.destructive} />
+              </View>
+              <View className="flex-1">
+                <Text className="font-sans-semibold text-lg text-foreground">Load canceled</Text>
+                <Text className="font-sans text-sm text-muted-foreground">{load.tonu.reason}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center gap-2 rounded-2xl bg-accent px-4 py-3">
+              <Calendar size={15} color={C.mutedForeground} />
+              <Text className="flex-1 font-sans text-sm text-muted-foreground">Canceled</Text>
+              <Text className="font-sans-medium text-sm text-foreground">{load.tonu.canceledAt}</Text>
+            </View>
+            <View
+              className="flex-row items-center gap-3 rounded-2xl px-4 py-3"
+              style={{ backgroundColor: `${C.teal}14`, borderWidth: 1, borderColor: `${C.teal}33` }}
+            >
+              <View className="size-10 items-center justify-center rounded-full" style={{ backgroundColor: `${C.teal}1F` }}>
+                <DollarSign size={18} color={C.teal} />
+              </View>
+              <View className="flex-1">
+                <Text className="font-sans-medium text-base text-foreground">TONU fee</Text>
+                <Text className="font-sans text-sm text-muted-foreground">Paid for the canceled trip</Text>
+              </View>
+              <Text className="font-sans-semibold text-lg" style={{ color: C.teal }}>
+                {load.tonu.fee}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
         {/* Shipment / order spec */}
         <View className="rounded-3xl bg-background p-4">
           <View className="flex-row items-center gap-3 pb-4">
@@ -386,6 +422,20 @@ export default function LoadDetailScreen() {
             >
               <Navigation2 size={18} color={C.primaryForeground} fill={C.primaryForeground} />
               <Text className="font-sans-medium text-base text-primary-foreground">Open map</Text>
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      ) : variant === 'tonu' ? (
+        <SafeAreaView edges={['bottom']} className="border-t border-border bg-background">
+          <View className="px-4 pb-2 pt-3">
+            <Pressable
+              onPress={() => router.push('/chat')}
+              accessibilityRole="button"
+              accessibilityLabel="Message dispatcher"
+              className="h-16 flex-row items-center justify-center gap-2 rounded-2xl bg-primary active:opacity-90"
+            >
+              <MessageCircle size={18} color={C.primaryForeground} />
+              <Text className="font-sans-medium text-base text-primary-foreground">Message dispatcher</Text>
             </Pressable>
           </View>
         </SafeAreaView>

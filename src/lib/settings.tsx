@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Appearance, Platform } from 'react-native';
 import { colorScheme as nwColorScheme } from 'nativewind';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { setThemeScheme } from './theme';
 import { setUnitsValue } from './units';
@@ -34,6 +35,8 @@ const KEYS = {
   appLock: 'huntms.applock',
 } as const;
 
+// Web reads synchronously from localStorage (no flash); native starts on the
+// fallback and hydrates from AsyncStorage right after mount (see effect below).
 function load<T extends string>(key: string, fallback: T): T {
   if (Platform.OS !== 'web' || typeof localStorage === 'undefined') return fallback;
   try {
@@ -43,10 +46,15 @@ function load<T extends string>(key: string, fallback: T): T {
   }
 }
 function save(key: string, value: string) {
-  if (Platform.OS !== 'web' || typeof localStorage === 'undefined') return;
-  try {
-    localStorage.setItem(key, value);
-  } catch {}
+  if (Platform.OS === 'web') {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(key, value);
+    } catch {}
+    return;
+  }
+  // native: persist across cold launches
+  AsyncStorage.setItem(key, value).catch(() => {});
 }
 
 function systemScheme(): 'light' | 'dark' {
@@ -72,6 +80,32 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   // Keep the module-level units in sync for context-less helpers (route/map).
   setUnitsValue(units);
+
+  // Native: hydrate persisted settings from AsyncStorage on mount (web already
+  // read them synchronously above). Runs once; completes well before the splash
+  // timer in index.tsx routes on `onboarded`.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const entries = await AsyncStorage.multiGet(Object.values(KEYS));
+        if (cancelled) return;
+        const map = Object.fromEntries(entries) as Record<string, string | null>;
+        const t = map[KEYS.theme];
+        if (t === 'light' || t === 'dark' || t === 'system') setThemeState(t);
+        const u = map[KEYS.units];
+        if (u === 'mi' || u === 'km') setUnitsState(u);
+        const l = map[KEYS.locale];
+        if (l === 'en' || l === 'ru') setLocaleState(l);
+        if (map[KEYS.onboarded] != null) setOnboardedState(map[KEYS.onboarded] === '1');
+        if (map[KEYS.appLock] != null) setAppLockState(map[KEYS.appLock] === '1');
+      } catch {}
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Track OS theme changes while on "system"
   useEffect(() => {

@@ -102,7 +102,7 @@ export default function ReportIssue() {
                   onPress={() => setType(t)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
-                  className="items-center justify-center rounded-2xl px-4"
+                  className="items-center justify-center rounded-2xl px-4 active:opacity-70"
                   style={{ height: 48, backgroundColor: on ? C.primary : C.background }}
                 >
                   <Text className="font-sans-medium text-sm" style={{ color: on ? C.primaryForeground : C.foreground }}>{t}</Text>
@@ -145,7 +145,7 @@ export default function ReportIssue() {
                   onPress={() => setPhotos((p) => p.filter((_, j) => j !== i))}
                   accessibilityRole="button"
                   accessibilityLabel="Remove photo"
-                  className="absolute right-1 top-1 size-7 items-center justify-center rounded-full"
+                  className="absolute right-1 top-1 size-7 items-center justify-center rounded-full active:opacity-70"
                   style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
                 >
                   <X size={14} color="#fff" />
@@ -157,7 +157,7 @@ export default function ReportIssue() {
                 onPress={addPhoto}
                 accessibilityRole="button"
                 accessibilityLabel="Add photo"
-                className="items-center justify-center gap-1 rounded-2xl bg-background"
+                className="items-center justify-center gap-1 rounded-2xl bg-background active:opacity-80"
                 style={{ width: 96, height: 96, borderWidth: 1, borderColor: C.border }}
               >
                 <Camera size={20} color={C.mutedForeground} />

@@ -89,7 +89,7 @@ export default function AddExpense() {
                   onPress={() => setCategory(c)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
-                  className="flex-row items-center gap-2 rounded-2xl px-4"
+                  className="flex-row items-center gap-2 rounded-2xl px-4 active:opacity-70"
                   style={{ height: 48, backgroundColor: on ? C.primary : C.background }}
                 >
                   <Icon size={16} color={on ? C.primaryForeground : C.foreground} />
@@ -145,7 +145,7 @@ export default function AddExpense() {
                 onPress={() => setReceiptUri(undefined)}
                 accessibilityRole="button"
                 accessibilityLabel="Remove receipt"
-                className="absolute right-3 top-3 size-9 items-center justify-center rounded-full"
+                className="absolute right-3 top-3 size-9 items-center justify-center rounded-full active:opacity-70"
                 style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
               >
                 <X size={18} color="#fff" />

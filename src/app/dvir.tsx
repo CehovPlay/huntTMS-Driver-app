@@ -94,10 +94,10 @@ export default function Dvir() {
                 onPress={() => setType(t)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
-                className="h-full flex-1 items-center justify-center rounded-xl"
+                className="h-full flex-1 items-center justify-center rounded-xl active:opacity-70"
                 style={{ backgroundColor: on ? C.primary : 'transparent' }}
               >
-                <Text className="font-sans-medium text-sm" style={{ color: on ? '#fafafa' : C.mutedForeground }}>
+                <Text className="font-sans-medium text-sm" style={{ color: on ? C.primaryForeground : C.mutedForeground }}>
                   {t}
                 </Text>
               </Pressable>
@@ -142,8 +142,8 @@ export default function Dvir() {
                           accessibilityRole="button"
                           accessibilityLabel={`${item} ${v === 'ok' ? 'OK' : 'defect'}`}
                           accessibilityState={{ selected: active }}
-                          hitSlop={6}
-                          className="rounded-full px-3"
+                          hitSlop={8}
+                          className="rounded-full px-3 active:opacity-70"
                           style={{
                             height: 34,
                             justifyContent: 'center',
