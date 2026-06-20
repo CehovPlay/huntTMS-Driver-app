@@ -180,7 +180,7 @@ export default function Navigate() {
             <View className="flex-1 overflow-hidden rounded-full" style={{ height: 10, backgroundColor: C.border }}>
               <View
                 className="rounded-full"
-                style={{ height: 10, width: `${Math.max(6, progress * 100)}%`, backgroundColor: '#1e9df1' }}
+                style={{ height: 10, width: `${Math.max(6, progress * 100)}%`, backgroundColor: C.route }}
               />
             </View>
             <View className="items-center justify-center rounded-full" style={{ width: 48, height: 48, backgroundColor: C.destructive }}>

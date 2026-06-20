@@ -22,6 +22,7 @@ export type Palette = {
   destructive: string;
   amber: string;
   white: string;
+  route: string; // map/route accent (blue line + nav progress) — fixed in both themes
 };
 
 export const lightColors: Palette = {
@@ -39,6 +40,7 @@ export const lightColors: Palette = {
   destructive: '#ef4444',
   amber: '#fbbf24',
   white: '#ffffff',
+  route: '#1e9df1',
 };
 
 export const darkColors: Palette = {
@@ -56,6 +58,7 @@ export const darkColors: Palette = {
   destructive: '#f87171',
   amber: '#fbbf24',
   white: '#ffffff',
+  route: '#1e9df1',
 };
 
 let _scheme: 'light' | 'dark' = 'light';
