@@ -81,11 +81,11 @@ export default function LoadDetailScreen() {
             hitSlop={8}
             className="flex-row items-center gap-1.5 active:opacity-60"
           >
-            <ArrowLeft size={20} color="#171717" />
+            <ArrowLeft size={20} color={C.foreground} />
             <Text className="font-sans-medium text-base text-foreground">Back</Text>
           </Pressable>
           <View pointerEvents="none" className="absolute inset-x-0 flex-row items-center justify-center gap-2">
-            <Package size={18} color="#171717" />
+            <Package size={18} color={C.foreground} />
             <Text className="font-sans-medium text-base text-foreground">{load.id}</Text>
           </View>
         </View>
@@ -276,7 +276,7 @@ export default function LoadDetailScreen() {
               accessibilityLabel={`Message ${load.dispatcher.name}`}
               className="size-12 items-center justify-center rounded-2xl bg-accent active:opacity-80"
             >
-              <MessageCircle size={20} color="#171717" />
+              <MessageCircle size={20} color={C.foreground} />
             </Pressable>
             <Pressable
               onPress={() => router.push('/call')}
@@ -284,7 +284,7 @@ export default function LoadDetailScreen() {
               accessibilityLabel={`Call ${load.dispatcher.name}`}
               className="size-12 items-center justify-center rounded-2xl bg-accent active:opacity-80"
             >
-              <Phone size={20} color="#171717" />
+              <Phone size={20} color={C.foreground} />
             </Pressable>
           </View>
         </View>
@@ -343,7 +343,7 @@ export default function LoadDetailScreen() {
               accessibilityLabel="Open map"
               className="h-16 flex-row items-center justify-center gap-2 rounded-2xl bg-primary active:opacity-90"
             >
-              <Navigation2 size={18} color="#fafafa" fill="#fafafa" />
+              <Navigation2 size={18} color={C.primaryForeground} fill={C.primaryForeground} />
               <Text className="font-sans-medium text-base text-primary-foreground">Open map</Text>
             </Pressable>
           </View>

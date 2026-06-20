@@ -201,7 +201,7 @@ export default function MessagesScreen() {
       >
         {list.length === 0 ? (
           <View className="flex-1 items-center justify-center gap-2 pb-24">
-            <Search size={32} color="#d4d4d4" />
+            <Search size={32} color={C.border} />
             <Text className="font-sans text-base text-muted-foreground">
               {query ? `No chats match “${query}”` : 'No chats yet'}
             </Text>

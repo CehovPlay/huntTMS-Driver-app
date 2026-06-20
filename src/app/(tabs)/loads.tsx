@@ -28,8 +28,11 @@ function StopRow({ stop, isFirst, isLast }: { stop: TripStop; isFirst: boolean; 
       {/* timeline column */}
       <View className="w-5 items-center">
         <View className={`w-px flex-1 ${isFirst ? '' : 'border-l border-dashed border-border'}`} />
-        <View className="size-[18px] items-center justify-center rounded-full border-[5px] border-muted-foreground/40 bg-background">
-          <View className="size-1.5 rounded-full bg-muted-foreground" />
+        <View
+          className="items-center justify-center rounded-full bg-background"
+          style={{ width: 18, height: 18, borderWidth: 5, borderColor: `${C.mutedForeground}66` }}
+        >
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.mutedForeground }} />
         </View>
         <View className={`w-px flex-1 ${isLast ? '' : 'border-l border-dashed border-border'}`} />
       </View>
@@ -209,7 +212,7 @@ export default function LoadsScreen() {
             accessibilityRole="button"
             accessibilityLabel="Profile"
             className="size-12 items-center justify-center rounded-full active:opacity-70"
-            style={{ backgroundColor: '#171717' }}
+            style={{ backgroundColor: C.primary }}
           >
             <Text className="font-sans-semibold text-xs text-primary-foreground">DC</Text>
           </Pressable>
@@ -234,7 +237,7 @@ export default function LoadsScreen() {
               flexDirection: 'row',
               alignItems: 'center',
               borderRadius: 12,
-              backgroundColor: C.muted,
+              backgroundColor: C.accent,
               padding: 4,
             }}
           >
@@ -297,7 +300,7 @@ export default function LoadsScreen() {
         {/* list */}
         {empty ? (
           <View className="flex-1 items-center justify-center gap-2 pb-24">
-            <Package size={32} color="#d4d4d4" />
+            <Package size={32} color={C.border} />
             <Text className="font-sans text-base text-muted-foreground">
               {query ? `No loads match “${query}”` : `No ${tab} loads`}
             </Text>

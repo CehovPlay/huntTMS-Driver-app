@@ -191,7 +191,7 @@ export default function MapScreen() {
                   accessibilityLabel="Start navigation"
                   className="h-16 flex-1 flex-row items-center justify-center gap-2 rounded-2xl bg-primary active:opacity-90"
                 >
-                  <Navigation2 size={18} color="#fafafa" fill="#fafafa" />
+                  <Navigation2 size={18} color={C.primaryForeground} fill={C.primaryForeground} />
                   <Text className="font-sans-medium text-base text-primary-foreground">Start navigation</Text>
                 </Pressable>
                 <Pressable

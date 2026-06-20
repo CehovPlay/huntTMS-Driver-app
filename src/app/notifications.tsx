@@ -51,7 +51,7 @@ export default function Notifications() {
 
       {feed.length === 0 ? (
         <View className="flex-1 items-center justify-center gap-2">
-          <BellOff size={32} color="#d4d4d4" />
+          <BellOff size={32} color={C.border} />
           <Text className="font-sans text-base text-muted-foreground">No notifications</Text>
         </View>
       ) : (

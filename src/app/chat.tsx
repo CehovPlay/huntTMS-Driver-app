@@ -43,7 +43,7 @@ const STATUS_PILL: Record<string, { bg: string; color: string }> = {
 const BARS = [8, 14, 10, 18, 12, 20, 9, 16, 11, 14, 8, 17, 10]; // static waveform
 
 function VoiceBubble({ mine, duration }: { mine: boolean; duration?: string }) {
-  const tint = mine ? '#fafafa' : C.foreground;
+  const tint = mine ? C.primaryForeground : C.foreground;
   return (
     <View className="flex-row items-center gap-3">
       <Play size={20} color={tint} fill={tint} />
@@ -87,12 +87,12 @@ function Bubble({ m, onLongPress }: { m: ChatMessage; onLongPress: () => void })
         {m.replyTo ? (
           <View
             className="mx-2 mt-2 gap-0.5 rounded-xl px-3 py-1.5"
-            style={{ backgroundColor: mine ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)' }}
+            style={{ backgroundColor: mine ? `${C.primaryForeground}1F` : `${C.foreground}0D` }}
           >
-            <Text className="font-sans-medium text-xs" style={{ color: mine ? '#fafafa' : C.teal }}>
+            <Text className="font-sans-medium text-xs" style={{ color: mine ? C.primaryForeground : C.teal }}>
               {m.replyTo.name}
             </Text>
-            <Text className="font-sans text-xs" style={{ color: mine ? 'rgba(255,255,255,0.7)' : C.mutedForeground }} numberOfLines={1}>
+            <Text className="font-sans text-xs" style={{ color: mine ? `${C.primaryForeground}B3` : C.mutedForeground }} numberOfLines={1}>
               {m.replyTo.text}
             </Text>
           </View>
@@ -105,14 +105,14 @@ function Bubble({ m, onLongPress }: { m: ChatMessage; onLongPress: () => void })
         <View className={m.kind === 'voice' ? 'px-4 py-3' : 'px-4 py-2.5'}>
           {m.kind === 'file' ? (
             <View className="flex-row items-center gap-3">
-              <View className="size-10 items-center justify-center rounded-xl" style={{ backgroundColor: mine ? 'rgba(255,255,255,0.15)' : C.background }}>
-                <FileText size={20} color={mine ? '#fafafa' : C.foreground} />
+              <View className="size-10 items-center justify-center rounded-xl" style={{ backgroundColor: mine ? `${C.primaryForeground}26` : C.background }}>
+                <FileText size={20} color={mine ? C.primaryForeground : C.foreground} />
               </View>
               <View>
-                <Text className="font-sans-medium text-sm" style={{ color: mine ? '#fafafa' : C.foreground }}>
+                <Text className="font-sans-medium text-sm" style={{ color: mine ? C.primaryForeground : C.foreground }}>
                   {m.fileName}
                 </Text>
-                <Text className="font-sans text-xs" style={{ color: mine ? 'rgba(255,255,255,0.7)' : C.mutedForeground }}>
+                <Text className="font-sans text-xs" style={{ color: mine ? `${C.primaryForeground}B3` : C.mutedForeground }}>
                   {m.fileSize}
                 </Text>
               </View>
@@ -120,7 +120,7 @@ function Bubble({ m, onLongPress }: { m: ChatMessage; onLongPress: () => void })
           ) : m.kind === 'voice' ? (
             <VoiceBubble mine={mine} duration={m.duration} />
           ) : m.text ? (
-            <Text className="font-sans text-base" style={{ color: mine ? '#fafafa' : C.foreground }}>
+            <Text className="font-sans text-base" style={{ color: mine ? C.primaryForeground : C.foreground }}>
               {m.text}
             </Text>
           ) : null}
@@ -336,7 +336,7 @@ export default function Chat() {
                 Recording… 0:{String(recSec).padStart(2, '0')}
               </Text>
               <Pressable onPress={() => stopRec(true)} accessibilityRole="button" accessibilityLabel="Send voice message" className="size-12 items-center justify-center rounded-full" style={{ backgroundColor: C.primary }}>
-                <Send size={16} color="#fafafa" />
+                <Send size={16} color={C.primaryForeground} />
               </Pressable>
             </View>
           ) : (
@@ -357,7 +357,7 @@ export default function Chat() {
               </View>
               {text.trim() ? (
                 <Pressable onPress={send} accessibilityRole="button" accessibilityLabel="Send message" className="size-12 items-center justify-center rounded-full" style={{ backgroundColor: C.primary }}>
-                  <Send size={20} color="#fafafa" />
+                  <Send size={20} color={C.primaryForeground} />
                 </Pressable>
               ) : (
                 <Pressable onPress={startRec} accessibilityRole="button" accessibilityLabel="Record voice message" className="size-12 items-center justify-center rounded-full bg-accent active:opacity-80">

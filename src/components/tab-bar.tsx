@@ -58,7 +58,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               }`}
             >
               <View>
-                <Icon size={20} color={focused ? '#171717' : '#737373'} strokeWidth={2} />
+                <Icon size={20} color={focused ? C.foreground : C.mutedForeground} strokeWidth={2} />
                 {route.name === 'messages' && CONV_UNREAD > 0 ? (
                   <View
                     className="absolute -right-2 -top-1 size-4 items-center justify-center rounded-full"
