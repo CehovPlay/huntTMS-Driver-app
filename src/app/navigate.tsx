@@ -17,6 +17,7 @@ function maneuverIcon(m?: Maneuver) {
   return ArrowUp;
 }
 import { Pressable } from '@/components/pressable';
+import { QuickActions } from '@/components/quick-actions';
 import { C } from '@/lib/theme';
 
 export default function Navigate() {
@@ -117,13 +118,13 @@ export default function Navigate() {
         <View pointerEvents="box-none" className="flex-row items-start justify-between gap-2 px-3">
           {/* compact maneuver chip */}
           <View className="flex-row items-center gap-2.5 rounded-2xl px-3 py-2.5" style={{ backgroundColor: C.primary, maxWidth: '58%' }}>
-            <ManIcon size={22} color="#fff" />
+            <ManIcon size={22} color={C.primaryForeground} />
             <View className="shrink">
               <Text className="font-sans-semibold text-base text-primary-foreground">
                 {rerouting ? 'Rerouting…' : upcoming?.type === 'arrive' ? 'Arriving' : milesText(distToNext)}
               </Text>
               {!rerouting ? (
-                <Text className="font-sans text-xs" style={{ color: 'rgba(255,255,255,0.7)' }} numberOfLines={1}>
+                <Text className="font-sans text-xs" style={{ color: `${C.primaryForeground}B3` }} numberOfLines={1}>
                   {upcoming?.instruction ?? 'Starting route…'}
                 </Text>
               ) : null}
@@ -157,6 +158,11 @@ export default function Navigate() {
           </View>
         </View>
 
+        {/* quick actions — breakdown / add expense (active trip) */}
+        <View pointerEvents="box-none" className="items-end px-3">
+          <QuickActions variant="floating" />
+        </View>
+
         {/* bottom sheet — one block: stats + progress track + end */}
         <View className="mx-3 gap-5 rounded-3xl bg-background p-5" style={SHADOW}>
           {/* 3 stats */}
@@ -169,7 +175,7 @@ export default function Navigate() {
           {/* progress track: origin → filled progress → destination */}
           <View className="flex-row items-center gap-3" style={{ height: 48 }}>
             <View className="items-center justify-center rounded-full" style={{ width: 48, height: 48, backgroundColor: C.foreground }}>
-              <Package size={22} color="#fff" />
+              <Package size={22} color={C.background} />
             </View>
             <View className="flex-1 overflow-hidden rounded-full" style={{ height: 10, backgroundColor: C.border }}>
               <View

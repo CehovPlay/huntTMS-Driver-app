@@ -26,6 +26,10 @@ export type DetailStop = {
   time: string;
   note?: string;
   doneAt?: string; // completion timestamp shown in Delivered variant
+  // Route history (derived on-device from the driver's GPS / geofence crossings):
+  progress?: 'done' | 'current' | 'upcoming';
+  arrival?: string; // actual arrival time captured locally when GPS entered the stop
+  leg?: string; // distance/time of the leg leading to this stop
   coordinate: { latitude: number; longitude: number };
 };
 
@@ -247,13 +251,21 @@ export function getLoadDetail(id: string): LoadDetail {
   // The active/partial load shows its full multi-stop itinerary (synced with the
   // Map tab + full-route map via NAV_STOPS); other loads show pickup + delivery.
   const isActive = trip.id === '1832888' || trip.id === '#48213';
+  // Route history is derived on-device from the driver's GPS: stop 0 already
+  // visited (actual arrival captured at the geofence), stop 1 in progress, the
+  // rest still ahead. Leg distances are the on-device route segments.
+  const LEGS = [undefined, '128 mi · 2h 10m', '92 mi · 1h 35m', '64 mi · 1h 05m'];
+  const ARRIVALS = ['13 Mar · 10:04 AM'];
   const stops: DetailStop[] = isActive
-    ? NAV_STOPS.map((s) => ({
-        type: s.kind === 'Pickup' ? 'Pick up' : 'Delivery',
+    ? NAV_STOPS.map((s, i) => ({
+        type: (s.kind === 'Pickup' ? 'Pick up' : 'Delivery') as 'Pick up' | 'Delivery',
         address: `${s.address}, ${s.city}`,
         date: s.date,
         time: s.window,
         doneAt: `${s.date} • ${s.window}`,
+        progress: (i === 0 ? 'done' : i === 1 ? 'current' : 'upcoming') as 'done' | 'current' | 'upcoming',
+        arrival: ARRIVALS[i],
+        leg: LEGS[i],
         coordinate: s.coordinate,
       }))
     : [mk(pickup, 'Pick up'), mk(delivery, 'Delivery')];

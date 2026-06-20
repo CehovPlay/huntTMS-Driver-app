@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   Ban,
   Calendar,
-  Check,
   DollarSign,
   Hash,
   Layers,
@@ -27,6 +26,8 @@ import {
 import { getLoadDetail } from '@/lib/mock';
 import { StopMiniMap } from '@/components/stop-mini-map';
 import { Pressable } from '@/components/pressable';
+import { QuickActions } from '@/components/quick-actions';
+import { RouteTimeline } from '@/components/route-timeline';
 import { SwipeButton } from '@/components/swipe-button';
 import { Skeleton } from '@/components/skeleton';
 import { ErrorState } from '@/components/error-state';
@@ -231,6 +232,9 @@ export default function LoadDetailScreen() {
           </View>
         </View>
 
+        {/* Quick actions — active trip only (report breakdown / add expense) */}
+        {variant === 'current' ? <QuickActions variant="inline" /> : null}
+
         {/* Highlighted comment */}
         {d.comment ? (
           <View className="flex-row gap-3 rounded-3xl bg-background p-4" style={{ borderWidth: 1, borderColor: `${C.amber}66` }}>
@@ -283,41 +287,8 @@ export default function LoadDetailScreen() {
             </Text>
           </View>
 
-          {/* itinerary timeline */}
-          <View>
-            {load.stops.map((s, i) => {
-              const isLast = i === load.stops.length - 1;
-              const isPickup = s.type === 'Pick up';
-              return (
-                <View key={i} className="flex-row gap-3">
-                  <View className="items-center" style={{ width: 24 }}>
-                    <View
-                      className="size-6 items-center justify-center rounded-full"
-                      style={{ backgroundColor: isPickup ? C.foreground : C.teal }}
-                    >
-                      <Text className="font-sans-semibold text-white" style={{ fontSize: 11 }}>{i + 1}</Text>
-                    </View>
-                    {!isLast ? <View style={{ flex: 1, width: 1, minHeight: 18, backgroundColor: C.border }} /> : null}
-                  </View>
-                  <View className={`flex-1 ${isLast ? '' : 'pb-4'}`}>
-                    <View className="flex-row items-center gap-2">
-                      <Text className="font-sans-medium text-xs" style={{ color: isPickup ? C.foreground : C.teal }}>
-                        {s.type}
-                      </Text>
-                      {done && s.doneAt ? <Check size={13} color={C.teal} /> : null}
-                    </View>
-                    <Text className="font-sans-medium text-base leading-6 text-foreground">{s.address}</Text>
-                    <View className="mt-0.5 flex-row items-center gap-1.5">
-                      <Calendar size={13} color={C.mutedForeground} />
-                      <Text className="font-sans text-sm text-muted-foreground">
-                        {s.date} · {s.time}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
+          {/* itinerary timeline — GPS-derived history (arrived / en route / upcoming) */}
+          <RouteTimeline stops={load.stops} delivered={done} />
 
           {/* route preview → full-screen map */}
           <View className="overflow-hidden rounded-2xl" style={{ height: 150 }}>

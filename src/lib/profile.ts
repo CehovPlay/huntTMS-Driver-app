@@ -1,6 +1,6 @@
 // Mock profile data — driver, co-driver, documents, vehicle. Layout-first.
 
-export type DocStatus = 'valid' | 'expiring' | 'expired';
+export type DocStatus = 'valid' | 'expiring' | 'expired' | 'missing';
 export type Doc = { name: string; status: DocStatus; expires: string };
 
 export const DRIVER = {
@@ -23,6 +23,7 @@ export const DRIVER_DOCS: Doc[] = [
   { name: 'Medical examiner certificate', status: 'expiring', expires: '02 Jul 2026' },
   { name: 'TWIC card', status: 'valid', expires: '21 Mar 2029' },
   { name: 'Hazmat endorsement', status: 'expired', expires: '10 Jan 2026' },
+  { name: 'MVR (driving record)', status: 'missing', expires: 'Not on file' },
 ];
 
 export const TRUCK = {
@@ -44,6 +45,7 @@ export const VEHICLE_DOCS: Doc[] = [
   { name: 'Insurance (COI)', status: 'valid', expires: '30 Sep 2026' },
   { name: 'Annual DOT inspection', status: 'expiring', expires: '18 Jul 2026' },
   { name: 'Trailer registration', status: 'valid', expires: '31 Dec 2026' },
+  { name: 'IFTA permit', status: 'missing', expires: 'Not on file' },
 ];
 
 export const NOTIFICATION_PREFS = [

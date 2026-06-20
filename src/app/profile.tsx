@@ -25,6 +25,7 @@ import {
 
 import { Pressable } from '@/components/pressable';
 import { Switch } from '@/components/switch';
+import { DocsFlowSheet } from '@/components/docs-flow-sheet';
 import { useSettings, type ThemeMode } from '@/lib/settings';
 import { useOffline, setOffline } from '@/lib/use-mock-query';
 import { biometricAvailable } from '@/lib/biometric';
@@ -46,6 +47,7 @@ const DOC_COLOR: Record<DocStatus, { label: string; color: string }> = {
   valid: { label: 'Valid', color: '#0d9488' },
   expiring: { label: 'Expiring', color: '#d97706' },
   expired: { label: 'Expired', color: '#ef4444' },
+  missing: { label: 'Missing', color: '#737373' },
 };
 
 const PERM_ICON: Record<string, typeof Camera> = {
@@ -66,21 +68,33 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function DocRow({ doc }: { doc: Doc }) {
-  const s = DOC_COLOR[doc.status];
+function DocRow({ doc, status, onPress }: { doc: Doc; status: DocStatus; onPress: () => void }) {
+  const s = DOC_COLOR[status];
+  const expiresText =
+    status === 'missing'
+      ? 'Not on file — tap to upload'
+      : status === 'valid' && doc.status === 'missing'
+        ? 'Uploaded · in review'
+        : `Expires ${doc.expires}`;
   return (
-    <View className="flex-row items-center gap-3 bg-background px-4 py-3.5">
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${doc.name}, ${s.label}. ${status === 'valid' ? 'Replace' : 'Upload'}`}
+      className="flex-row items-center gap-3 bg-background px-4 py-3.5 active:opacity-80"
+    >
       <FileText size={18} color={C.mutedForeground} />
       <View className="flex-1">
         <Text className="font-sans-medium text-base text-foreground">{doc.name}</Text>
-        <Text className="font-sans text-sm text-muted-foreground">Expires {doc.expires}</Text>
+        <Text className="font-sans text-sm text-muted-foreground">{expiresText}</Text>
       </View>
       <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: `${s.color}1A` }}>
         <Text className="font-sans-medium text-xs" style={{ color: s.color }}>
           {s.label}
         </Text>
       </View>
-    </View>
+      <ChevronRight size={16} color={C.mutedForeground} />
+    </Pressable>
   );
 }
 
@@ -95,6 +109,15 @@ export default function Profile() {
   const { theme, setTheme, appLock, setAppLock } = useSettings();
   const offline = useOffline();
   const [bio, setBio] = useState<{ available: boolean; label: string }>({ available: false, label: 'Face ID' });
+  // Document status overrides + active upload (flips a doc to "valid" on confirm).
+  const [docOverride, setDocOverride] = useState<Record<string, DocStatus>>({});
+  const [uploadDoc, setUploadDoc] = useState<string | null>(null);
+  const [uploadedTypes, setUploadedTypes] = useState<string[]>([]);
+  const statusOf = (d: Doc): DocStatus => docOverride[d.name] ?? d.status;
+  const openUpload = (d: Doc) => {
+    setUploadedTypes([]);
+    setUploadDoc(d.name);
+  };
 
   useEffect(() => {
     biometricAvailable().then(setBio);
@@ -218,7 +241,7 @@ export default function Profile() {
         {/* Driver documents */}
         <Section title="DRIVER & MEDICAL DOCUMENTS">
           {DRIVER_DOCS.map((d) => (
-            <DocRow key={d.name} doc={d} />
+            <DocRow key={d.name} doc={d} status={statusOf(d)} onPress={() => openUpload(d)} />
           ))}
         </Section>
 
@@ -250,7 +273,7 @@ export default function Profile() {
 
         <Section title="VEHICLE DOCUMENTS">
           {VEHICLE_DOCS.map((d) => (
-            <DocRow key={d.name} doc={d} />
+            <DocRow key={d.name} doc={d} status={statusOf(d)} onPress={() => openUpload(d)} />
           ))}
         </Section>
 
@@ -359,6 +382,21 @@ export default function Profile() {
           </Text>
         </Pressable>
       </ScrollView>
+
+      {/* single-document upload — flips the doc to "valid" on confirm */}
+      <DocsFlowSheet
+        visible={!!uploadDoc}
+        required={uploadDoc ? [uploadDoc] : []}
+        labels={{}}
+        uploaded={uploadedTypes}
+        title={uploadDoc ? `Upload ${uploadDoc}` : 'Upload document'}
+        onUpload={(t) => setUploadedTypes((u) => (u.includes(t) ? u : [...u, t]))}
+        onConfirm={() => {
+          if (uploadDoc) setDocOverride((o) => ({ ...o, [uploadDoc]: 'valid' }));
+          setUploadDoc(null);
+        }}
+        onClose={() => setUploadDoc(null)}
+      />
     </View>
   );
 }
