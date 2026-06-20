@@ -34,7 +34,7 @@ export function Switch({
         opacity: disabled ? 0.5 : 1,
       }}
     >
-      <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#ffffff', ...shadowXs }} />
+      <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: C.background, ...shadowXs }} />
     </Pressable>
   );
 }
