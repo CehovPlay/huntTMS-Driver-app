@@ -7,7 +7,7 @@ import { ArrowLeft, BellOff } from 'lucide-react-native';
 import { Pressable } from '@/components/pressable';
 import { PressableScale } from '@/components/pressable-scale';
 import { C } from '@/lib/theme';
-import { useNotifications, NOTIF_ICONS } from '@/lib/notifications';
+import { useNotifications, notifIcon } from '@/lib/notifications';
 
 export default function Notifications() {
   const { feed, unread, markAllRead } = useNotifications();
@@ -63,7 +63,7 @@ export default function Notifications() {
           }
         >
           {feed.map((n) => {
-            const { icon: Icon, color } = NOTIF_ICONS[n.type];
+            const { icon: Icon, color } = notifIcon(n.type);
             return (
               <PressableScale
                 key={n.id}

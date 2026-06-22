@@ -12,19 +12,22 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ArrowRight } from 'lucide-react-native';
 import { haptics } from '@/lib/haptics';
+import { C } from '@/lib/theme';
 
 const TRACK_H = 62;
 const PAD = 5;
 const THUMB = TRACK_H - PAD * 2; // 52 — equilateral square thumb
 const SPRING = { damping: 20, stiffness: 220, mass: 0.6 };
 
-type Variant = 'dark' | 'teal' | 'light';
-
-const VARIANTS: Record<Variant, { track: string; thumb: string; text: string; icon: string }> = {
-  dark: { track: '#171717', thumb: '#ffffff', text: '#fafafa', icon: '#171717' },
-  teal: { track: '#0d9488', thumb: '#ffffff', text: '#ffffff', icon: '#0d9488' },
-  light: { track: '#f5f5f5', thumb: '#171717', text: '#171717', icon: '#ffffff' },
-};
+// `primary` follows the theme tokens (dark track in light theme, light track in
+// dark theme — the same ink/surface flip as every other primary CTA); `teal` is
+// a constant brand confirm. Resolved at render so it tracks theme changes.
+type Variant = 'primary' | 'teal';
+const TEAL = { track: '#0d9488', thumb: '#ffffff', text: '#ffffff', icon: '#0d9488' } as const;
+const variantColors = (variant: Variant) =>
+  variant === 'teal'
+    ? TEAL
+    : { track: C.primary, thumb: C.background, text: C.primaryForeground, icon: C.primary };
 
 type Props = {
   label: string;
@@ -33,11 +36,11 @@ type Props = {
   disabled?: boolean;
 };
 
-export function SwipeButton({ label, onConfirm, variant = 'dark', disabled = false }: Props) {
+export function SwipeButton({ label, onConfirm, variant = 'primary', disabled = false }: Props) {
   const x = useSharedValue(0);
   const startX = useSharedValue(0);
   const maxX = useSharedValue(0);
-  const c = VARIANTS[variant];
+  const c = variantColors(variant);
 
   const onLayout = (e: LayoutChangeEvent) => {
     maxX.value = Math.max(0, e.nativeEvent.layout.width - THUMB - PAD * 2);

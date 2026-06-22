@@ -224,7 +224,6 @@ export default function MapScreen() {
               </View>
 
               <SwipeButton
-                variant="light"
                 label={stage === 'pickup' ? 'Swipe to Picked up' : 'Swipe to Delivered'}
                 onConfirm={onSwipe}
               />

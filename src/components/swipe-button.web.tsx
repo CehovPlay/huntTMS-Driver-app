@@ -2,24 +2,27 @@ import { useRef, useState } from 'react';
 import { Text, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 import { haptics } from '@/lib/haptics';
+import { C } from '@/lib/theme';
 
 const TRACK_H = 62;
 const PAD = 5;
 const THUMB = TRACK_H - PAD * 2; // 52 — equilateral square thumb
 
-type Variant = 'dark' | 'teal' | 'light';
-const VARIANTS: Record<Variant, { track: string; thumb: string; text: string; icon: string }> = {
-  dark: { track: '#171717', thumb: '#ffffff', text: '#fafafa', icon: '#171717' },
-  teal: { track: '#0d9488', thumb: '#ffffff', text: '#ffffff', icon: '#0d9488' },
-  light: { track: '#f5f5f5', thumb: '#171717', text: '#171717', icon: '#ffffff' },
-};
+// `primary` follows the theme tokens (flips dark/light like every primary CTA);
+// `teal` is a constant brand confirm. Resolved at render so it tracks the theme.
+type Variant = 'primary' | 'teal';
+const TEAL = { track: '#0d9488', thumb: '#ffffff', text: '#ffffff', icon: '#0d9488' } as const;
+const variantColors = (variant: Variant) =>
+  variant === 'teal'
+    ? TEAL
+    : { track: C.primary, thumb: C.background, text: C.primaryForeground, icon: C.primary };
 
 type Props = { label: string; onConfirm: () => void; variant?: Variant; disabled?: boolean };
 
 // Web slider: real drag via RNW's responder system (works with mouse & touch in
 // the browser / Telegram webview). The native file uses gesture-handler + reanimated.
-export function SwipeButton({ label, onConfirm, variant = 'dark', disabled = false }: Props) {
-  const c = VARIANTS[variant];
+export function SwipeButton({ label, onConfirm, variant = 'primary', disabled = false }: Props) {
+  const c = variantColors(variant);
   const [width, setWidth] = useState(0);
   const [x, setX] = useState(0);
   const startX = useRef(0);

@@ -20,12 +20,27 @@ export type Notif = {
   href?: string;
 };
 
-const ICONS: Record<NotifType, { icon: typeof Bell; color: string }> = {
-  load: { icon: Package, color: C.foreground },
-  message: { icon: MessageCircle, color: '#1e9df1' },
-  alert: { icon: TriangleAlert, color: '#d97706' },
-  success: { icon: CheckCircle2, color: C.teal },
+// Icon component is static; the color must be resolved at render (not here at
+// module load) so it reads the live theme via the C proxy — otherwise it freezes
+// to the boot-time (light) palette.
+const ICON_COMP: Record<NotifType, typeof Bell> = {
+  load: Package,
+  message: MessageCircle,
+  alert: TriangleAlert,
+  success: CheckCircle2,
 };
+function iconColor(type: NotifType): string {
+  switch (type) {
+    case 'message':
+      return C.route;
+    case 'alert':
+      return C.amber;
+    case 'success':
+      return C.teal;
+    default:
+      return C.foreground;
+  }
+}
 
 const SEED: Notif[] = [
   { id: 'n1', type: 'load', title: 'New load assigned', body: 'Load #48213 · New Berlin, WI → Chicago, IL', time: '8:00 AM', read: false, href: '/load/1832888?variant=current' },
@@ -85,7 +100,8 @@ function ToastHost({ toasts, onDismiss }: { toasts: Notif[]; onDismiss: (id: str
 
 function ToastCard({ n, onDismiss }: { n: Notif; onDismiss: () => void }) {
   const ty = useSharedValue(-160);
-  const { icon: Icon, color } = ICONS[n.type];
+  const Icon = ICON_COMP[n.type];
+  const color = iconColor(n.type);
 
   useEffect(() => {
     ty.value = withSpring(0, { damping: 16, stiffness: 320, mass: 0.5 });
@@ -126,4 +142,7 @@ function ToastCard({ n, onDismiss }: { n: Notif; onDismiss: () => void }) {
   );
 }
 
-export { ICONS as NOTIF_ICONS };
+// Resolves the icon + live theme color for a notification type. Call at render.
+export function notifIcon(type: NotifType): { icon: typeof Bell; color: string } {
+  return { icon: ICON_COMP[type], color: iconColor(type) };
+}
