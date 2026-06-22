@@ -7,6 +7,7 @@
 // trees + the SettingsProvider remounts on scheme change), so icon colors track
 // the theme without per-call-site hooks.
 
+import type { TextStyle } from 'react-native';
 import { vars } from 'nativewind';
 
 export type Palette = {
@@ -30,15 +31,15 @@ export type Palette = {
 export const lightColors: Palette = {
   background: '#ffffff',
   foreground: '#171717',
-  primary: '#171717',
+  primary: '#171717', // neutral ink — CTAs/surfaces (premium monochrome); violet is the accent only
   primaryForeground: '#fafafa',
   accent: '#f5f5f5',
   accentForeground: '#171717',
   mutedForeground: '#737373',
   border: '#e5e5e5',
   input: '#e5e5e5',
-  teal: '#0d9488',
-  purple: '#7a5af8',
+  teal: '#6f19da', // accent (violet) — single brand accent used app-wide
+  purple: '#6f19da', // unified to the violet accent (offer banner, partial-load badges)
   destructive: '#ef4444',
   amber: '#fbbf24',
   white: '#ffffff',
@@ -48,15 +49,15 @@ export const lightColors: Palette = {
 export const darkColors: Palette = {
   background: '#18181b',
   foreground: '#fafafa',
-  primary: '#fafafa',
+  primary: '#fafafa', // neutral ink (light on dark)
   primaryForeground: '#18181b',
   accent: '#0a0a0b',
   accentForeground: '#fafafa',
   mutedForeground: '#a1a1aa',
   border: '#27272a',
   input: '#27272a',
-  teal: '#2dd4bf',
-  purple: '#a78bfa',
+  teal: '#8b4df0', // accent (violet) — lighter for dark bg legibility
+  purple: '#8b4df0', // unified to the violet accent
   destructive: '#f87171',
   amber: '#fbbf24',
   white: '#ffffff',
@@ -97,8 +98,8 @@ export const lightVars = vars({
   '--muted-foreground': '115 115 115',
   '--border': '229 229 229',
   '--input': '229 229 229',
-  '--teal': '13 148 136',
-  '--purple': '122 90 248',
+  '--teal': '111 25 218',
+  '--purple': '111 25 218',
   '--destructive': '239 68 68',
 });
 export const darkVars = vars({
@@ -112,13 +113,22 @@ export const darkVars = vars({
   '--muted-foreground': '161 161 170',
   '--border': '39 39 42',
   '--input': '39 39 42',
-  '--teal': '45 212 191',
-  '--purple': '167 139 250',
+  '--teal': '139 77 240',
+  '--purple': '139 77 240',
   '--destructive': '248 113 113',
 });
 export function themeVars(scheme: 'light' | 'dark') {
   return scheme === 'dark' ? darkVars : lightVars;
 }
+
+// Tabular (monospaced) figures — apply to money/ETA/HOS/miles so digits don't
+// jitter as they change. style={tnum} on any number Text. Reads as "pro".
+export const tnum: TextStyle = { fontVariant: ['tabular-nums'] };
+
+// Shared sizing tokens for consistency (Refero scale). Use these for new/edited
+// surfaces so radii and control heights stay uniform app-wide.
+export const radii = { sm: 10, md: 14, lg: 20, xl: 26 } as const;
+export const sizes = { button: 56, input: 48, control: 48 } as const;
 
 // shadow/xs — Figma: 0 1 2 rgba(0,0,0,0.05)
 export const shadowXs = {

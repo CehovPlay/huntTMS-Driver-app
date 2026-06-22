@@ -9,12 +9,13 @@ import { fetchRoutes, etaText, milesText, type LatLng } from '@/lib/route';
 import { locateOnce } from '@/lib/geo';
 import { Pressable } from '@/components/pressable';
 import { SwipeButton } from '@/components/swipe-button';
+import { SuccessCheck } from '@/components/success-check';
 import { UploadSheet } from '@/components/upload-sheet';
 import { DocsFlowSheet } from '@/components/docs-flow-sheet';
 import { TripMap, type MapRoutes } from '@/components/trip-map';
 import { REQUIRED_DOCS, useActiveLoad } from '@/lib/active-load';
 import { useNotifications } from '@/lib/notifications';
-import { C, shadowSm } from '@/lib/theme';
+import { C, shadowSm, tnum } from '@/lib/theme';
 import { useCountUp } from '@/lib/use-count-up';
 
 const DOC_LABEL: Record<string, string> = {
@@ -25,7 +26,7 @@ const DOC_LABEL: Record<string, string> = {
 // Isolated so the count-up's re-renders don't touch the heavy map tree.
 function EtaDistance({ meters }: { meters: number }) {
   const m = useCountUp(meters, 800);
-  return <Text className="font-sans text-sm text-muted-foreground">{milesText(m)}</Text>;
+  return <Text className="font-sans text-sm text-muted-foreground" style={tnum}>{milesText(m)}</Text>;
 }
 
 export default function MapScreen() {
@@ -35,6 +36,7 @@ export default function MapScreen() {
   const [sheet, setSheet] = useState(false);
   const [uploadType, setUploadType] = useState<string | undefined>(undefined);
   const [pickupDocs, setPickupDocs] = useState(false);
+  const [pickupDone, setPickupDone] = useState(false);
   const [routes, setRoutes] = useState<MapRoutes | null>(null);
   const [selected, setSelected] = useState(0); // 0 = fastest, 1 = alt
   const [myLocation, setMyLocation] = useState<LatLng | null>(null);
@@ -77,6 +79,8 @@ export default function MapScreen() {
     setPickupDocs(false);
     advance();
     notify({ type: 'success', title: 'Pickup confirmed', body: 'Status sent to dispatch · next: Delivery' });
+    setPickupDone(true);
+    setTimeout(() => setPickupDone(false), 1300);
   };
 
   const onSwipe = () => {
@@ -104,7 +108,7 @@ export default function MapScreen() {
             accessibilityLabel={`Estimated ${etaText(routes.fastest.duration)}, ${milesText(routes.fastest.distance)} remaining`}
           >
             <Clock size={15} color={C.teal} />
-            <Text className="font-sans-semibold text-sm text-foreground">{etaText(routes.fastest.duration)}</Text>
+            <Text className="font-sans-semibold text-sm text-foreground" style={tnum}>{etaText(routes.fastest.duration)}</Text>
             <View className="size-1 rounded-full" style={{ backgroundColor: C.mutedForeground }} />
             <EtaDistance meters={routes.fastest.distance} />
           </View>
@@ -265,6 +269,16 @@ export default function MapScreen() {
         onSkip={finishPickup}
         onClose={() => setPickupDocs(false)}
       />
+
+      {/* pickup success confirmation */}
+      {pickupDone ? (
+        <View className="absolute inset-0 items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }} pointerEvents="none">
+          <View className="items-center gap-4 rounded-3xl bg-background px-10 py-8" style={shadowSm}>
+            <SuccessCheck size={84} />
+            <Text className="font-sans-semibold text-xl text-foreground">Picked up</Text>
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }

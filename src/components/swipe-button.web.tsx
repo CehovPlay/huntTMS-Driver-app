@@ -11,7 +11,7 @@ const THUMB = TRACK_H - PAD * 2; // 52 — equilateral square thumb
 // `primary` follows the theme tokens (flips dark/light like every primary CTA);
 // `teal` is a constant brand confirm. Resolved at render so it tracks the theme.
 type Variant = 'primary' | 'teal';
-const TEAL = { track: '#0d9488', thumb: '#ffffff', text: '#ffffff', icon: '#0d9488' } as const;
+const TEAL = { track: '#6f19da', thumb: '#ffffff', text: '#ffffff', icon: '#6f19da' } as const;
 const variantColors = (variant: Variant) =>
   variant === 'teal'
     ? TEAL

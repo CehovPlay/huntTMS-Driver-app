@@ -22,7 +22,7 @@ function bearing(a: LatLng, b: LatLng) {
   return (toDeg(Math.atan2(y, x)) + 360) % 360;
 }
 
-// Top-down truck glyph (points up at 0°) inside the blue puck, rotated to heading.
+// Original arrow puck (white triangle, points up at 0°), rotated to heading.
 function truckPuck(deg: number) {
   return L.divIcon({
     className: '',
@@ -30,10 +30,8 @@ function truckPuck(deg: number) {
     iconAnchor: [20, 20],
     html:
       `<div style="width:40px;height:40px;border-radius:20px;border:3px solid #fff;background:#1e9df1;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.35)">` +
-      `<svg width="22" height="22" viewBox="0 0 24 24" style="transform:rotate(${deg}deg);transform-origin:50% 50%" fill="#fff">` +
-      `<rect x="7" y="9" width="10" height="11" rx="2.5"></rect>` +
-      `<rect x="8.5" y="3.5" width="7" height="6.5" rx="2"></rect>` +
-      `</svg></div>`,
+      `<div style="transform:rotate(${deg}deg);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:14px solid #fff"></div>` +
+      `</div>`,
   });
 }
 

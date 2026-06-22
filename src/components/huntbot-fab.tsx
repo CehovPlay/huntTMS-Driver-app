@@ -46,7 +46,7 @@ export function HuntBotFab() {
           width: 56,
           height: 56,
           borderRadius: 28,
-          backgroundColor: C.primary,
+          backgroundColor: C.teal,
           alignItems: 'center',
           justifyContent: 'center',
           shadowColor: '#000',
@@ -56,7 +56,7 @@ export function HuntBotFab() {
           elevation: 8,
         }}
       >
-        <Sparkles size={26} color={C.primaryForeground} />
+        <Sparkles size={26} color="#fff" />
       </Pressable>
     </View>
   );

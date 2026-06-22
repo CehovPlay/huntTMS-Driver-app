@@ -32,7 +32,7 @@ import { SwipeButton } from '@/components/swipe-button';
 import { Skeleton } from '@/components/skeleton';
 import { ErrorState } from '@/components/error-state';
 import { useMockQuery } from '@/lib/use-mock-query';
-import { C, shadowSm } from '@/lib/theme';
+import { C, shadowSm, tnum } from '@/lib/theme';
 import { loadBadge, type LoadVariant } from '@/lib/status';
 
 type Variant = LoadVariant;
@@ -45,7 +45,7 @@ function Spec({ icon: Icon, label, value }: { icon: typeof Hash; label: string; 
         <Text className="font-sans text-xs text-muted-foreground" numberOfLines={1}>
           {label}
         </Text>
-        <Text className="font-sans-medium text-base text-foreground" numberOfLines={1}>
+        <Text className="font-sans-medium text-base text-foreground" numberOfLines={1} style={tnum}>
           {value}
         </Text>
       </View>

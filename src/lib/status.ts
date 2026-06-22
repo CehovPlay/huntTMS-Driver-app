@@ -13,7 +13,7 @@ import { C } from './theme';
 
 const CHIP = {
   amber: '#fbbf24',
-  teal: '#0d9488',
+  teal: '#6f19da',
   red: '#ef4444',
   purple: '#7a5af8',
   onDark: '#171717', // text on the (light) amber chip

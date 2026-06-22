@@ -14,7 +14,8 @@ import { useMockQuery } from '@/lib/use-mock-query';
 import { fmtMi } from '@/lib/units';
 import { Logo } from '@/components/logo';
 import { useNotifications } from '@/lib/notifications';
-import { C, shadowXs } from '@/lib/theme';
+import { EmptyState } from '@/components/empty-state';
+import { C, shadowXs, tnum } from '@/lib/theme';
 import { loadBadge } from '@/lib/status';
 import { Appear } from '@/components/appear';
 import {
@@ -325,12 +326,11 @@ export default function LoadsScreen() {
         ) : q.error ? (
           <ErrorState onRetry={q.refetch} />
         ) : empty ? (
-          <View className="flex-1 items-center justify-center gap-2 pb-24">
-            <Package size={32} color={C.border} />
-            <Text className="font-sans text-base text-muted-foreground">
-              {query ? `No loads match “${query}”` : `No ${tab} loads`}
-            </Text>
-          </View>
+          <EmptyState
+            icon={Package}
+            title={query ? `No loads match “${query}”` : `No ${tab} loads`}
+            subtitle={query ? 'Try a different search.' : tab === 'scheduled' ? 'New offers from dispatch will appear here.' : 'Delivered loads will show up here.'}
+          />
         ) : (
           <View className="gap-3 p-4">
             {showOffer && offer ? (
@@ -341,27 +341,24 @@ export default function LoadsScreen() {
                 }
                 accessibilityRole="button"
                 accessibilityLabel={`New load offer ${offer.id}`}
-                className="gap-2 rounded-3xl p-4 active:opacity-90"
-                style={{ backgroundColor: C.purple }}
+                className="gap-2 rounded-3xl bg-background p-4 active:opacity-90"
+                style={{ borderWidth: 1.5, borderColor: C.teal }}
               >
                 <View className="flex-row items-center gap-2">
-                  <Zap size={16} color="#ffffff" fill="#ffffff" />
-                  <Text className="flex-1 font-sans-semibold text-sm text-white">New load offer</Text>
-                  <Text className="font-sans-medium text-xs" style={{ color: 'rgba(255,255,255,0.8)' }}>{offer.id}</Text>
+                  <Zap size={16} color={C.teal} fill={C.teal} />
+                  <Text className="flex-1 font-sans-semibold text-sm" style={{ color: C.teal }}>New load offer</Text>
+                  <Text className="font-sans-medium text-xs text-muted-foreground" style={tnum}>{offer.id}</Text>
                 </View>
-                <Text className="font-sans-medium text-base text-white" numberOfLines={1}>
+                <Text className="font-sans-medium text-base text-foreground" numberOfLines={1}>
                   {offer.stops[0]?.city} → {offer.stops[offer.stops.length - 1]?.city}
                 </Text>
                 <View className="flex-row items-center gap-2">
-                  <Text className="font-sans text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                  <Text className="font-sans text-sm text-muted-foreground" style={tnum}>
                     {offer.broker ?? 'Broker'}
                     {offer.miles ? ` · ${fmtMi(offer.miles, units)}` : ''}
                   </Text>
                   <View className="flex-1" />
-                  <View
-                    className="flex-row items-center gap-1 rounded-full px-3 py-1"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
-                  >
+                  <View className="flex-row items-center gap-1 rounded-full px-3 py-1" style={{ backgroundColor: C.teal }}>
                     <Text className="font-sans-medium text-xs text-white">Review</Text>
                     <ChevronRight size={14} color="#ffffff" />
                   </View>

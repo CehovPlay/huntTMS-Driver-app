@@ -49,10 +49,10 @@ export function PermissionsModal({ onAllow, onSkip }: { onAllow: () => void; onS
           {/* hero */}
           <View className="items-center gap-3 px-6 pb-1 pt-7">
             <View
-              className="size-16 items-center justify-center bg-primary"
-              style={{ borderRadius: 20, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}
+              className="size-16 items-center justify-center"
+              style={{ backgroundColor: C.teal, borderRadius: 20, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}
             >
-              <Sparkles size={30} color={C.primaryForeground} strokeWidth={2.2} />
+              <Sparkles size={30} color="#fff" strokeWidth={2.2} />
             </View>
             <Text className="text-center font-sans-bold text-[22px] leading-7 text-foreground">Set up HuntBot</Text>
             <Text className="px-2 text-center font-sans text-sm leading-5 text-muted-foreground">

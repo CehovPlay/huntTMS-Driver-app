@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowUp, CornerUpLeft, CornerUpRight, Flag, MapPin, Navigation2, Package, Play, Volume2, VolumeX, X } from 'lucide-react-native';
+import { ArrowUp, CornerUpLeft, CornerUpRight, Flag, MapPin, Navigation2, Package, Play, Sparkles, Volume2, VolumeX, X } from 'lucide-react-native';
 
 import { Speech } from '@/lib/speech';
+import { useCopilot } from '@/lib/use-assistant';
 import { NavMap } from '@/components/nav-map';
 import { DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
 import { fetchRoutes, etaText, milesText, type Maneuver, type RouteData, type LatLng } from '@/lib/route';
@@ -18,13 +19,14 @@ function maneuverIcon(m?: Maneuver) {
 }
 import { Pressable } from '@/components/pressable';
 import { QuickActions } from '@/components/quick-actions';
-import { C } from '@/lib/theme';
+import { C, tnum } from '@/lib/theme';
 
 export default function Navigate() {
   const [route, setRoute] = useState<RouteData | null>(null);
   const [idx, setIdx] = useState(0); // driver position index along route coords
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
+  const { openCopilot } = useCopilot();
   const [rerouting, setRerouting] = useState(false);
   const spoken = useRef<number>(-1);
   const started = useRef(false);
@@ -134,6 +136,15 @@ export default function Navigate() {
           {/* controls */}
           <View className="flex-row items-center gap-2">
             <Pressable
+              onPress={openCopilot}
+              accessibilityRole="button"
+              accessibilityLabel="Open HuntBot"
+              className="size-12 items-center justify-center rounded-full"
+              style={{ backgroundColor: C.teal, ...SHADOW }}
+            >
+              <Sparkles size={20} color="#fff" />
+            </Pressable>
+            <Pressable
               onPress={() => {
                 if (!muted) Speech.stop();
                 setMuted((m) => !m);
@@ -212,7 +223,7 @@ const SHADOW = { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, sha
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <View className="flex-1">
-      <Text className="font-sans-semibold text-xl text-foreground">{value}</Text>
+      <Text className="font-sans-semibold text-xl text-foreground" style={tnum}>{value}</Text>
       <Text className="font-sans text-sm text-muted-foreground">{label}</Text>
     </View>
   );

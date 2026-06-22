@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera, Check, X } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
+import { SuccessCheck } from '@/components/success-check';
 import { haptics } from '@/lib/haptics';
-import { EXPENSE_CATEGORIES, EXPENSE_META, useExpenses, type ExpenseCategory } from '@/lib/expenses';
+import { EXPENSE_CATEGORIES, EXPENSE_META, money, useExpenses, type ExpenseCategory } from '@/lib/expenses';
 import { CURRENT_LOAD } from '@/lib/mock';
-import { C } from '@/lib/theme';
+import { C, tnum } from '@/lib/theme';
 
 // Add-expense form — shared by the /add-expense route and the AddExpenseSheet
 // modal. Receipt photo comes from the driver's own camera/library.
@@ -19,9 +20,17 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
   const [note, setNote] = useState('');
   const [linkLoad, setLinkLoad] = useState(true);
   const [receiptUri, setReceiptUri] = useState<string | undefined>(undefined);
+  const [done, setDone] = useState(false);
 
   const value = parseFloat(amount || '0');
   const valid = value > 0;
+
+  // Auto-dismiss shortly after the success confirmation.
+  useEffect(() => {
+    if (!done) return;
+    const t = setTimeout(onClose, 1100);
+    return () => clearTimeout(t);
+  }, [done, onClose]);
 
   const pickReceipt = async () => {
     try {
@@ -41,17 +50,29 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
       loadId: linkLoad ? CURRENT_LOAD.reference.replace(/^#/, '') : undefined,
       receiptUri,
     });
-    onClose();
+    setDone(true);
   };
+
+  if (done) {
+    return (
+      <View className="flex-1 items-center justify-center gap-4 px-8">
+        <SuccessCheck size={80} />
+        <Text className="text-center font-sans-bold text-2xl text-foreground">Expense saved</Text>
+        <Text className="text-center font-sans text-base text-muted-foreground" style={tnum}>
+          {money(value)} · {category}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1">
       <ScrollView contentContainerClassName="gap-5 p-4 pb-4" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* amount */}
-        <View className="items-center gap-1.5 rounded-3xl bg-background py-6">
+        <View className="items-center gap-1.5 rounded-3xl bg-background py-6" style={{ borderWidth: 1, borderColor: C.border }}>
           <Text className="font-sans-medium text-xs uppercase tracking-wide text-muted-foreground">Amount</Text>
-          <View className="flex-row items-baseline justify-center">
-            <Text className="font-sans-semibold" style={{ fontSize: 24, color: C.mutedForeground, marginRight: 2 }}>$</Text>
+          <View className="w-full flex-row items-center justify-center">
+            <Text className="font-sans-semibold" style={{ fontSize: 28, color: C.mutedForeground, marginRight: 2 }}>$</Text>
             <TextInput
               value={amount}
               onChangeText={(t) => setAmount(t.replace(/[^0-9.]/g, ''))}
@@ -60,7 +81,7 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
               keyboardType="decimal-pad"
               textAlign="center"
               className="font-sans-bold text-foreground"
-              style={{ fontSize: 44, minWidth: 64, paddingVertical: 0 }}
+              style={[{ fontSize: 44, minWidth: 80, paddingVertical: 0, textAlign: 'center' }, tnum]}
             />
           </View>
         </View>
@@ -79,7 +100,7 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
                   className="flex-row items-center gap-2 rounded-2xl px-4 active:opacity-70"
-                  style={{ height: 48, backgroundColor: on ? C.primary : C.background }}
+                  style={{ height: 48, backgroundColor: on ? C.primary : C.background, borderWidth: on ? 0 : 1, borderColor: C.border }}
                 >
                   <Icon size={16} color={on ? C.primaryForeground : C.foreground} />
                   <Text className="font-sans-medium text-sm" style={{ color: on ? C.primaryForeground : C.foreground }}>
@@ -94,7 +115,7 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
         {/* note */}
         <View className="gap-2">
           <Text className="px-1 font-sans-medium text-sm text-muted-foreground">NOTE</Text>
-          <View className="rounded-3xl bg-background px-4" style={{ minHeight: 56, justifyContent: 'center' }}>
+          <View className="rounded-3xl bg-background px-4" style={{ minHeight: 56, justifyContent: 'center', borderWidth: 1, borderColor: C.border }}>
             <TextInput
               value={note}
               onChangeText={setNote}
@@ -112,6 +133,7 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
           accessibilityRole="button"
           accessibilityState={{ checked: linkLoad }}
           className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-80"
+          style={{ borderWidth: 1, borderColor: C.border }}
         >
           <View
             className="size-6 items-center justify-center rounded-md"

@@ -4,6 +4,7 @@ import Animated, {
   Easing,
   cancelAnimation,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
@@ -89,31 +90,34 @@ export function AssistantMic({
   onPress: () => void;
 }) {
   const listening = status === 'listening';
-  // Animate (rings + button pulse) whenever the mic is actively working.
+  // Animate (rings + button pulse) while the mic is working — unless the user
+  // prefers reduced motion (accessibility).
+  const reduce = useReducedMotion();
   const active = status === 'wake' || status === 'listening';
-  const accent = C.primary;
-  const fg = C.primaryForeground;
+  const animate = active && !reduce;
+  const accent = C.teal;
+  const fg = '#fff';
   const SIZE = 84;
 
   // Gentle breathing pulse on the button itself while active.
   const pulse = useSharedValue(0);
   useEffect(() => {
-    if (active) {
+    if (animate) {
       pulse.value = withRepeat(withTiming(1, { duration: 950, easing: Easing.inOut(Easing.quad) }), -1, true);
     } else {
       cancelAnimation(pulse);
       pulse.value = withTiming(0, { duration: 160 });
     }
-  }, [active, pulse]);
+  }, [animate, pulse]);
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 + pulse.value * 0.06 }] }));
 
   return (
     <View style={{ width: 140, height: 140, alignItems: 'center', justifyContent: 'center' }}>
       {/* expanding wave rings */}
-      <Ring active={active} size={128} color={accent} delay={0} />
-      <Ring active={active} size={128} color={accent} delay={450} />
-      <Ring active={active} size={128} color={accent} delay={900} />
-      <Ring active={active} size={128} color={accent} delay={1350} />
+      <Ring active={animate} size={128} color={accent} delay={0} />
+      <Ring active={animate} size={128} color={accent} delay={450} />
+      <Ring active={animate} size={128} color={accent} delay={900} />
+      <Ring active={animate} size={128} color={accent} delay={1350} />
       <Animated.View style={pulseStyle}>
         <Pressable
           onPress={onPress}
@@ -134,7 +138,7 @@ export function AssistantMic({
             elevation: 6,
           }}
         >
-          {status === 'thinking' ? <Spinner color={fg} /> : listening ? <Waveform active color={fg} /> : <Mic size={34} color={fg} />}
+          {status === 'thinking' ? <Spinner color={fg} /> : listening ? <Waveform active={!reduce} color={fg} /> : <Mic size={34} color={fg} />}
         </Pressable>
       </Animated.View>
     </View>

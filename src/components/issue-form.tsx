@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Image, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { AlertTriangle, Camera, Check, Plus, TriangleAlert, X } from 'lucide-react-native';
+import { AlertTriangle, Camera, Check, TriangleAlert, X } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
+import { SuccessCheck } from '@/components/success-check';
 import { haptics } from '@/lib/haptics';
 import { useNotifications } from '@/lib/notifications';
 import { C } from '@/lib/theme';
@@ -45,9 +46,7 @@ export function IssueForm({ onClose }: { onClose: () => void }) {
     return (
       <View className="flex-1">
         <View className="flex-1 items-center justify-center gap-4 px-8 py-10">
-          <View className="size-20 items-center justify-center rounded-full" style={{ backgroundColor: `${C.amber}1F` }}>
-            <Check size={40} color={C.amber} />
-          </View>
+          <SuccessCheck size={80} color={C.amber} />
           <Text className="text-center font-sans-bold text-2xl text-foreground">Issue reported</Text>
           <Text className="text-center font-sans text-base leading-6 text-muted-foreground">
             Your report{cantDrive ? ' (truck down)' : ''} was sent with your current location. Dispatch and the safety
@@ -93,7 +92,7 @@ export function IssueForm({ onClose }: { onClose: () => void }) {
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
                   className="items-center justify-center rounded-2xl px-4 active:opacity-70"
-                  style={{ height: 48, backgroundColor: on ? C.primary : C.background }}
+                  style={{ height: 48, backgroundColor: on ? C.primary : C.background, borderWidth: on ? 0 : 1, borderColor: C.border }}
                 >
                   <Text className="font-sans-medium text-sm" style={{ color: on ? C.primaryForeground : C.foreground }}>{t}</Text>
                 </Pressable>
@@ -108,6 +107,7 @@ export function IssueForm({ onClose }: { onClose: () => void }) {
           accessibilityRole="button"
           accessibilityState={{ checked: cantDrive }}
           className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-80"
+          style={{ borderWidth: 1, borderColor: C.border }}
         >
           <View className="size-10 items-center justify-center rounded-2xl bg-accent">
             <TriangleAlert size={18} color={cantDrive ? C.destructive : C.mutedForeground} />
@@ -127,40 +127,42 @@ export function IssueForm({ onClose }: { onClose: () => void }) {
         {/* photos */}
         <View className="gap-2">
           <Text className="px-1 font-sans-medium text-sm text-muted-foreground">PHOTOS</Text>
-          <View className="flex-row flex-wrap gap-2">
-            {photos.map((uri, i) => (
-              <View key={i} className="overflow-hidden rounded-2xl" style={{ width: 96, height: 96 }}>
-                <Image source={{ uri }} style={{ width: 96, height: 96 }} resizeMode="cover" />
-                <Pressable
-                  onPress={() => setPhotos((p) => p.filter((_, j) => j !== i))}
-                  accessibilityRole="button"
-                  accessibilityLabel="Remove photo"
-                  className="absolute right-1 top-1 size-7 items-center justify-center rounded-full active:opacity-70"
-                  style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
-                >
-                  <X size={14} color="#fff" />
-                </Pressable>
-              </View>
-            ))}
-            {photos.length < 3 ? (
-              <Pressable
-                onPress={addPhoto}
-                accessibilityRole="button"
-                accessibilityLabel="Add photo"
-                className="items-center justify-center gap-1 rounded-2xl bg-background active:opacity-80"
-                style={{ width: 96, height: 96, borderWidth: 1, borderColor: C.border }}
-              >
-                <Camera size={20} color={C.mutedForeground} />
-                <Plus size={14} color={C.mutedForeground} />
-              </Pressable>
-            ) : null}
-          </View>
+          {photos.length > 0 ? (
+            <View className="flex-row flex-wrap gap-2">
+              {photos.map((uri, i) => (
+                <View key={i} className="overflow-hidden rounded-2xl" style={{ width: 96, height: 96 }}>
+                  <Image source={{ uri }} style={{ width: 96, height: 96 }} resizeMode="cover" />
+                  <Pressable
+                    onPress={() => setPhotos((p) => p.filter((_, j) => j !== i))}
+                    accessibilityRole="button"
+                    accessibilityLabel="Remove photo"
+                    className="absolute right-1 top-1 size-7 items-center justify-center rounded-full active:opacity-70"
+                    style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+                  >
+                    <X size={14} color="#fff" />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          ) : null}
+          {photos.length < 3 ? (
+            <Pressable
+              onPress={addPhoto}
+              accessibilityRole="button"
+              accessibilityLabel="Add photo"
+              className="h-16 flex-row items-center justify-center gap-2 rounded-2xl bg-background active:opacity-80"
+              style={{ borderWidth: 1, borderColor: C.border }}
+            >
+              <Camera size={18} color={C.foreground} />
+              <Text className="font-sans-medium text-base text-foreground">Add photo</Text>
+            </Pressable>
+          ) : null}
         </View>
 
         {/* comment */}
         <View className="gap-2">
           <Text className="px-1 font-sans-medium text-sm text-muted-foreground">DETAILS</Text>
-          <View className="rounded-3xl bg-background p-4">
+          <View className="rounded-3xl bg-background p-4" style={{ borderWidth: 1, borderColor: C.border }}>
             <TextInput
               value={comment}
               onChangeText={setComment}

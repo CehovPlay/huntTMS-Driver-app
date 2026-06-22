@@ -74,7 +74,8 @@ export default function Scan() {
             onPress={capture}
             accessibilityRole="button"
             accessibilityLabel="Take photo"
-            className="size-[72px] items-center justify-center rounded-full border-4 border-white active:opacity-70"
+            className="items-center justify-center rounded-full border-4 border-white active:opacity-70"
+            style={{ width: 72, height: 72 }}
           >
             <View className="size-14 rounded-full bg-white" />
           </Pressable>

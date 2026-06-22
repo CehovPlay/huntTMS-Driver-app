@@ -126,8 +126,8 @@ export default function CopilotScreen() {
       <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* header */}
         <View className="flex-row items-center gap-2.5 px-4 pb-2 pt-2">
-          <View className="size-9 items-center justify-center rounded-full" style={{ backgroundColor: `${C.primary}1A` }}>
-            <Sparkles size={18} color={C.primary} />
+          <View className="size-9 items-center justify-center rounded-full" style={{ backgroundColor: `${C.teal}1A` }}>
+            <Sparkles size={18} color={C.teal} />
           </View>
           <View className="flex-1">
             <Text className="font-sans-semibold text-xl text-foreground">HuntBot</Text>
@@ -209,9 +209,9 @@ export default function CopilotScreen() {
             accessibilityRole="button"
             accessibilityLabel="Send"
             className="size-12 items-center justify-center rounded-2xl"
-            style={{ backgroundColor: draft.trim() ? C.primary : C.border }}
+            style={{ backgroundColor: draft.trim() ? C.teal : C.border }}
           >
-            <ArrowUp size={22} color={draft.trim() ? C.primaryForeground : C.mutedForeground} />
+            <ArrowUp size={22} color={draft.trim() ? '#fff' : C.mutedForeground} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>

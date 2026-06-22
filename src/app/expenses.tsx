@@ -4,8 +4,9 @@ import { router } from 'expo-router';
 import { ArrowLeft, Paperclip, Plus, ReceiptText } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
+import { EmptyState } from '@/components/empty-state';
 import { EXPENSE_META, money, useExpenses } from '@/lib/expenses';
-import { C } from '@/lib/theme';
+import { C, tnum } from '@/lib/theme';
 
 export default function Expenses() {
   const { expenses, total } = useExpenses();
@@ -34,15 +35,18 @@ export default function Expenses() {
         {/* total */}
         <View className="items-center gap-1 rounded-3xl bg-background py-7">
           <Text className="font-sans-medium text-sm text-muted-foreground">Logged this week</Text>
-          <Text className="font-sans-bold text-foreground" style={{ fontSize: 40 }}>{money(total)}</Text>
+          <Text className="font-sans-bold text-foreground" style={[{ fontSize: 40 }, tnum]}>{money(total)}</Text>
           <Text className="font-sans text-sm text-muted-foreground">{expenses.length} expenses</Text>
         </View>
 
         {expenses.length === 0 ? (
-          <View className="items-center gap-2 py-16">
-            <ReceiptText size={32} color={C.border} />
-            <Text className="font-sans text-base text-muted-foreground">No expenses yet</Text>
-          </View>
+          <EmptyState
+            icon={ReceiptText}
+            title="No expenses yet"
+            subtitle="Log fuel, tolls, scales and more — tap “Add expense” or tell HuntBot."
+            actionLabel="Add expense"
+            onAction={() => router.push('/add-expense')}
+          />
         ) : (
           <View className="gap-px overflow-hidden rounded-3xl bg-background">
             {expenses.map((e) => {
@@ -63,7 +67,7 @@ export default function Expenses() {
                       {e.loadId ? ` · #${e.loadId}` : ''}
                     </Text>
                   </View>
-                  <Text className="font-sans-semibold text-base text-foreground">{money(e.amount)}</Text>
+                  <Text className="font-sans-semibold text-base text-foreground" style={tnum}>{money(e.amount)}</Text>
                 </View>
               );
             })}

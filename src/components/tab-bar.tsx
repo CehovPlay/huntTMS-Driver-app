@@ -91,7 +91,7 @@ function BotButton({ focused, onPress }: { focused: boolean; onPress: () => void
           width: BOT,
           height: BOT,
           borderRadius: BOT / 2,
-          backgroundColor: C.primary,
+          backgroundColor: C.teal,
           alignItems: 'center',
           justifyContent: 'center',
           shadowColor: '#000',
@@ -101,7 +101,7 @@ function BotButton({ focused, onPress }: { focused: boolean; onPress: () => void
           elevation: 6,
         }}
       >
-        <Sparkles size={28} color={C.primaryForeground} strokeWidth={2.2} />
+        <Sparkles size={28} color="#fff" strokeWidth={2.2} />
       </Pressable>
     </Animated.View>
   );

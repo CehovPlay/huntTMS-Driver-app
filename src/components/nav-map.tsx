@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
-import Svg, { Rect } from 'react-native-svg';
+import { Navigation2 } from 'lucide-react-native';
 
 import { DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
 import { type LatLng } from '@/lib/route';
@@ -58,13 +58,10 @@ export function NavMap({ coords, here, headingTo, onPress }: Props) {
           </View>
         </Marker>
       ))}
-      {/* truck puck — rotates to the direction of travel (top-down, points up at 0°) */}
+      {/* puck — original arrow, rotates to the direction of travel */}
       <Marker coordinate={here} anchor={{ x: 0.5, y: 0.5 }} flat rotation={bearing(here, headingTo)} tracksViewChanges={false}>
         <View className="size-10 items-center justify-center rounded-full border-[3px] border-white" style={{ backgroundColor: C.route, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4 }}>
-          <Svg width={20} height={20} viewBox="0 0 24 24">
-            <Rect x={7} y={9} width={10} height={11} rx={2.5} fill="#fff" />
-            <Rect x={8.5} y={3.5} width={7} height={6.5} rx={2} fill="#fff" />
-          </Svg>
+          <Navigation2 size={20} color="#fff" fill="#fff" />
         </View>
       </Marker>
     </MapView>

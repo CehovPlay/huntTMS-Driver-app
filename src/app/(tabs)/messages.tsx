@@ -8,6 +8,7 @@ import { Pressable } from '@/components/pressable';
 import { PressableScale } from '@/components/pressable-scale';
 import { Skeleton } from '@/components/skeleton';
 import { ErrorState } from '@/components/error-state';
+import { EmptyState } from '@/components/empty-state';
 import { Logo } from '@/components/logo';
 import { useMockQuery } from '@/lib/use-mock-query';
 import { useNotifications } from '@/lib/notifications';
@@ -211,12 +212,11 @@ export default function MessagesScreen() {
         ) : mq.error ? (
           <ErrorState onRetry={mq.refetch} />
         ) : list.length === 0 ? (
-          <View className="flex-1 items-center justify-center gap-2 pb-24">
-            <Search size={32} color={C.border} />
-            <Text className="font-sans text-base text-muted-foreground">
-              {query ? `No chats match “${query}”` : 'No chats yet'}
-            </Text>
-          </View>
+          query ? (
+            <EmptyState icon={Search} title={`No chats match “${query}”`} subtitle="Try a different name or load." />
+          ) : (
+            <EmptyState icon={Bell} title="No chats yet" subtitle="Messages from your dispatcher will appear here." />
+          )
         ) : (
           list.map((conv, i) => (
             <Appear key={conv.id} index={i}>

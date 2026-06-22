@@ -23,7 +23,7 @@ const SPRING = { damping: 20, stiffness: 220, mass: 0.6 };
 // dark theme — the same ink/surface flip as every other primary CTA); `teal` is
 // a constant brand confirm. Resolved at render so it tracks theme changes.
 type Variant = 'primary' | 'teal';
-const TEAL = { track: '#0d9488', thumb: '#ffffff', text: '#ffffff', icon: '#0d9488' } as const;
+const TEAL = { track: '#6f19da', thumb: '#ffffff', text: '#ffffff', icon: '#6f19da' } as const;
 const variantColors = (variant: Variant) =>
   variant === 'teal'
     ? TEAL
