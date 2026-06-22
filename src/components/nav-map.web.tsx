@@ -60,7 +60,7 @@ export function NavMap({ coords, here, onPress }: Props) {
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <Follow here={here} />
       <Clicker onPress={onPress} />
-      {coords.length ? <Polyline positions={coords.map(ll)} pathOptions={{ color: '#1e9df1', weight: 8 }} /> : null}
+      {coords.length ? <Polyline positions={coords.map(ll)} pathOptions={{ color: C.route, weight: 8 }} /> : null}
       {NAV_STOPS.map((s, i) => (
         <Marker key={i} position={ll(s.coordinate)} icon={stopIcon(i)} />
       ))}

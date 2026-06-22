@@ -32,13 +32,7 @@ import {
 import { Pressable } from '@/components/pressable';
 import { CHAT_MESSAGES, QUICK_REPLIES, REACTIONS, getConversation, type ChatMessage } from '@/lib/chat';
 import { C } from '@/lib/theme';
-
-const STATUS_PILL: Record<string, { bg: string; color: string }> = {
-  'En route': { bg: '#fbbf24', color: '#171717' },
-  Scheduled: { bg: '#f5f5f5', color: '#737373' },
-  Delivered: { bg: '#0d9488', color: '#ffffff' },
-  TONU: { bg: '#ef4444', color: '#ffffff' },
-};
+import { convBadge } from '@/lib/status';
 
 const BARS = [8, 14, 10, 18, 12, 20, 9, 16, 11, 14, 8, 17, 10]; // static waveform
 
@@ -252,8 +246,8 @@ export default function Chat() {
       >
         <Package size={14} color={C.mutedForeground} />
         <Text className="font-sans-medium text-sm text-foreground">{conv.load.id}</Text>
-        <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: STATUS_PILL[conv.load.status].bg }}>
-          <Text className="font-sans-medium text-[11px]" style={{ color: STATUS_PILL[conv.load.status].color }}>
+        <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: convBadge(conv.load.status).bg }}>
+          <Text className="font-sans-medium text-[11px]" style={{ color: convBadge(conv.load.status).color }}>
             {conv.load.status}
           </Text>
         </View>

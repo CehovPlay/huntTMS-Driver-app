@@ -33,16 +33,9 @@ import { Skeleton } from '@/components/skeleton';
 import { ErrorState } from '@/components/error-state';
 import { useMockQuery } from '@/lib/use-mock-query';
 import { C, shadowSm } from '@/lib/theme';
+import { loadBadge, type LoadVariant } from '@/lib/status';
 
-type Variant = 'offered' | 'scheduled' | 'current' | 'delivered' | 'tonu';
-
-const STATUS: Record<Variant, { label: string; bg: string; color: string }> = {
-  offered: { label: 'New offer', bg: '#7a5af8', color: '#ffffff' },
-  scheduled: { label: 'Scheduled', bg: '#f5f5f5', color: '#737373' },
-  current: { label: 'Current load', bg: '#fbbf24', color: '#171717' },
-  delivered: { label: 'Delivered', bg: '#0d9488', color: '#ffffff' },
-  tonu: { label: 'Canceled', bg: '#ef4444', color: '#ffffff' },
-};
+type Variant = LoadVariant;
 
 function Spec({ icon: Icon, label, value }: { icon: typeof Hash; label: string; value: string }) {
   return (
@@ -100,7 +93,7 @@ export default function LoadDetailScreen() {
       ? variantParam
       : 'scheduled';
   const load = getLoadDetail(id ?? '');
-  const status = STATUS[variant];
+  const status = loadBadge(variant);
   const d = load.details;
   const done = variant === 'delivered';
 

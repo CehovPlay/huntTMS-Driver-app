@@ -7,6 +7,8 @@
 // trees + the SettingsProvider remounts on scheme change), so icon colors track
 // the theme without per-call-site hooks.
 
+import { vars } from 'nativewind';
+
 export type Palette = {
   background: string;
   foreground: string;
@@ -78,6 +80,45 @@ export const C: Palette = new Proxy({} as Palette, {
     return activePalette()[prop as keyof Palette];
   },
 }) as Palette;
+
+// NativeWind className tokens (bg-background, text-foreground…) read these CSS
+// variables. On web the `.dark` class on <html> flips them; on NATIVE the `.dark`
+// selector is never applied, so we set the variables explicitly on a root View
+// via vars() (see _layout ThemedShell). Channel values mirror global.css exactly
+// so className tokens render identically on both platforms.
+export const lightVars = vars({
+  '--background': '255 255 255',
+  '--foreground': '23 23 23',
+  '--primary': '23 23 23',
+  '--primary-foreground': '250 250 250',
+  '--accent': '245 245 245',
+  '--accent-foreground': '23 23 23',
+  '--muted': '245 245 245',
+  '--muted-foreground': '115 115 115',
+  '--border': '229 229 229',
+  '--input': '229 229 229',
+  '--teal': '13 148 136',
+  '--purple': '122 90 248',
+  '--destructive': '239 68 68',
+});
+export const darkVars = vars({
+  '--background': '24 24 27',
+  '--foreground': '250 250 250',
+  '--primary': '250 250 250',
+  '--primary-foreground': '24 24 27',
+  '--accent': '10 10 11',
+  '--accent-foreground': '250 250 250',
+  '--muted': '39 39 42',
+  '--muted-foreground': '161 161 170',
+  '--border': '39 39 42',
+  '--input': '39 39 42',
+  '--teal': '45 212 191',
+  '--purple': '167 139 250',
+  '--destructive': '248 113 113',
+});
+export function themeVars(scheme: 'light' | 'dark') {
+  return scheme === 'dark' ? darkVars : lightVars;
+}
 
 // shadow/xs — Figma: 0 1 2 rgba(0,0,0,0.05)
 export const shadowXs = {

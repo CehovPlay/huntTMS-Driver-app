@@ -7,7 +7,7 @@ import { DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
 import { etaText, milesText, type RouteData, type LatLng } from '@/lib/route';
 import { C, shadowSm } from '@/lib/theme';
 
-const BLUE = '#1e9df1';
+const BLUE = '#1e9df1'; // route accent — mirrors the C.route token (map chrome is theme-agnostic)
 const DIM = 'rgba(120,120,120,0.4)';
 const DEAD = 'rgba(115,115,115,0.75)';
 
@@ -123,7 +123,7 @@ export function TripMap({ routes, selected, onSelect, active, myLocation }: Prop
       ))}
 
       <Marker coordinate={DRIVER_LOCATION} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
-        <View className="size-9 items-center justify-center rounded-full border-2 border-white bg-[#1e9df1] shadow">
+        <View className="size-9 items-center justify-center rounded-full border-2 border-white shadow" style={{ backgroundColor: BLUE }}>
           <Navigation2 size={18} color="#fff" fill="#fff" />
         </View>
       </Marker>

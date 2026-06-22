@@ -15,12 +15,12 @@ import { fmtMi } from '@/lib/units';
 import { Logo } from '@/components/logo';
 import { useNotifications } from '@/lib/notifications';
 import { C, shadowXs } from '@/lib/theme';
+import { loadBadge } from '@/lib/status';
 import {
   COMPLETED_TRIPS,
   DELIVERED_CURRENT,
   SCHEDULED_TRIPS,
   type Trip,
-  type TripStatus,
   type TripStop,
 } from '@/lib/mock';
 import { useActiveLoad } from '@/lib/active-load';
@@ -62,15 +62,9 @@ function StopRow({ stop, isFirst, isLast }: { stop: TripStop; isFirst: boolean; 
   );
 }
 
-const STATUS_BADGE: Record<TripStatus, { label: string; bg: string; color: string } | null> = {
-  scheduled: null,
-  current: { label: 'Current load', bg: '#fbbf24', color: '#171717' },
-  tonu: { label: 'Canceled', bg: '#ef4444', color: '#ffffff' },
-  delivered: { label: 'Delivered', bg: '#0d9488', color: '#ffffff' },
-};
-
 function TripCard({ trip }: { trip: Trip }) {
-  const badge = STATUS_BADGE[trip.status];
+  // Scheduled trips show no status badge in the list.
+  const badge = trip.status === 'scheduled' ? null : loadBadge(trip.status);
   const { units } = useSettings();
   return (
     <PressableScale

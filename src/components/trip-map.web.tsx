@@ -7,7 +7,7 @@ import { DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
 import { etaText, milesText, type RouteData, type LatLng } from '@/lib/route';
 import { C } from '@/lib/theme';
 
-const BLUE = '#1e9df1';
+const BLUE = '#1e9df1'; // route accent — mirrors the C.route token (map chrome is theme-agnostic)
 const DIM = 'rgba(120,120,120,0.45)';
 const DEAD = 'rgba(115,115,115,0.8)';
 

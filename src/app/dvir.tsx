@@ -190,7 +190,7 @@ export default function Dvir() {
           style={{ backgroundColor: `${safe ? C.teal : C.amber}14` }}
         >
           {safe ? <ClipboardCheck size={20} color={C.teal} /> : <TriangleAlert size={20} color={C.amber} />}
-          <Text className="flex-1 font-sans-medium text-sm" style={{ color: safe ? C.teal : '#b45309' }}>
+          <Text className="flex-1 font-sans-medium text-sm" style={{ color: safe ? C.teal : C.amber }}>
             {safe
               ? 'No defects found. Vehicle is safe to operate.'
               : `${defects.length} defect${defects.length > 1 ? 's' : ''} flagged — must be reviewed before operating.`}

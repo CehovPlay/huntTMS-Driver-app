@@ -30,6 +30,7 @@ import { useSettings, type ThemeMode } from '@/lib/settings';
 import { useOffline, setOffline } from '@/lib/use-mock-query';
 import { biometricAvailable } from '@/lib/biometric';
 import { C } from '@/lib/theme';
+import { docColor } from '@/lib/status';
 import {
   CO_DRIVER,
   DRIVER,
@@ -42,13 +43,6 @@ import {
   type Doc,
   type DocStatus,
 } from '@/lib/profile';
-
-const DOC_COLOR: Record<DocStatus, { label: string; color: string }> = {
-  valid: { label: 'Valid', color: '#0d9488' },
-  expiring: { label: 'Expiring', color: '#d97706' },
-  expired: { label: 'Expired', color: '#ef4444' },
-  missing: { label: 'Missing', color: '#737373' },
-};
 
 const PERM_ICON: Record<string, typeof Camera> = {
   camera: Camera,
@@ -69,7 +63,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function DocRow({ doc, status, onPress }: { doc: Doc; status: DocStatus; onPress: () => void }) {
-  const s = DOC_COLOR[status];
+  const s = docColor(status);
   const expiresText =
     status === 'missing'
       ? 'Not on file — tap to upload'

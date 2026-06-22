@@ -2,6 +2,8 @@
 // app to full screen so it doesn't open as a small bottom sheet in Telegram.
 // Outside Telegram (plain browser) every call no-ops gracefully.
 
+import { getThemeScheme } from './theme';
+
 type TgHaptic = {
   impactOccurred?: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
   notificationOccurred?: (type: 'error' | 'success' | 'warning') => void;
@@ -64,9 +66,11 @@ function applyTelegram() {
   try { tg.requestFullscreen?.(); } catch {}
   // We use the app's own in-screen back buttons; hide Telegram's native one.
   try { tg.BackButton?.hide?.(); } catch {}
-  // Keep Telegram's chrome matching the app's light theme
-  try { tg.setHeaderColor?.('#ffffff'); } catch {}
-  try { tg.setBackgroundColor?.('#ffffff'); } catch {}
+  // Match Telegram's chrome to the resolved theme (settings.tsx keeps it in sync
+  // afterwards on every theme change; this just avoids a white flash at startup).
+  const chrome = getThemeScheme() === 'dark' ? '#0a0a0b' : '#ffffff';
+  try { tg.setHeaderColor?.(chrome); } catch {}
+  try { tg.setBackgroundColor?.(chrome); } catch {}
   // A swipe-down shouldn't close the app while the driver is mid-task
   try { tg.disableVerticalSwipes?.(); } catch {}
 

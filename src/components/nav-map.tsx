@@ -46,7 +46,7 @@ export function NavMap({ coords, here, headingTo, onPress }: Props) {
       onPress={(e) => onPress?.(e.nativeEvent.coordinate)}
       initialRegion={{ latitude: DRIVER_LOCATION.latitude, longitude: DRIVER_LOCATION.longitude, latitudeDelta: 0.02, longitudeDelta: 0.02 }}
     >
-      {coords.length ? <Polyline coordinates={coords} strokeColor="#1e9df1" strokeWidth={8} /> : null}
+      {coords.length ? <Polyline coordinates={coords} strokeColor={C.route} strokeWidth={8} /> : null}
       {NAV_STOPS.map((s, i) => (
         <Marker key={i} coordinate={s.coordinate} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
           <View className="size-7 items-center justify-center rounded-full border-2 border-white" style={{ backgroundColor: i === 0 ? C.teal : C.foreground }}>
@@ -55,7 +55,7 @@ export function NavMap({ coords, here, headingTo, onPress }: Props) {
         </Marker>
       ))}
       <Marker coordinate={here} anchor={{ x: 0.5, y: 0.5 }} flat rotation={0}>
-        <View className="size-10 items-center justify-center rounded-full border-[3px] border-white bg-[#1e9df1]" style={{ shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4 }}>
+        <View className="size-10 items-center justify-center rounded-full border-[3px] border-white" style={{ backgroundColor: C.route, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4 }}>
           <Navigation2 size={20} color="#fff" fill="#fff" />
         </View>
       </Marker>

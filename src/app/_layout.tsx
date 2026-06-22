@@ -31,7 +31,7 @@ import { biometricAuth } from '@/lib/biometric';
 import { initTelegram } from '@/lib/telegram';
 import { Pressable } from '@/components/pressable';
 import { Logo } from '@/components/logo';
-import { C } from '@/lib/theme';
+import { C, themeVars } from '@/lib/theme';
 
 // Biometric app-lock gate. When enabled in Settings, the app locks on launch and
 // whenever it returns from the background; Face/Touch ID (or web no-op) unlocks.
@@ -89,7 +89,11 @@ function ThemedShell() {
   const { scheme } = useSettings();
   const pageBg = scheme === 'dark' ? '#0a0a0b' : '#ffffff';
   return (
-    <>
+    // NativeWind className tokens (bg-background…) resolve against these CSS
+    // variables. The `.dark` selector is web-only, so on native we set the
+    // variables here per scheme; changing scheme re-renders this tree, flipping
+    // every className token (and inline C.*) at once — no stale colors on switch.
+    <View style={[{ flex: 1 }, themeVars(scheme)]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <BiometricGate>
         <Stack
@@ -107,7 +111,7 @@ function ThemedShell() {
           <Stack.Screen name="navigate" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         </Stack>
       </BiometricGate>
-    </>
+    </View>
   );
 }
 
@@ -116,13 +120,13 @@ SplashScreen.preventAutoHideAsync();
 // Shows the real error on-screen instead of a white crash (diagnostic).
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff', paddingHorizontal: 24, paddingTop: 80 }}>
-      <Text style={{ fontSize: 20, fontWeight: '700', color: '#ef4444' }}>App error</Text>
-      <Text style={{ marginTop: 8, fontSize: 15, color: '#171717' }}>{error.message}</Text>
+    <View style={{ flex: 1, backgroundColor: C.background, paddingHorizontal: 24, paddingTop: 80 }}>
+      <Text style={{ fontSize: 20, fontWeight: '700', color: C.destructive }}>App error</Text>
+      <Text style={{ marginTop: 8, fontSize: 15, color: C.foreground }}>{error.message}</Text>
       <ScrollView style={{ marginTop: 12, flex: 1 }}>
-        <Text style={{ fontSize: 12, color: '#737373' }}>{error.stack}</Text>
+        <Text style={{ fontSize: 12, color: C.mutedForeground }}>{error.stack}</Text>
       </ScrollView>
-      <Text onPress={retry} style={{ marginVertical: 16, fontSize: 16, color: '#1e9df1' }}>
+      <Text onPress={retry} style={{ marginVertical: 16, fontSize: 16, color: C.route }}>
         Tap to retry
       </Text>
     </View>

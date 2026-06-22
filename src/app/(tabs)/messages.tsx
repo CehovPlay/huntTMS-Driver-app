@@ -12,14 +12,8 @@ import { Logo } from '@/components/logo';
 import { useMockQuery } from '@/lib/use-mock-query';
 import { useNotifications } from '@/lib/notifications';
 import { C } from '@/lib/theme';
-import { CONVERSATIONS, type Conversation, type ConvStatus } from '@/lib/chat';
-
-const STATUS_PILL: Record<ConvStatus, { bg: string; color: string }> = {
-  'En route': { bg: '#fbbf24', color: '#171717' },
-  Scheduled: { bg: '#f5f5f5', color: '#737373' },
-  Delivered: { bg: '#0d9488', color: '#ffffff' },
-  TONU: { bg: '#ef4444', color: '#ffffff' },
-};
+import { CONVERSATIONS, type Conversation } from '@/lib/chat';
+import { convBadge } from '@/lib/status';
 
 const KIND_ICON = {
   text: null,
@@ -29,7 +23,7 @@ const KIND_ICON = {
 } as const;
 
 function ConvCard({ conv }: { conv: Conversation }) {
-  const pill = STATUS_PILL[conv.load.status];
+  const pill = convBadge(conv.load.status);
   const KindIcon = KIND_ICON[conv.lastKind];
   return (
     <PressableScale
