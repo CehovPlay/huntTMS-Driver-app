@@ -15,7 +15,17 @@ _td.defaultProps.allowFontScaling = true;
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { cssInterop } from 'nativewind';
 import * as SplashScreen from 'expo-splash-screen';
+
+// WEB ONLY: register className support on reanimated's Animated.View. On native
+// the nativewind babel JSX transform already maps className on every component
+// (and calling cssInterop there double-registers and breaks rendering → blank
+// screen); on web it's needed or animated containers drop their classes
+// (flex-1/justify-end/border vanish and the layout collapses).
+if (Platform.OS === 'web') {
+  cssInterop(Animated.View, { className: 'style' });
+}
 import {
   useFonts,
   Geist_400Regular,
