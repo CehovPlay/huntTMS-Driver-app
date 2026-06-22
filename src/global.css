@@ -56,6 +56,29 @@ body,
   -webkit-tap-highlight-color: transparent;
 }
 
+/* RN-web renders TextInput as a real <input>/<textarea>; the browser draws a
+   blue focus outline inside our styled field. We style focus on the wrapper
+   ourselves, so strip the inner ring entirely. */
+input,
+textarea,
+select,
+[contenteditable] {
+  outline: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  background-color: transparent;
+}
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+[contenteditable]:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* Web only — native uses expo-font. The per-weight family names (Geist_400Regular…)
    weren't resolving on web (serif fallback), so we load Geist once as a variable
    font and remap the NativeWind font utilities to it, with a real sans-serif

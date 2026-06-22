@@ -6,6 +6,8 @@ import { MapContainer, Marker, Polyline, TileLayer, useMap } from 'react-leaflet
 import { DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
 import { etaText, milesText, type RouteData, type LatLng } from '@/lib/route';
 import { C } from '@/lib/theme';
+import { useSettings } from '@/lib/settings';
+import { tileUrl, TILE_SUBDOMAINS } from '@/lib/map-tiles';
 
 const BLUE = '#1e9df1'; // route accent — mirrors the C.route token (map chrome is theme-agnostic)
 const DIM = 'rgba(120,120,120,0.45)';
@@ -75,6 +77,7 @@ type Props = {
 };
 
 export function TripMap({ routes, selected, onSelect, active, myLocation }: Props) {
+  const { scheme } = useSettings();
   const altDur = routes?.alt ? Math.max(routes.alt.duration, routes.fastest.duration * 1.1) : 0;
   const altDist = routes?.alt ? Math.max(routes.alt.distance, routes.fastest.distance * 1.05) : 0;
   const deadMid = routes?.deadhead ? mid(routes.deadhead.coords) : null;
@@ -89,7 +92,7 @@ export function TripMap({ routes, selected, onSelect, active, myLocation }: Prop
       attributionControl={false}
       style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}
     >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <TileLayer key={scheme} url={tileUrl(scheme)} subdomains={TILE_SUBDOMAINS} />
       <FitBounds routes={routes} />
       <RecenterMe at={myLocation} />
       {myLocation ? <Marker position={ll(myLocation)} icon={myDotIcon} /> : null}

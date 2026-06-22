@@ -4,11 +4,15 @@ import { Package } from 'lucide-react-native';
 
 import { type LatLng } from '@/lib/route';
 import { C, shadowSm } from '@/lib/theme';
+import { useSettings } from '@/lib/settings';
 
 export function StopMiniMap({ coordinate, pickup }: { coordinate: LatLng; pickup: boolean }) {
+  const { scheme } = useSettings();
   return (
     <MapView
+      key={scheme}
       provider={PROVIDER_DEFAULT}
+      userInterfaceStyle={scheme}
       style={StyleSheet.absoluteFill}
       pointerEvents="none"
       initialRegion={{ latitude: coordinate.latitude, longitude: coordinate.longitude, latitudeDelta: 0.06, longitudeDelta: 0.06 }}

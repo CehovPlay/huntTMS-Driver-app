@@ -6,6 +6,7 @@ import { Navigation2 } from 'lucide-react-native';
 import { DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
 import { etaText, milesText, type RouteData, type LatLng } from '@/lib/route';
 import { C, shadowSm } from '@/lib/theme';
+import { useSettings } from '@/lib/settings';
 
 const BLUE = '#1e9df1'; // route accent — mirrors the C.route token (map chrome is theme-agnostic)
 const DIM = 'rgba(120,120,120,0.4)';
@@ -25,6 +26,7 @@ type Props = {
 
 export function TripMap({ routes, selected, onSelect, active, myLocation }: Props) {
   const mapRef = useRef<MapView>(null);
+  const { scheme } = useSettings();
   const [drawn, setDrawn] = useState<LatLng[]>([]);
 
   // recenter on the real device location when it's captured
@@ -68,8 +70,10 @@ export function TripMap({ routes, selected, onSelect, active, myLocation }: Prop
 
   return (
     <MapView
+      key={scheme}
       ref={mapRef}
       provider={PROVIDER_DEFAULT}
+      userInterfaceStyle={scheme}
       style={StyleSheet.absoluteFill}
       showsCompass={false}
       initialRegion={{ latitude: 42.6, longitude: -87.9, latitudeDelta: 1.4, longitudeDelta: 1.4 }}

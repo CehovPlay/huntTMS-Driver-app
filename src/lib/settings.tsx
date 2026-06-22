@@ -78,7 +78,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const scheme: 'light' | 'dark' = theme === 'system' ? sysScheme : theme;
 
-  // Keep the module-level units in sync for context-less helpers (route/map).
+  // Keep module-level helpers in sync DURING render (not in an effect) so the
+  // values are correct on the very render that the scheme changes. The `C` color
+  // proxy reads getThemeScheme(); if we only set it in an effect, inline C.*
+  // colors (e.g. the Switch thumb/track) lag one render behind on theme switch
+  // and never catch up — every consumer renders before the effect runs.
+  setThemeScheme(scheme);
   setUnitsValue(units);
 
   // Native: hydrate persisted settings from AsyncStorage on mount (web already

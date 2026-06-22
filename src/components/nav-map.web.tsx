@@ -6,6 +6,8 @@ import { MapContainer, Marker, Polyline, TileLayer, useMap, useMapEvents } from 
 import { NAV_STOPS } from '@/lib/mock';
 import { type LatLng } from '@/lib/route';
 import { C } from '@/lib/theme';
+import { useSettings } from '@/lib/settings';
+import { tileUrl, TILE_SUBDOMAINS } from '@/lib/map-tiles';
 
 const ll = (c: LatLng): [number, number] => [c.latitude, c.longitude];
 
@@ -49,6 +51,7 @@ type Props = {
 };
 
 export function NavMap({ coords, here, onPress }: Props) {
+  const { scheme } = useSettings();
   return (
     <MapContainer
       center={ll(here)}
@@ -57,7 +60,7 @@ export function NavMap({ coords, here, onPress }: Props) {
       attributionControl={false}
       style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}
     >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <TileLayer key={scheme} url={tileUrl(scheme)} subdomains={TILE_SUBDOMAINS} />
       <Follow here={here} />
       <Clicker onPress={onPress} />
       {coords.length ? <Polyline positions={coords.map(ll)} pathOptions={{ color: C.route, weight: 8 }} /> : null}

@@ -1,7 +1,7 @@
 import '../global.css';
 
 import { useCallback, useEffect, useState } from 'react';
-import { AppState, ScrollView, Text, View, Text as RNText } from 'react-native';
+import { AppState, Platform, ScrollView, Text, View, Text as RNText } from 'react-native';
 import { Stack, type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Lock } from 'lucide-react-native';
@@ -13,7 +13,7 @@ _td.defaultProps = _td.defaultProps || {};
 _td.defaultProps.maxFontSizeMultiplier = 1.35;
 _td.defaultProps.allowFontScaling = true;
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
@@ -115,6 +115,18 @@ function ThemedShell() {
   );
 }
 
+// On web, Telegram already pads #root by the full safe area (device inset +
+// Telegram's content inset; see telegram.web initTelegram). react-native-safe-
+// area-context ALSO reads env(safe-area-inset-*) in the Telegram iOS webview, so
+// SafeAreaView edges would add the notch a second time → a too-tall top gap.
+// Make Telegram's #root padding the single source of truth on web by zeroing the
+// safe-area context there; native is untouched.
+const ZERO_INSETS = { top: 0, right: 0, bottom: 0, left: 0 };
+function WebSafeAreaReset({ children }: { children: React.ReactNode }) {
+  if (Platform.OS !== 'web') return <>{children}</>;
+  return <SafeAreaInsetsContext.Provider value={ZERO_INSETS}>{children}</SafeAreaInsetsContext.Provider>;
+}
+
 SplashScreen.preventAutoHideAsync();
 
 // Shows the real error on-screen instead of a white crash (diagnostic).
@@ -155,6 +167,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
+        <WebSafeAreaReset>
         <SettingsProvider>
           <ActiveLoadProvider>
             <ExpensesProvider>
@@ -164,6 +177,7 @@ export default function RootLayout() {
             </ExpensesProvider>
           </ActiveLoadProvider>
         </SettingsProvider>
+        </WebSafeAreaReset>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

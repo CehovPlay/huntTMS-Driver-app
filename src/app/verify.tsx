@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
@@ -49,22 +49,28 @@ export default function EnterCode() {
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View className="flex-1 px-8 pb-8 pt-5">
-          {/* Header: back + logo */}
-          <View className="h-9 flex-row items-center gap-3 pr-12">
-            <Pressable
-              onPress={() => router.back()}
-              className="size-12 items-center justify-center rounded-2xl active:bg-accent"
-            >
-              <ArrowLeft size={20} color={C.foreground} />
-            </Pressable>
-            <View className="flex-1 items-center">
-              <Logo height={28} />
-            </View>
+        {/* Header: back + logo (pinned) */}
+        <View className="flex-row items-center gap-3 px-8 pr-12 pt-5">
+          <Pressable
+            onPress={() => router.back()}
+            className="size-12 items-center justify-center rounded-2xl active:bg-accent"
+          >
+            <ArrowLeft size={20} color={C.foreground} />
+          </Pressable>
+          <View className="flex-1 items-center">
+            <Logo height={28} />
           </View>
+        </View>
 
-          {/* Verification section */}
-          <View className="flex-1 gap-5 py-10">
+        {/* Verification section — scrolls if the keyboard squeezes the viewport,
+            so it can never overlap the pinned CTA below. */}
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="gap-5 px-8 py-8"
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
             <View className="gap-2">
               <Text className="font-sans-semibold text-2xl leading-8 text-foreground">
                 Enter verification code
@@ -129,9 +135,10 @@ export default function EnterCode() {
                 </Text>
               </Pressable>
             </View>
-          </View>
+        </ScrollView>
 
-          {/* Enter app */}
+        {/* Enter app — pinned below the scroll area; never overlaps the content */}
+        <View className="px-8 pb-8 pt-2">
           <Pressable
             onPress={submit}
             disabled={!filled || error}

@@ -6,6 +6,7 @@ import { Navigation2 } from 'lucide-react-native';
 import { DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
 import { type LatLng } from '@/lib/route';
 import { C } from '@/lib/theme';
+import { useSettings } from '@/lib/settings';
 
 function bearing(a: LatLng, b: LatLng) {
   const toRad = (d: number) => (d * Math.PI) / 180;
@@ -26,6 +27,7 @@ type Props = {
 
 export function NavMap({ coords, here, headingTo, onPress }: Props) {
   const mapRef = useRef<MapView>(null);
+  const { scheme } = useSettings();
 
   // close follow-cam locked at a fixed altitude above the puck
   useEffect(() => {
@@ -37,8 +39,10 @@ export function NavMap({ coords, here, headingTo, onPress }: Props) {
 
   return (
     <MapView
+      key={scheme}
       ref={mapRef}
       provider={PROVIDER_DEFAULT}
+      userInterfaceStyle={scheme}
       style={StyleSheet.absoluteFill}
       showsCompass={false}
       showsBuildings
