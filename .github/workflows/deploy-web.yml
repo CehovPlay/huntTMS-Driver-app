@@ -1,0 +1,44 @@
+name: Deploy Web (GitHub Pages)
+
+# Auto-build the Expo web export and publish it to the gh-pages branch (the
+# source GitHub Pages / the Telegram Mini App serves from). Mirrors the manual
+# flow: expo export -> SPA fallback -> gh-pages.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm install --no-audit --no-fund
+
+      - name: Export web build
+        run: npx expo export --platform web
+
+      - name: SPA fallback (GitHub Pages)
+        run: |
+          touch dist/.nojekyll
+          cp dist/index.html dist/404.html
+
+      - name: Publish to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages

@@ -42,6 +42,7 @@ import { CopilotProvider } from '@/lib/use-assistant';
 import { biometricAuth } from '@/lib/biometric';
 import { initTelegram } from '@/lib/telegram';
 import { HuntBotFab } from '@/components/huntbot-fab';
+import { PermissionsGate } from '@/components/permissions-gate';
 import { Pressable } from '@/components/pressable';
 import { Logo } from '@/components/logo';
 import { C, themeVars } from '@/lib/theme';
@@ -138,6 +139,8 @@ function ThemedShell() {
           {/* HuntBot reachable from every stack screen (tab screens use the
               center bot in the tab bar instead) */}
           <HuntBotFab />
+          {/* One-time permissions prompt on entering the platform */}
+          <PermissionsGate />
         </CopilotProvider>
       </BiometricGate>
     </Animated.View>
