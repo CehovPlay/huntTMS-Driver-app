@@ -90,10 +90,13 @@ function ThemedShell() {
   const pageBg = scheme === 'dark' ? '#0a0a0b' : '#ffffff';
   return (
     // NativeWind className tokens (bg-background…) resolve against these CSS
-    // variables. The `.dark` selector is web-only, so on native we set the
-    // variables here per scheme; changing scheme re-renders this tree, flipping
-    // every className token (and inline C.*) at once — no stale colors on switch.
-    <View style={[{ flex: 1 }, themeVars(scheme)]}>
+    // variables (the `.dark` selector is web-only, so native needs them set here).
+    // `key={scheme}` remounts the whole navigator on theme change: the C color
+    // proxy isn't reactive, and react-navigation memoizes inactive screens, so a
+    // plain re-render leaves stale inline colors (avatars, status dots, badges) on
+    // background tabs. Remounting guarantees every screen renders in the new theme
+    // (on web expo-router restores the current route from the URL).
+    <View key={scheme} style={[{ flex: 1 }, themeVars(scheme)]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <BiometricGate>
         <Stack

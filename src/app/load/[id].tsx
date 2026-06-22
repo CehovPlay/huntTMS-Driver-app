@@ -228,16 +228,20 @@ export default function LoadDetailScreen() {
         {/* Quick actions — active trip only (report breakdown / add expense) */}
         {variant === 'current' ? <QuickActions variant="inline" /> : null}
 
-        {/* Highlighted comment */}
+        {/* Dispatcher comment — highlighted amber callout */}
         {d.comment ? (
-          <View className="flex-row gap-3 rounded-3xl bg-background p-4" style={{ borderWidth: 1, borderColor: `${C.amber}66` }}>
-            <View className="relative">
-              <MessageSquare size={20} color={C.amber} />
-              <View className="absolute -right-1 -top-1 size-2 rounded-full" style={{ backgroundColor: C.amber }} />
+          <View
+            className="flex-row items-start gap-3 rounded-3xl p-4"
+            style={{ backgroundColor: `${C.amber}14`, borderWidth: 1, borderColor: `${C.amber}33` }}
+          >
+            <View className="size-9 items-center justify-center rounded-xl" style={{ backgroundColor: `${C.amber}26` }}>
+              <MessageSquare size={18} color={C.amber} />
             </View>
-            <View className="flex-1">
-              <Text className="font-sans text-xs text-muted-foreground">Comment</Text>
-              <Text className="font-sans-medium text-base leading-6 text-foreground">{d.comment}</Text>
+            <View className="flex-1 gap-1">
+              <Text className="font-sans-medium text-xs uppercase tracking-wide" style={{ color: C.amber }}>
+                Comment
+              </Text>
+              <Text className="font-sans-semibold text-[15px] leading-5 text-foreground">{d.comment}</Text>
             </View>
           </View>
         ) : null}
