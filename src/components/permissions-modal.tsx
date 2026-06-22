@@ -1,23 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Text, View } from 'react-native';
-import { Bell, Camera, Mic, MapPin, ShieldCheck } from 'lucide-react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Bell, Camera, Lock, MapPin, Mic, Sparkles } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import { requestAllPermissions } from '@/lib/permissions';
 import { C } from '@/lib/theme';
 
 const ITEMS = [
-  { icon: Mic, label: 'Microphone', body: 'Talk to HuntBot hands-free — “Hey Bot…”.' },
-  { icon: Camera, label: 'Camera', body: 'Scan BOL / POD and capture proof of delivery.' },
-  { icon: MapPin, label: 'Location', body: 'Live ETA and turn-by-turn navigation on a load.' },
-  { icon: Bell, label: 'Notifications', body: 'Load offers, stop reminders, dispatcher messages.' },
+  { icon: Mic, label: 'Microphone', body: 'Talk to HuntBot hands-free — “Hey Bot…”' },
+  { icon: Camera, label: 'Camera', body: 'Scan BOL / POD and capture proof of delivery' },
+  { icon: MapPin, label: 'Location', body: 'Live ETA and turn-by-turn while on a load' },
+  { icon: Bell, label: 'Notifications', body: 'Load offers, stop reminders, dispatcher' },
 ];
 
-// Centered modal shown once on entering the platform — primes and requests the
-// browser/OS permissions HuntBot and the driver tools need. The actual prompts
-// fire from the "Allow access" tap (browsers require a user gesture).
+// Permission priming shown once on entering the platform. Branded hero, clean
+// hairline rows, spring-in entrance. The real prompts fire from the Allow tap.
 export function PermissionsModal({ onAllow, onSkip }: { onAllow: () => void; onSkip: () => void }) {
   const [busy, setBusy] = useState(false);
+
+  // Pop-in entrance (scale + fade).
+  const p = useSharedValue(0);
+  useEffect(() => {
+    p.value = withTiming(1, { duration: 280, easing: Easing.out(Easing.cubic) });
+  }, [p]);
+  const cardStyle = useAnimatedStyle(() => ({
+    opacity: p.value,
+    transform: [{ scale: 0.94 + p.value * 0.06 }, { translateY: (1 - p.value) * 16 }],
+  }));
 
   const allow = async () => {
     if (busy) return;
@@ -30,37 +40,58 @@ export function PermissionsModal({ onAllow, onSkip }: { onAllow: () => void; onS
   };
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onSkip}>
-      <View className="flex-1 items-center justify-center bg-black/50 px-6">
-        <View className="w-full max-w-md gap-5 rounded-3xl bg-background p-6" style={{ borderWidth: 1, borderColor: C.border }}>
-          <View className="items-center gap-3">
-            <View className="size-16 items-center justify-center rounded-3xl bg-accent">
-              <ShieldCheck size={30} color={C.foreground} />
+    <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={onSkip}>
+      <View className="flex-1 items-center justify-center bg-black/60 px-6">
+        <Animated.View
+          style={[cardStyle, { width: '100%', maxWidth: 380, borderRadius: 26 }]}
+          className="overflow-hidden bg-background"
+        >
+          {/* hero */}
+          <View className="items-center gap-3 px-6 pb-1 pt-7">
+            <View
+              className="size-16 items-center justify-center bg-primary"
+              style={{ borderRadius: 20, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}
+            >
+              <Sparkles size={30} color={C.primaryForeground} strokeWidth={2.2} />
             </View>
-            <Text className="text-center font-sans-bold text-2xl text-foreground">Enable HuntBot & tools</Text>
-            <Text className="text-center font-sans text-sm leading-5 text-muted-foreground">
-              Grant access so the assistant and driver tools work. Used only for the job — change anytime in Settings.
+            <Text className="text-center font-sans-bold text-[22px] leading-7 text-foreground">Set up HuntBot</Text>
+            <Text className="px-2 text-center font-sans text-sm leading-5 text-muted-foreground">
+              A couple of permissions so the assistant and driver tools work properly.
             </Text>
           </View>
 
-          <View className="gap-px overflow-hidden rounded-2xl" style={{ borderWidth: 1, borderColor: C.border }}>
-            {ITEMS.map((p) => {
-              const Icon = p.icon;
+          {/* permission rows */}
+          <View className="px-5 py-4">
+            {ITEMS.map((it, i) => {
+              const Icon = it.icon;
               return (
-                <View key={p.label} className="flex-row items-center gap-3 bg-accent p-3.5">
-                  <View className="size-10 items-center justify-center rounded-2xl bg-background">
-                    <Icon size={18} color={C.foreground} />
+                <View
+                  key={it.label}
+                  className="flex-row items-center gap-3.5 py-3"
+                  style={i > 0 ? { borderTopWidth: 1, borderTopColor: C.border } : undefined}
+                >
+                  <View className="size-11 items-center justify-center rounded-full bg-accent">
+                    <Icon size={19} color={C.foreground} strokeWidth={2} />
                   </View>
                   <View className="flex-1">
-                    <Text className="font-sans-medium text-[15px] text-foreground">{p.label}</Text>
-                    <Text className="font-sans text-[13px] leading-[18px] text-muted-foreground">{p.body}</Text>
+                    <Text className="font-sans-semibold text-[15px] text-foreground">{it.label}</Text>
+                    <Text className="font-sans text-[13px] leading-[18px] text-muted-foreground">{it.body}</Text>
                   </View>
                 </View>
               );
             })}
           </View>
 
-          <View className="gap-2">
+          {/* privacy note */}
+          <View className="mx-5 mb-4 flex-row items-center gap-2 rounded-2xl bg-accent px-3.5 py-2.5">
+            <Lock size={14} color={C.mutedForeground} />
+            <Text className="flex-1 font-sans text-xs leading-4 text-muted-foreground">
+              Used only while you drive. Change anytime in Settings.
+            </Text>
+          </View>
+
+          {/* actions */}
+          <View className="gap-1.5 px-5 pb-5">
             <Pressable
               onPress={allow}
               disabled={busy}
@@ -69,20 +100,20 @@ export function PermissionsModal({ onAllow, onSkip }: { onAllow: () => void; onS
               className="h-14 flex-row items-center justify-center gap-2 rounded-2xl bg-primary active:opacity-90"
               style={{ opacity: busy ? 0.7 : 1 }}
             >
-              {busy ? <ActivityIndicator color={C.primaryForeground} /> : null}
-              <Text className="font-sans-medium text-base text-primary-foreground">{busy ? 'Requesting…' : 'Allow access'}</Text>
+              {busy ? <ActivityIndicator size="small" color={C.primaryForeground} /> : null}
+              <Text className="font-sans-semibold text-base text-primary-foreground">{busy ? 'Requesting…' : 'Allow access'}</Text>
             </Pressable>
             <Pressable
               onPress={onSkip}
               disabled={busy}
               accessibilityRole="button"
               accessibilityLabel="Not now"
-              className="h-12 items-center justify-center rounded-2xl active:opacity-60"
+              className="h-11 items-center justify-center rounded-2xl active:opacity-60"
             >
               <Text className="font-sans-medium text-sm text-muted-foreground">Not now</Text>
             </Pressable>
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );

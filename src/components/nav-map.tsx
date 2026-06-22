@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
-import { Navigation2 } from 'lucide-react-native';
+import Svg, { Rect } from 'react-native-svg';
 
 import { DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
 import { type LatLng } from '@/lib/route';
@@ -29,13 +29,13 @@ export function NavMap({ coords, here, headingTo, onPress }: Props) {
   const mapRef = useRef<MapView>(null);
   const { scheme } = useSettings();
 
-  // close follow-cam locked at a fixed altitude above the puck
+  // North-up follow-cam — the truck marker itself rotates to the travel heading.
   useEffect(() => {
     mapRef.current?.animateCamera(
-      { center: here, pitch: 60, altitude: 320, zoom: 18, heading: bearing(here, headingTo) },
+      { center: here, pitch: 60, altitude: 320, zoom: 18, heading: 0 },
       { duration: 380 },
     );
-  }, [here, headingTo]);
+  }, [here]);
 
   return (
     <MapView
@@ -58,9 +58,13 @@ export function NavMap({ coords, here, headingTo, onPress }: Props) {
           </View>
         </Marker>
       ))}
-      <Marker coordinate={here} anchor={{ x: 0.5, y: 0.5 }} flat rotation={0}>
+      {/* truck puck — rotates to the direction of travel (top-down, points up at 0°) */}
+      <Marker coordinate={here} anchor={{ x: 0.5, y: 0.5 }} flat rotation={bearing(here, headingTo)} tracksViewChanges={false}>
         <View className="size-10 items-center justify-center rounded-full border-[3px] border-white" style={{ backgroundColor: C.route, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4 }}>
-          <Navigation2 size={20} color="#fff" fill="#fff" />
+          <Svg width={20} height={20} viewBox="0 0 24 24">
+            <Rect x={7} y={9} width={10} height={11} rx={2.5} fill="#fff" />
+            <Rect x={8.5} y={3.5} width={7} height={6.5} rx={2} fill="#fff" />
+          </Svg>
         </View>
       </Marker>
     </MapView>
