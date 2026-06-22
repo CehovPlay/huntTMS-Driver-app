@@ -199,8 +199,8 @@ export default function MessagesScreen() {
       </SafeAreaView>
 
       <ScrollView
-        contentContainerClassName="gap-3 p-4"
-        contentContainerStyle={mq.error || (!mq.loading && list.length === 0) ? { flex: 1 } : undefined}
+        contentContainerClassName="gap-3"
+        contentContainerStyle={[{ padding: 16, paddingBottom: 110 }, mq.error || (!mq.loading && list.length === 0) ? { flex: 1 } : null]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={mq.refreshing} onRefresh={mq.refetch} tintColor={C.mutedForeground} colors={[C.foreground]} />

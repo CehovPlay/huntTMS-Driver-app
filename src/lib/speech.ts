@@ -5,7 +5,7 @@
 
 import { Platform } from 'react-native';
 
-type SpeakOptions = { rate?: number; pitch?: number; language?: string };
+type SpeakOptions = { rate?: number; pitch?: number; language?: string; onDone?: () => void };
 
 let mod: { speak: (t: string, o?: SpeakOptions) => void; stop: () => void } | null = null;
 // Web/Telegram webview TTS is unreliable — keep voice native-only.

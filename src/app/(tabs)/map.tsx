@@ -124,9 +124,9 @@ export default function MapScreen() {
         </Pressable>
       </SafeAreaView>
 
-      {/* bottom card */}
+      {/* bottom card — sits above the floating tab bar (≈ bar height clearance) */}
       <SafeAreaView edges={['bottom']} className="mt-auto">
-        <View className="mx-3 mb-2 gap-3 rounded-3xl border border-border bg-background p-4" style={shadowSm}>
+        <View className="mx-3 gap-3 rounded-3xl border border-border bg-background p-4" style={[shadowSm, { marginBottom: 108 }]}>
           {stage === 'delivered' ? (
             <Text className="py-2 text-center font-sans text-base text-muted-foreground">No active load</Text>
           ) : (

@@ -48,18 +48,19 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
     <View className="flex-1">
       <ScrollView contentContainerClassName="gap-5 p-4 pb-4" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* amount */}
-        <View className="items-center gap-2 rounded-3xl bg-background py-7">
-          <Text className="font-sans-medium text-sm text-muted-foreground">Amount</Text>
-          <View className="flex-row items-center">
-            <Text className="font-sans-bold text-foreground" style={{ fontSize: 40 }}>$</Text>
+        <View className="items-center gap-1.5 rounded-3xl bg-background py-6">
+          <Text className="font-sans-medium text-xs uppercase tracking-wide text-muted-foreground">Amount</Text>
+          <View className="flex-row items-baseline justify-center">
+            <Text className="font-sans-semibold" style={{ fontSize: 24, color: C.mutedForeground, marginRight: 2 }}>$</Text>
             <TextInput
               value={amount}
               onChangeText={(t) => setAmount(t.replace(/[^0-9.]/g, ''))}
               placeholder="0.00"
               placeholderTextColor={C.mutedForeground}
               keyboardType="decimal-pad"
+              textAlign="center"
               className="font-sans-bold text-foreground"
-              style={{ fontSize: 40, minWidth: 120, paddingVertical: 0 }}
+              style={{ fontSize: 44, minWidth: 64, paddingVertical: 0 }}
             />
           </View>
         </View>

@@ -240,8 +240,7 @@ export default function LoadsScreen() {
 
       {/* Body — plain views, no layout animations (avoids the device-only reanimated crash) */}
       <ScrollView
-        contentContainerClassName="pb-4"
-        contentContainerStyle={q.error || (!q.loading && empty) ? { flexGrow: 1 } : undefined}
+        contentContainerStyle={[{ paddingBottom: 110 }, q.error || (!q.loading && empty) ? { flexGrow: 1 } : null]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={q.refreshing} onRefresh={q.refetch} tintColor={C.mutedForeground} colors={[C.foreground]} />

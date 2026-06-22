@@ -38,8 +38,10 @@ import { ActiveLoadProvider } from '@/lib/active-load';
 import { ExpensesProvider } from '@/lib/expenses';
 import { NotificationProvider } from '@/lib/notifications';
 import { SettingsProvider, useSettings } from '@/lib/settings';
+import { CopilotProvider } from '@/lib/use-assistant';
 import { biometricAuth } from '@/lib/biometric';
 import { initTelegram } from '@/lib/telegram';
+import { HuntBotFab } from '@/components/huntbot-fab';
 import { Pressable } from '@/components/pressable';
 import { Logo } from '@/components/logo';
 import { C, themeVars } from '@/lib/theme';
@@ -118,20 +120,25 @@ function ThemedShell() {
     <Animated.View key={scheme} style={[{ flex: 1 }, themeVars(scheme), fadeStyle]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <BiometricGate>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: pageBg },
-            animation: 'slide_from_right',
-            gestureEnabled: true,
-          }}
-        >
-          {/* iOS: camera & call slide up full-screen; confirm-scan as a sheet */}
-          <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="call" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="confirm-scan" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="navigate" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-        </Stack>
+        <CopilotProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: pageBg },
+              animation: 'slide_from_right',
+              gestureEnabled: true,
+            }}
+          >
+            {/* iOS: camera & call slide up full-screen; confirm-scan as a sheet */}
+            <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="call" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="confirm-scan" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="navigate" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+          </Stack>
+          {/* HuntBot reachable from every stack screen (tab screens use the
+              center bot in the tab bar instead) */}
+          <HuntBotFab />
+        </CopilotProvider>
       </BiometricGate>
     </Animated.View>
   );
