@@ -6,6 +6,7 @@ import { ArrowLeft, BellOff } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import { PressableScale } from '@/components/pressable-scale';
+import { Appear } from '@/components/appear';
 import { C } from '@/lib/theme';
 import { useNotifications, notifIcon } from '@/lib/notifications';
 
@@ -62,28 +63,51 @@ export default function Notifications() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.mutedForeground} colors={[C.foreground]} />
           }
         >
-          {feed.map((n) => {
+          {feed.map((n, i) => {
             const { icon: Icon, color } = notifIcon(n.type);
             return (
-              <PressableScale
-                key={n.id}
-                onPress={() => n.href && router.push(n.href as never)}
-                className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-90"
-              >
-                <View className="size-10 items-center justify-center rounded-full" style={{ backgroundColor: `${color}1A` }}>
-                  <Icon size={20} color={color} />
-                </View>
-                <View className="flex-1 gap-0.5">
-                  <Text className="font-sans-semibold text-base text-foreground">{n.title}</Text>
-                  {n.body ? (
-                    <Text className="font-sans text-sm text-muted-foreground" numberOfLines={2}>
-                      {n.body}
-                    </Text>
-                  ) : null}
-                  <Text className="font-sans text-xs text-muted-foreground">{n.time}</Text>
-                </View>
-                {!n.read ? <View className="size-2.5 rounded-full" style={{ backgroundColor: C.teal }} /> : null}
-              </PressableScale>
+              <Appear key={n.id} index={i}>
+                <PressableScale
+                  onPress={() => n.href && router.push(n.href as never)}
+                  className="flex-row gap-3 rounded-3xl bg-background p-4 active:opacity-90"
+                >
+                  {/* icon chip + unread badge */}
+                  <View className="relative">
+                    <View
+                      className="size-11 items-center justify-center rounded-2xl"
+                      style={{ backgroundColor: `${color}1A` }}
+                    >
+                      <Icon size={20} color={color} />
+                    </View>
+                    {!n.read ? (
+                      <View
+                        className="absolute -right-1 -top-1 size-3 rounded-full border-2 border-background"
+                        style={{ backgroundColor: C.teal }}
+                      />
+                    ) : null}
+                  </View>
+
+                  <View className="flex-1 gap-1">
+                    <View className="flex-row items-start gap-2">
+                      <Text
+                        className="flex-1 font-sans-semibold text-[15px] leading-5 text-foreground"
+                        numberOfLines={1}
+                        style={{ opacity: n.read ? 0.85 : 1 }}
+                      >
+                        {n.title}
+                      </Text>
+                      <Text className="font-sans text-xs text-muted-foreground" style={{ marginTop: 1 }}>
+                        {n.time}
+                      </Text>
+                    </View>
+                    {n.body ? (
+                      <Text className="font-sans text-sm leading-5 text-muted-foreground" numberOfLines={2}>
+                        {n.body}
+                      </Text>
+                    ) : null}
+                  </View>
+                </PressableScale>
+              </Appear>
             );
           })}
         </ScrollView>

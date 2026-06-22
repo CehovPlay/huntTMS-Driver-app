@@ -294,10 +294,11 @@ export default function LoadDetailScreen() {
               onPress={() => router.push('/route-map')}
               accessibilityRole="button"
               accessibilityLabel="View route on map"
-              className="absolute bottom-2 left-1/2 -ml-16 w-32 flex-row items-center justify-center gap-2 rounded-full bg-primary py-2.5 active:opacity-90"
+              hitSlop={8}
+              className="absolute right-2 top-2 size-9 items-center justify-center rounded-full bg-primary active:opacity-90"
+              style={shadowSm}
             >
-              <Maximize2 size={14} color={C.primaryForeground} />
-              <Text className="font-sans-medium text-sm text-primary-foreground">View on map</Text>
+              <Maximize2 size={16} color={C.primaryForeground} />
             </Pressable>
           </View>
         </View>
