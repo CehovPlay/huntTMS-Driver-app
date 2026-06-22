@@ -64,8 +64,8 @@ const badgeIcon = (title: string, sub: string, on: boolean, dead = false) =>
     iconSize: [0, 0],
     iconAnchor: [0, 0],
     html: dead
-      ? `<div style="transform:translate(-50%,-50%);display:inline-block;white-space:nowrap;background:#fff;border:1px dashed ${C.border};border-radius:999px;padding:3px 10px;font:500 11px -apple-system,sans-serif;color:${C.mutedForeground};box-shadow:0 1px 5px rgba(0,0,0,.15)">${title} · ${sub}</div>`
-      : `<div style="transform:translate(-50%,-50%);display:inline-block;text-align:center;white-space:nowrap;background:${on ? BLUE : '#fff'};border:1px solid ${on ? BLUE : C.border};border-radius:14px;padding:3px 10px;box-shadow:0 1px 5px rgba(0,0,0,.15)"><div style="font:500 10px -apple-system,sans-serif;color:${on ? 'rgba(255,255,255,.85)' : C.mutedForeground}">${title}</div><div style="font:600 12px -apple-system,sans-serif;color:${on ? '#fff' : C.foreground}">${sub}</div></div>`,
+      ? `<div style="transform:translate(-50%,-50%);display:inline-block;white-space:nowrap;background:${C.background};border:1px dashed ${C.border};border-radius:999px;padding:3px 10px;font:500 11px -apple-system,sans-serif;color:${C.mutedForeground};box-shadow:0 1px 5px rgba(0,0,0,.25)">${title} · ${sub}</div>`
+      : `<div style="transform:translate(-50%,-50%);display:inline-block;text-align:center;white-space:nowrap;background:${on ? BLUE : C.background};border:1px solid ${on ? BLUE : C.border};border-radius:14px;padding:3px 10px;box-shadow:0 1px 5px rgba(0,0,0,.25)"><div style="font:500 10px -apple-system,sans-serif;color:${on ? 'rgba(255,255,255,.85)' : C.mutedForeground}">${title}</div><div style="font:600 12px -apple-system,sans-serif;color:${on ? '#fff' : C.foreground}">${sub}</div></div>`,
   });
 
 type Props = {
