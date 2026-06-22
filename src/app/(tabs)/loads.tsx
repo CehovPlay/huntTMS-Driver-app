@@ -16,6 +16,7 @@ import { Logo } from '@/components/logo';
 import { useNotifications } from '@/lib/notifications';
 import { C, shadowXs } from '@/lib/theme';
 import { loadBadge } from '@/lib/status';
+import { Appear } from '@/components/appear';
 import {
   COMPLETED_TRIPS,
   DELIVERED_CURRENT,
@@ -334,6 +335,7 @@ export default function LoadsScreen() {
         ) : (
           <View className="gap-3 p-4">
             {showOffer && offer ? (
+              <Appear>
               <PressableScale
                 onPress={() =>
                   router.push({ pathname: '/load/[id]', params: { id: offer.id, variant: 'offered' } })
@@ -366,17 +368,27 @@ export default function LoadsScreen() {
                   </View>
                 </View>
               </PressableScale>
+              </Appear>
             ) : null}
             {tab === 'scheduled'
-              ? groups.map((g) => (
-                  <View key={g.label} className="gap-3">
-                    <Text className="px-1 font-sans-medium text-sm text-muted-foreground">{g.label}</Text>
-                    {g.trips.map((trip) => (
-                      <TripCard key={trip.id} trip={trip} />
-                    ))}
-                  </View>
-                ))
-              : completed.map((trip) => <TripCard key={trip.id} trip={trip} />)}
+              ? (() => {
+                  let k = showOffer ? 1 : 0;
+                  return groups.map((g) => (
+                    <View key={g.label} className="gap-3">
+                      <Text className="px-1 font-sans-medium text-sm text-muted-foreground">{g.label}</Text>
+                      {g.trips.map((trip) => (
+                        <Appear key={trip.id} index={k++}>
+                          <TripCard trip={trip} />
+                        </Appear>
+                      ))}
+                    </View>
+                  ));
+                })()
+              : completed.map((trip, i) => (
+                  <Appear key={trip.id} index={i}>
+                    <TripCard trip={trip} />
+                  </Appear>
+                ))}
           </View>
         )}
       </ScrollView>

@@ -31,6 +31,7 @@ import { useOffline, setOffline } from '@/lib/use-mock-query';
 import { biometricAvailable } from '@/lib/biometric';
 import { C } from '@/lib/theme';
 import { docColor } from '@/lib/status';
+import { Appear } from '@/components/appear';
 import {
   CO_DRIVER,
   DRIVER,
@@ -55,10 +56,10 @@ let sectionOrder = 0;
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   const delay = (sectionOrder++ % 7) * 55;
   return (
-    <View className="gap-2">
+    <Appear delay={delay} className="gap-2">
       <Text className="px-1 font-sans-medium text-sm text-muted-foreground">{title}</Text>
       <View className="gap-px overflow-hidden rounded-3xl bg-background">{children}</View>
-    </View>
+    </Appear>
   );
 }
 

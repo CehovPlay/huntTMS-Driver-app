@@ -14,6 +14,7 @@ _td.defaultProps.maxFontSizeMultiplier = 1.35;
 _td.defaultProps.allowFontScaling = true;
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaInsetsContext } from 'react-native-safe-area-context';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
@@ -88,6 +89,14 @@ function BiometricGate({ children }: { children: React.ReactNode }) {
 function ThemedShell() {
   const { scheme } = useSettings();
   const pageBg = scheme === 'dark' ? '#0a0a0b' : '#ffffff';
+  // Fade the shell in on mount. Because the tree remounts on every theme change
+  // (key={scheme} below), this plays on each switch — a smooth crossfade that
+  // hides the remount flash instead of a hard cut.
+  const fade = useSharedValue(0);
+  useEffect(() => {
+    fade.value = withTiming(1, { duration: 240 });
+  }, [fade]);
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: fade.value }));
   return (
     // NativeWind className tokens (bg-background…) resolve against these CSS
     // variables (the `.dark` selector is web-only, so native needs them set here).
@@ -96,7 +105,7 @@ function ThemedShell() {
     // plain re-render leaves stale inline colors (avatars, status dots, badges) on
     // background tabs. Remounting guarantees every screen renders in the new theme
     // (on web expo-router restores the current route from the URL).
-    <View key={scheme} style={[{ flex: 1 }, themeVars(scheme)]}>
+    <Animated.View key={scheme} style={[{ flex: 1 }, themeVars(scheme), fadeStyle]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <BiometricGate>
         <Stack
@@ -114,7 +123,7 @@ function ThemedShell() {
           <Stack.Screen name="navigate" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         </Stack>
       </BiometricGate>
-    </View>
+    </Animated.View>
   );
 }
 

@@ -14,6 +14,7 @@ import { useNotifications } from '@/lib/notifications';
 import { C } from '@/lib/theme';
 import { CONVERSATIONS, type Conversation } from '@/lib/chat';
 import { convBadge } from '@/lib/status';
+import { Appear } from '@/components/appear';
 
 const KIND_ICON = {
   text: null,
@@ -217,7 +218,11 @@ export default function MessagesScreen() {
             </Text>
           </View>
         ) : (
-          list.map((conv) => <ConvCard key={conv.id} conv={conv} />)
+          list.map((conv, i) => (
+            <Appear key={conv.id} index={i}>
+              <ConvCard conv={conv} />
+            </Appear>
+          ))
         )}
       </ScrollView>
     </View>

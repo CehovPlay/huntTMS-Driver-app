@@ -1,14 +1,30 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NativeScrollEvent, NativeSyntheticEvent, Platform, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { Bell, Camera, FileSignature, MapPin, Navigation2, Package, ShieldCheck, Truck } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import { Logo } from '@/components/logo';
+import { Appear } from '@/components/appear';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/lib/settings';
 import { C } from '@/lib/theme';
+
+// Page indicator dot — the active dot springs wider.
+function Dot({ active }: { active: boolean }) {
+  const w = useSharedValue(active ? 22 : 7);
+  useEffect(() => {
+    w.value = withSpring(active ? 22 : 7, { damping: 16, stiffness: 240 });
+  }, [active, w]);
+  const style = useAnimatedStyle(() => ({ width: w.value }));
+  return (
+    <Animated.View
+      style={[{ height: 7, borderRadius: 4, backgroundColor: active ? C.primary : C.border }, style]}
+    />
+  );
+}
 
 type Slide = { icon: typeof Truck; title: string; body: string };
 
@@ -93,14 +109,16 @@ export default function Onboarding() {
         {SLIDES.map((s) => {
           const Icon = s.icon;
           return (
-            <View key={s.title} style={{ width }} className="flex-1 items-center justify-center gap-6 px-10">
-              <View className="size-24 items-center justify-center rounded-4xl bg-accent">
-                <Icon size={44} color={C.foreground} />
-              </View>
-              <View className="gap-3">
-                <Text className="text-center font-sans-bold text-2xl text-foreground">{s.title}</Text>
-                <Text className="text-center font-sans text-base leading-6 text-muted-foreground">{s.body}</Text>
-              </View>
+            <View key={s.title} style={{ width }} className="flex-1 items-center justify-center px-10">
+              <Appear delay={120} className="items-center gap-6">
+                <View className="size-24 items-center justify-center rounded-4xl bg-accent">
+                  <Icon size={44} color={C.foreground} />
+                </View>
+                <View className="gap-3">
+                  <Text className="text-center font-sans-bold text-2xl text-foreground">{s.title}</Text>
+                  <Text className="text-center font-sans text-base leading-6 text-muted-foreground">{s.body}</Text>
+                </View>
+              </Appear>
             </View>
           );
         })}
@@ -140,15 +158,7 @@ export default function Onboarding() {
         <View className="gap-5 px-8 pb-2 pt-3">
           <View className="flex-row items-center justify-center gap-2">
             {Array.from({ length: total }).map((_, i) => (
-              <View
-                key={i}
-                style={{
-                  width: i === page ? 22 : 7,
-                  height: 7,
-                  borderRadius: 4,
-                  backgroundColor: i === page ? C.primary : C.border,
-                }}
-              />
+              <Dot key={i} active={i === page} />
             ))}
           </View>
           <Pressable

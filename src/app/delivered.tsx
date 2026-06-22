@@ -7,6 +7,8 @@ import { Check, MapPin } from 'lucide-react-native';
 import { CURRENT_LOAD } from '@/lib/mock';
 import { Pressable } from '@/components/pressable';
 import { DocsFlowSheet } from '@/components/docs-flow-sheet';
+import { SuccessCheck } from '@/components/success-check';
+import { Appear } from '@/components/appear';
 import { REQUIRED_DOCS, useActiveLoad } from '@/lib/active-load';
 import { C } from '@/lib/theme';
 
@@ -21,13 +23,30 @@ export default function Delivered() {
   const { docs, canDeliver, reset, markDelivered, addDoc } = useActiveLoad();
   // The upload modal pops up on arrival (and can be reopened from the list).
   const [sheetOpen, setSheetOpen] = useState(true);
+  const [done, setDone] = useState(false);
 
   const complete = () => {
-    if (!canDeliver) return;
+    if (!canDeliver || done) return;
     markDelivered(CURRENT_LOAD.reference);
-    reset();
-    router.replace('/loads');
+    setDone(true);
+    // Let the success animation play before returning to the load list.
+    setTimeout(() => {
+      reset();
+      router.replace('/loads');
+    }, 1250);
   };
+
+  if (done) {
+    return (
+      <View className="flex-1 items-center justify-center gap-5 bg-background">
+        <SuccessCheck size={92} />
+        <Appear delay={260} className="items-center gap-1">
+          <Text className="font-sans-semibold text-2xl text-foreground">Load delivered</Text>
+          <Text className="font-sans text-base text-muted-foreground">{CURRENT_LOAD.reference}</Text>
+        </Appear>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-accent">

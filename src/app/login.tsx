@@ -1,15 +1,27 @@
 import { useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { router } from 'expo-router';
 
 import { Logo } from '@/components/logo';
 import { Pressable } from '@/components/pressable';
+import { Appear } from '@/components/appear';
 import { C, shadowXs } from '@/lib/theme';
 
 export default function LogIn() {
   const [phone, setPhone] = useState('');
   const [error, setError] = useState(false);
+  const focus = useSharedValue(0);
+
+  // Read tokens on the JS thread — the `C` proxy isn't available inside the
+  // worklet (UI thread), so capture plain color strings here and close over them.
+  const inputC = C.input;
+  const fgC = C.foreground;
+  const destC = C.destructive;
+  const borderStyle = useAnimatedStyle(() => ({
+    borderColor: error ? destC : interpolateColor(focus.value, [0, 1], [inputC, fgC]),
+  }));
 
   const digits = phone.replace(/[^0-9]/g, '');
 
@@ -45,7 +57,7 @@ export default function LogIn() {
             </View>
 
             {/* Form (bottom) */}
-            <View className="w-full flex-1 items-center justify-end gap-5">
+            <Appear delay={120} className="w-full flex-1 items-center justify-end gap-5">
               <View className="w-full items-center gap-2">
                 <Text className="text-center font-sans-medium text-2xl leading-8 text-foreground">
                   Sign in with phone
@@ -56,9 +68,9 @@ export default function LogIn() {
               </View>
 
               <View className="w-full gap-2">
-                <View
+                <Animated.View
                   className="h-16 flex-row items-center gap-3 rounded-2xl border bg-background px-4"
-                  style={{ borderColor: error ? C.destructive : C.input, ...shadowXs }}
+                  style={[{ ...shadowXs }, borderStyle]}
                 >
                   <Text className="font-sans text-base text-foreground">+1</Text>
                   <TextInput
@@ -71,10 +83,12 @@ export default function LogIn() {
                     autoComplete="tel"
                     returnKeyType="done"
                     onSubmitEditing={submit}
+                    onFocus={() => { focus.value = withTiming(1, { duration: 180 }); }}
+                    onBlur={() => { focus.value = withTiming(0, { duration: 180 }); }}
                     value={phone}
                     onChangeText={onChange}
                   />
-                </View>
+                </Animated.View>
                 {error ? (
                   <Text className="px-1 font-sans text-sm" style={{ color: C.destructive }}>
                     Please enter a valid phone number
@@ -91,7 +105,7 @@ export default function LogIn() {
               >
                 <Text className="font-sans-medium text-base text-primary-foreground">Sign in</Text>
               </Pressable>
-            </View>
+            </Appear>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>

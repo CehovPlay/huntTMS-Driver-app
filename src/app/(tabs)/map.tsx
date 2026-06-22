@@ -15,11 +15,18 @@ import { TripMap, type MapRoutes } from '@/components/trip-map';
 import { REQUIRED_DOCS, useActiveLoad } from '@/lib/active-load';
 import { useNotifications } from '@/lib/notifications';
 import { C, shadowSm } from '@/lib/theme';
+import { useCountUp } from '@/lib/use-count-up';
 
 const DOC_LABEL: Record<string, string> = {
   'Bill of landing': 'Bill of Lading (BOL)',
   'Proof of delivery': 'Proof of Delivery (POD)',
 };
+
+// Isolated so the count-up's re-renders don't touch the heavy map tree.
+function EtaDistance({ meters }: { meters: number }) {
+  const m = useCountUp(meters, 800);
+  return <Text className="font-sans text-sm text-muted-foreground">{milesText(m)}</Text>;
+}
 
 export default function MapScreen() {
   const load = CURRENT_LOAD;
@@ -99,7 +106,7 @@ export default function MapScreen() {
             <Clock size={15} color={C.teal} />
             <Text className="font-sans-semibold text-sm text-foreground">{etaText(routes.fastest.duration)}</Text>
             <View className="size-1 rounded-full" style={{ backgroundColor: C.mutedForeground }} />
-            <Text className="font-sans text-sm text-muted-foreground">{milesText(routes.fastest.distance)}</Text>
+            <EtaDistance meters={routes.fastest.distance} />
           </View>
         </SafeAreaView>
       ) : null}
