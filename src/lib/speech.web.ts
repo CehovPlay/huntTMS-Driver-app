@@ -12,12 +12,22 @@ export const isSpeechAvailable = !!synth;
 // Highest-quality free voices first. Names vary by browser/OS; we match exact
 // then by substring, then fall back to any natural/en-US voice.
 const PREFERRED = [
+  // Cloud neural voices (most natural when available)
   'Microsoft Aria Online (Natural)',
   'Microsoft Jenny Online (Natural)',
   'Microsoft Emma Online (Natural)',
   'Google US English',
-  'Samantha',
+  // Apple premium / enhanced local voices (macOS / iOS, far less robotic)
   'Ava (Premium)',
+  'Zoe (Premium)',
+  'Evan (Enhanced)',
+  'Samantha (Enhanced)',
+  'Allison (Enhanced)',
+  // Apple Siri voices (show up as plain first names in Chrome on macOS)
+  'Aaron',
+  'Nicky',
+  // Compact fallbacks
+  'Samantha',
   'Ava',
   'Allison',
   'Google UK English Female',
@@ -68,9 +78,10 @@ export const Speech = {
       const u = new SpeechSynthesisUtterance(text);
       if (chosen) u.voice = chosen;
       u.lang = chosen?.lang || options?.language || 'en-US';
-      // Slightly slower + neutral pitch reads more naturally than the defaults.
-      u.rate = options?.rate ?? 0.98;
-      u.pitch = options?.pitch ?? 1.0;
+      // Slightly slower + a touch lower pitch reads warmer / less robotic than
+      // the synth defaults.
+      u.rate = options?.rate ?? 0.95;
+      u.pitch = options?.pitch ?? 0.94;
       let done = false;
       const finish = () => {
         if (done) return;

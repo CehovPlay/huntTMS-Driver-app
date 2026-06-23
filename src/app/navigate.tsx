@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowUp, CornerUpLeft, CornerUpRight, Flag, MapPin, Navigation2, Package, Play, Sparkles, Volume2, VolumeX, X } from 'lucide-react-native';
+import { ArrowUp, CornerUpLeft, CornerUpRight, Flag, MapPin, Navigation2, Package, Pause, Play, Sparkles, Volume2, VolumeX, X } from 'lucide-react-native';
 
 import { Speech } from '@/lib/speech';
 import { useCopilot } from '@/lib/use-assistant';
@@ -58,7 +58,6 @@ export default function Navigate() {
           const last = NAV_STOPS[NAV_STOPS.length - 1];
           Speech.speak(
             `Starting route to ${last.city}. ${milesText(r.primary.distance)}, about ${etaText(r.primary.duration)}.`,
-            { rate: 1.0 },
           );
         }
       }
@@ -96,7 +95,7 @@ export default function Navigate() {
     spoken.current = upcoming.offset;
     const phrase = upcoming.type === 'arrive' ? upcoming.instruction : `In ${milesText(distToNext)}, ${upcoming.instruction}`;
     Speech.stop();
-    Speech.speak(phrase, { rate: 1.0, pitch: 1.0 });
+    Speech.speak(phrase);
   }, [upcoming?.offset, muted, paused, rerouting]);
 
   const togglePause = () => {
@@ -113,7 +112,7 @@ export default function Navigate() {
       {/* overlay: compact maneuver chip + controls (top), progress sheet (bottom) */}
       <View
         pointerEvents="box-none"
-        style={[StyleSheet.absoluteFill, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 8 }]}
+        style={[StyleSheet.absoluteFill, { paddingTop: insets.top + 8, paddingBottom: Math.max(insets.bottom, 12) + 12 }]}
         className="justify-between"
       >
         {/* top row */}
@@ -133,16 +132,15 @@ export default function Navigate() {
             </View>
           </View>
 
-          {/* controls */}
-          <View className="flex-row items-center gap-2">
+          {/* controls — compact icon-only cluster (one rounded bar) */}
+          <View className="flex-row items-center gap-1 rounded-full bg-background p-1" style={SHADOW}>
             <Pressable
-              onPress={openCopilot}
+              onPress={togglePause}
               accessibilityRole="button"
-              accessibilityLabel="Open HuntBot"
-              className="size-12 items-center justify-center rounded-full"
-              style={{ backgroundColor: C.teal, ...SHADOW }}
+              accessibilityLabel={paused ? 'Resume navigation' : 'Pause navigation'}
+              className="size-10 items-center justify-center rounded-full active:opacity-70"
             >
-              <Sparkles size={20} color="#fff" />
+              {paused ? <Play size={18} color={C.foreground} fill={C.foreground} /> : <Pause size={18} color={C.foreground} fill={C.foreground} />}
             </Pressable>
             <Pressable
               onPress={() => {
@@ -151,20 +149,18 @@ export default function Navigate() {
               }}
               accessibilityRole="button"
               accessibilityLabel={muted ? 'Unmute voice guidance' : 'Mute voice guidance'}
-              className="size-12 items-center justify-center rounded-full"
-              style={{ backgroundColor: C.background, ...SHADOW }}
+              className="size-10 items-center justify-center rounded-full active:opacity-70"
             >
-              {muted ? <VolumeX size={20} color={C.foreground} /> : <Volume2 size={20} color={C.foreground} />}
+              {muted ? <VolumeX size={18} color={C.mutedForeground} /> : <Volume2 size={18} color={C.foreground} />}
             </Pressable>
             <Pressable
-              onPress={togglePause}
+              onPress={openCopilot}
               accessibilityRole="button"
-              accessibilityLabel={paused ? 'Resume navigation' : 'Pause navigation'}
-              className="h-12 flex-row items-center gap-1.5 rounded-full px-5 active:opacity-80"
-              style={{ backgroundColor: C.background, ...SHADOW }}
+              accessibilityLabel="Open HuntBot"
+              className="size-10 items-center justify-center rounded-full"
+              style={{ backgroundColor: C.teal }}
             >
-              {paused ? <Play size={16} color={C.foreground} fill={C.foreground} /> : null}
-              <Text className="font-sans-medium text-base text-foreground">{paused ? 'Resume' : 'Pause'}</Text>
+              <Sparkles size={18} color="#fff" />
             </Pressable>
           </View>
         </View>
@@ -174,44 +170,37 @@ export default function Navigate() {
           <QuickActions variant="floating" />
         </View>
 
-        {/* bottom sheet — one block: stats + progress track + end */}
-        <View className="mx-3 gap-5 rounded-3xl bg-background p-5" style={SHADOW}>
-          {/* 3 stats */}
-          <View className="flex-row">
-            <Stat value={milesText(remaining)} label="distance" />
-            <Stat value={etaText(remEta)} label="time left" />
-            <Stat value={arrival} label="arrival" />
+        {/* bottom sheet — slim: ETA-led stats + thin progress + end */}
+        <View className="mx-3 gap-3.5 rounded-3xl bg-background p-4" style={SHADOW}>
+          {/* stats — time left leads, distance + arrival beneath, exit at right */}
+          <View className="flex-row items-center justify-between gap-3">
+            <View className="shrink">
+              <Text className="font-sans-bold text-3xl leading-9 text-foreground" style={tnum} numberOfLines={1}>
+                {etaText(remEta)}
+              </Text>
+              <Text className="mt-0.5 font-sans text-sm text-muted-foreground" style={tnum} numberOfLines={1}>
+                {milesText(remaining)} · arrive {arrival}
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="End navigation"
+              className="size-10 items-center justify-center rounded-full active:opacity-70"
+              style={{ backgroundColor: C.accent }}
+            >
+              <X size={18} color={C.destructive} />
+            </Pressable>
           </View>
 
-          {/* progress track: origin → filled progress → destination */}
-          <View className="flex-row items-center gap-3" style={{ height: 48 }}>
-            <View className="items-center justify-center rounded-full" style={{ width: 48, height: 48, backgroundColor: C.foreground }}>
-              <Package size={22} color={C.background} />
+          {/* thin progress track with small endpoints */}
+          <View className="flex-row items-center gap-2.5">
+            <Package size={15} color={C.foreground} />
+            <View className="flex-1 overflow-hidden rounded-full" style={{ height: 6, backgroundColor: C.border }}>
+              <View className="rounded-full" style={{ height: 6, width: `${Math.max(4, progress * 100)}%`, backgroundColor: C.route }} />
             </View>
-            <View className="flex-1 overflow-hidden rounded-full" style={{ height: 10, backgroundColor: C.border }}>
-              <View
-                className="rounded-full"
-                style={{ height: 10, width: `${Math.max(6, progress * 100)}%`, backgroundColor: C.route }}
-              />
-            </View>
-            <View className="items-center justify-center rounded-full" style={{ width: 48, height: 48, backgroundColor: C.destructive }}>
-              <MapPin size={22} color="#fff" />
-            </View>
+            <MapPin size={15} color={C.destructive} />
           </View>
-
-          {/* end */}
-          <Pressable
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="End navigation"
-            className="h-16 flex-row items-center justify-center gap-2 rounded-2xl active:opacity-80"
-            style={{ backgroundColor: C.accent }}
-          >
-            <X size={18} color={C.destructive} />
-            <Text className="font-sans-medium text-base" style={{ color: C.destructive }}>
-              End navigation
-            </Text>
-          </Pressable>
         </View>
       </View>
     </View>
@@ -219,12 +208,3 @@ export default function Navigate() {
 }
 
 const SHADOW = { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 6 };
-
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <View className="flex-1">
-      <Text className="font-sans-semibold text-xl text-foreground" style={tnum}>{value}</Text>
-      <Text className="font-sans text-sm text-muted-foreground">{label}</Text>
-    </View>
-  );
-}
