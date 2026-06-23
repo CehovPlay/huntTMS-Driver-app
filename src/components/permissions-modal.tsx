@@ -43,14 +43,14 @@ export function PermissionsModal({ onAllow, onSkip }: { onAllow: () => void; onS
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={onSkip}>
       <View className="flex-1 items-center justify-center bg-black/60 px-6">
         <Animated.View
-          style={[cardStyle, { width: '100%', maxWidth: 380, borderRadius: 26 }]}
+          style={[cardStyle, { width: '100%', maxWidth: 380, borderRadius: 18 }]}
           className="overflow-hidden bg-background"
         >
           {/* hero */}
           <View className="items-center gap-3 px-6 pb-1 pt-7">
             <View
               className="size-16 items-center justify-center"
-              style={{ backgroundColor: C.teal, borderRadius: 20, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}
+              style={{ backgroundColor: C.teal, borderRadius: 14, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}
             >
               <Sparkles size={30} color="#fff" strokeWidth={2.2} />
             </View>

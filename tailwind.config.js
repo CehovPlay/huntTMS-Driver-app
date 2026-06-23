@@ -21,12 +21,12 @@ module.exports = {
         destructive: 'rgb(var(--destructive) / <alpha-value>)',
       },
       borderRadius: {
-        md: '8px',
-        lg: '10px',
-        xl: '14px',
-        '2xl': '16px',
-        '3xl': '24px',
-        '4xl': '32px',
+        md: '6px',
+        lg: '8px',
+        xl: '10px',
+        '2xl': '12px',
+        '3xl': '16px',
+        '4xl': '20px',
       },
       fontFamily: {
         // Geist — one family per weight (RN can't synthesize weights)

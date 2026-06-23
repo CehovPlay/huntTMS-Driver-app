@@ -12,7 +12,7 @@ const pin = (pickup: boolean) =>
     className: '',
     iconSize: [36, 36],
     iconAnchor: [18, 18],
-    html: `<div style="width:36px;height:36px;border-radius:18px;border:2px solid #fff;background:${pickup ? C.teal : C.foreground};display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.3)"><div style="width:13px;height:13px;border:2px solid #fff;border-radius:3px"></div></div>`,
+    html: `<div style="width:36px;height:36px;border-radius:18px;border:2px solid #fff;background:${C.foreground};display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.3)"><div style="width:13px;height:13px;border:2px solid #fff;border-radius:3px"></div></div>`,
   });
 
 export function StopMiniMap({ coordinate, pickup }: { coordinate: LatLng; pickup: boolean }) {

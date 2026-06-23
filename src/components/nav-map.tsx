@@ -53,7 +53,7 @@ export function NavMap({ coords, here, headingTo, onPress }: Props) {
       {coords.length ? <Polyline coordinates={coords} strokeColor={C.route} strokeWidth={8} /> : null}
       {NAV_STOPS.map((s, i) => (
         <Marker key={i} coordinate={s.coordinate} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
-          <View className="size-7 items-center justify-center rounded-full border-2 border-white" style={{ backgroundColor: i === 0 ? C.teal : C.foreground }}>
+          <View className="size-7 items-center justify-center rounded-full border-2 border-white" style={{ backgroundColor: C.foreground }}>
             <Text className="font-sans-bold text-xs text-white">{i + 1}</Text>
           </View>
         </Marker>

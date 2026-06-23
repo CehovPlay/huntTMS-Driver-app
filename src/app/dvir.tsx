@@ -36,9 +36,9 @@ export default function Dvir() {
           <View className="flex-1 items-center justify-center gap-4 px-8">
             <View
               className="size-20 items-center justify-center rounded-full"
-              style={{ backgroundColor: `${safe ? C.teal : C.amber}1A` }}
+              style={{ backgroundColor: `${safe ? C.foreground : C.amber}1A` }}
             >
-              {safe ? <Check size={40} color={C.teal} /> : <TriangleAlert size={40} color={C.amber} />}
+              {safe ? <Check size={40} color={C.foreground} /> : <TriangleAlert size={40} color={C.amber} />}
             </View>
             <Text className="text-center font-sans-bold text-2xl text-foreground">Inspection submitted</Text>
             <Text className="text-center font-sans text-base text-muted-foreground">
@@ -134,7 +134,7 @@ export default function Dvir() {
                     <Text className="flex-1 font-sans-medium text-base text-foreground">{item}</Text>
                     {(['ok', 'defect'] as const).map((v) => {
                       const active = st === v;
-                      const color = v === 'ok' ? C.teal : C.destructive;
+                      const color = v === 'ok' ? C.foreground : C.destructive;
                       return (
                         <Pressable
                           key={v}
@@ -187,10 +187,10 @@ export default function Dvir() {
         {/* status summary */}
         <View
           className="flex-row items-center gap-3 rounded-3xl p-4"
-          style={{ backgroundColor: `${safe ? C.teal : C.amber}14` }}
+          style={{ backgroundColor: `${safe ? C.foreground : C.amber}14` }}
         >
-          {safe ? <ClipboardCheck size={20} color={C.teal} /> : <TriangleAlert size={20} color={C.amber} />}
-          <Text className="flex-1 font-sans-medium text-sm" style={{ color: safe ? C.teal : C.amber }}>
+          {safe ? <ClipboardCheck size={20} color={C.foreground} /> : <TriangleAlert size={20} color={C.amber} />}
+          <Text className="flex-1 font-sans-medium text-sm" style={{ color: safe ? C.foreground : C.amberText }}>
             {safe
               ? 'No defects found. Vehicle is safe to operate.'
               : `${defects.length} defect${defects.length > 1 ? 's' : ''} flagged — must be reviewed before operating.`}

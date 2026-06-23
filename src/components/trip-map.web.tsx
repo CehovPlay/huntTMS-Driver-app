@@ -48,7 +48,7 @@ const stopIcon = (i: number) =>
     className: '',
     iconSize: [28, 28],
     iconAnchor: [14, 14],
-    html: `<div style="width:28px;height:28px;border-radius:14px;border:2px solid #fff;background:${i === 0 ? C.teal : C.foreground};color:#fff;font:700 12px -apple-system,sans-serif;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.3)">${i + 1}</div>`,
+    html: `<div style="width:28px;height:28px;border-radius:14px;border:2px solid #fff;background:${C.foreground};color:#fff;font:700 12px -apple-system,sans-serif;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.3)">${i + 1}</div>`,
   });
 
 const driverIcon = L.divIcon({

@@ -3,6 +3,7 @@ import { type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withDelay,
   withTiming,
@@ -30,12 +31,18 @@ export function Appear({
   className?: string;
   style?: StyleProp<ViewStyle>;
 }) {
+  const reduce = useReducedMotion();
   const p = useSharedValue(0);
-  const wait = index != null ? index * step : delay;
+  // Cap the stagger so long lists don't trail off with huge delays.
+  const wait = index != null ? Math.min(index, 6) * step : delay;
 
   useEffect(() => {
+    if (reduce) {
+      p.value = 1;
+      return;
+    }
     p.value = withDelay(wait, withTiming(1, { duration, easing: Easing.out(Easing.cubic) }));
-  }, [p, wait, duration]);
+  }, [p, wait, duration, reduce]);
 
   const animStyle = useAnimatedStyle(() => ({
     opacity: p.value,

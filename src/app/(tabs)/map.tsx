@@ -107,7 +107,7 @@ export default function MapScreen() {
             style={shadowSm}
             accessibilityLabel={`Estimated ${etaText(routes.fastest.duration)}, ${milesText(routes.fastest.distance)} remaining`}
           >
-            <Clock size={15} color={C.teal} />
+            <Clock size={15} color={C.foreground} />
             <Text className="font-sans-semibold text-sm text-foreground" style={tnum}>{etaText(routes.fastest.duration)}</Text>
             <View className="size-1 rounded-full" style={{ backgroundColor: C.mutedForeground }} />
             <EtaDistance meters={routes.fastest.distance} />
@@ -140,7 +140,7 @@ export default function MapScreen() {
                 className="gap-2 active:opacity-70"
               >
                 <View className="flex-row items-center gap-2">
-                  <Text className="font-sans-medium text-base text-teal">Next stop — {stop.type}</Text>
+                  <Text className="font-sans-medium text-base text-foreground">Next stop — {stop.type}</Text>
                   <Text className="font-sans text-base text-foreground">{stop.date}</Text>
                   <Text className="font-sans text-base text-foreground">{stop.time}</Text>
                 </View>
@@ -153,7 +153,7 @@ export default function MapScreen() {
                 <View className="gap-2.5 rounded-2xl bg-accent p-3.5">
                   <View className="flex-row items-center justify-between">
                     <Text className="font-sans-medium text-xs text-muted-foreground">DOCUMENTS</Text>
-                    <Text className="font-sans-medium text-xs" style={{ color: canDeliver ? C.teal : C.mutedForeground }}>
+                    <Text className="font-sans-medium text-xs" style={{ color: canDeliver ? C.foreground : C.mutedForeground }}>
                       {REQUIRED_DOCS.filter((d) => docs.includes(d)).length}/{REQUIRED_DOCS.length}
                     </Text>
                   </View>
@@ -178,14 +178,14 @@ export default function MapScreen() {
                       >
                         <View
                           className="size-5 items-center justify-center rounded-full"
-                          style={{ backgroundColor: up ? C.teal : 'transparent', borderWidth: up ? 0 : 1.5, borderColor: C.border }}
+                          style={{ backgroundColor: up ? C.foreground : 'transparent', borderWidth: up ? 0 : 1.5, borderColor: C.border }}
                         >
-                          {up ? <Check size={13} color="#fff" strokeWidth={3} /> : null}
+                          {up ? <Check size={13} color={C.background} strokeWidth={3} /> : null}
                         </View>
                         <Text className={`flex-1 text-sm ${up ? 'font-sans-medium text-foreground' : 'font-sans text-muted-foreground'}`}>
                           {DOC_LABEL[d] ?? d}
                         </Text>
-                        <Text className="font-sans-medium text-xs" style={{ color: up ? C.teal : C.foreground }}>
+                        <Text className="font-sans-medium text-xs" style={{ color: C.foreground }}>
                           {up ? 'Uploaded' : 'Upload'}
                         </Text>
                       </Pressable>
@@ -198,7 +198,7 @@ export default function MapScreen() {
                     <View className="flex-row flex-wrap gap-2">
                       {docs.map((d) => (
                         <View key={d} className="flex-row items-center gap-1.5 rounded-full bg-accent px-3 py-1">
-                          <Check size={14} color={C.teal} />
+                          <Check size={14} color={C.foreground} />
                           <Text className="font-sans-medium text-xs text-foreground">{d}</Text>
                         </View>
                       ))}

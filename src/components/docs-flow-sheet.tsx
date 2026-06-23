@@ -178,13 +178,13 @@ export function DocsFlowSheet({
                     >
                       <View
                         className="size-10 items-center justify-center rounded-2xl"
-                        style={{ backgroundColor: up ? C.teal : C.background }}
+                        style={{ backgroundColor: up ? C.foreground : C.background }}
                       >
-                        {up ? <Check size={18} color="#fff" strokeWidth={3} /> : <FileText size={18} color={C.foreground} />}
+                        {up ? <Check size={18} color={C.background} strokeWidth={3} /> : <FileText size={18} color={C.foreground} />}
                       </View>
                       <View className="flex-1">
                         <Text className="font-sans-medium text-base text-foreground">{labels[type] ?? type}</Text>
-                        <Text className="font-sans text-sm" style={{ color: up ? C.teal : C.mutedForeground }}>
+                        <Text className="font-sans text-sm" style={{ color: up ? C.foreground : C.mutedForeground }}>
                           {up ? 'Uploaded' : 'Required'}
                         </Text>
                       </View>

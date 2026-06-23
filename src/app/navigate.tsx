@@ -118,15 +118,15 @@ export default function Navigate() {
       >
         {/* top row */}
         <View pointerEvents="box-none" className="flex-row items-start justify-between gap-2 px-3">
-          {/* compact maneuver chip */}
-          <View className="flex-row items-center gap-2.5 rounded-2xl px-3 py-2.5" style={{ backgroundColor: C.primary, maxWidth: '58%' }}>
-            <ManIcon size={22} color={C.primaryForeground} />
+          {/* maneuver banner — enlarged for at-a-glance reading while driving */}
+          <View className="flex-row items-center gap-3 rounded-2xl px-3.5 py-3" style={{ backgroundColor: C.primary, maxWidth: '60%' }}>
+            <ManIcon size={26} color={C.primaryForeground} />
             <View className="shrink">
-              <Text className="font-sans-semibold text-base text-primary-foreground">
+              <Text className="font-sans-bold text-xl text-primary-foreground" style={tnum}>
                 {rerouting ? 'Rerouting…' : upcoming?.type === 'arrive' ? 'Arriving' : milesText(distToNext)}
               </Text>
               {!rerouting ? (
-                <Text className="font-sans text-xs" style={{ color: `${C.primaryForeground}B3` }} numberOfLines={1}>
+                <Text className="font-sans text-xs" style={{ color: `${C.primaryForeground}CC` }} numberOfLines={2}>
                   {upcoming?.instruction ?? 'Starting route…'}
                 </Text>
               ) : null}

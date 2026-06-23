@@ -17,10 +17,9 @@ export function RouteTimeline({ stops, delivered }: { stops: DetailStop[]; deliv
       {stops.map((s, i) => {
         const state = stateOf(s);
         const isLast = i === stops.length - 1;
-        const isPickup = s.type === 'Pick up';
-        const accent = isPickup ? C.foreground : C.teal;
+        const accent = C.foreground;
         // connector below this dot is "travelled" only when this stop is done
-        const lineColor = state === 'done' ? C.teal : C.border;
+        const lineColor = state === 'done' ? C.foreground : C.border;
 
         return (
           <View key={i} className="flex-row gap-3">
@@ -53,8 +52,8 @@ export function RouteTimeline({ stops, delivered }: { stops: DetailStop[]; deliv
               {/* status line — actual arrival (GPS) vs scheduled window */}
               {state === 'done' ? (
                 <View className="mt-0.5 flex-row items-center gap-1.5">
-                  <Check size={13} color={C.teal} />
-                  <Text className="font-sans-medium text-sm" style={{ color: C.teal }}>
+                  <Check size={13} color={C.foreground} />
+                  <Text className="font-sans-medium text-sm" style={{ color: C.foreground }}>
                     Arrived {s.arrival ?? s.doneAt ?? s.time}
                   </Text>
                 </View>
@@ -76,8 +75,8 @@ export function RouteTimeline({ stops, delivered }: { stops: DetailStop[]; deliv
 function Dot({ state, accent }: { state: Progress; accent: string }) {
   if (state === 'done') {
     return (
-      <View className="size-6 items-center justify-center rounded-full" style={{ backgroundColor: C.teal }}>
-        <Check size={14} color="#fff" strokeWidth={3} />
+      <View className="size-6 items-center justify-center rounded-full" style={{ backgroundColor: C.foreground }}>
+        <Check size={14} color={C.background} strokeWidth={3} />
       </View>
     );
   }

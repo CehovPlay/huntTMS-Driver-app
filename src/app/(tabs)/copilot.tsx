@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import { ArrowUp, Camera, Paperclip, Sparkles, Volume2, VolumeX } from 'lucide-react-native';
 
@@ -44,6 +45,33 @@ function Bubble({ msg, onChip }: { msg: CopilotMessage; onChip: (s: string) => v
   );
 }
 
+// "Typing" dots shown while HuntBot is thinking (chat-style).
+function Dot({ delay }: { delay: number }) {
+  const reduce = useReducedMotion();
+  const v = useSharedValue(0.3);
+  useEffect(() => {
+    if (reduce) {
+      v.value = 0.6;
+      return;
+    }
+    v.value = withDelay(delay, withRepeat(withTiming(1, { duration: 450, easing: Easing.inOut(Easing.quad) }), -1, true));
+  }, [v, delay, reduce]);
+  const style = useAnimatedStyle(() => ({ opacity: v.value }));
+  return <Animated.View style={[{ width: 7, height: 7, borderRadius: 4, backgroundColor: C.mutedForeground }, style]} />;
+}
+
+function TypingBubble() {
+  return (
+    <Appear className="items-start">
+      <View className="flex-row gap-1.5 rounded-2xl bg-accent px-4 py-3" style={{ borderWidth: 1, borderColor: C.border }}>
+        <Dot delay={0} />
+        <Dot delay={150} />
+        <Dot delay={300} />
+      </View>
+    </Appear>
+  );
+}
+
 export default function CopilotScreen() {
   const {
     status,
@@ -62,6 +90,7 @@ export default function CopilotScreen() {
   } = useCopilot();
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState('');
+  const [inputFocused, setInputFocused] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
   const pickFromLibrary = async () => {
@@ -162,6 +191,7 @@ export default function CopilotScreen() {
               </View>
             </View>
           ) : null}
+          {status === 'thinking' ? <TypingBubble /> : null}
         </ScrollView>
 
         {/* mic + status */}
@@ -191,7 +221,7 @@ export default function CopilotScreen() {
           >
             <Camera size={20} color={C.foreground} />
           </Pressable>
-          <View className="h-12 flex-1 flex-row items-center rounded-2xl bg-accent px-4" style={{ borderWidth: 1, borderColor: C.border }}>
+          <View className="h-12 flex-1 flex-row items-center rounded-2xl bg-accent px-4" style={{ borderWidth: 1.5, borderColor: inputFocused ? C.teal : C.border }}>
             <TextInput
               value={draft}
               onChangeText={setDraft}
@@ -201,6 +231,8 @@ export default function CopilotScreen() {
               style={{ paddingVertical: 0 }}
               returnKeyType="send"
               onSubmitEditing={() => draft.trim() && submit(draft)}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
             />
           </View>
           <Pressable

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Text, useWindowDimensions, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { Bell, Map, MessageCircle, Package, Sparkles } from 'lucide-react-native';
@@ -28,35 +28,45 @@ const LABELS: Record<string, string> = { loads: 'Loads', map: 'Map', messages: '
 // Geometry of the floating bar + center notch.
 const MARGIN = 14;
 const BAR_H = 64;
-const R = BAR_H / 2; // stadium end radius
+const CR = 16; // corner radius — matches the app's rounded-3xl cards
 const DIP_HALF = 48; // half-width of the center notch opening
 const DIP_DEPTH = 26; // how far the notch dips into the bar
 const BOT = 62; // raised bot button diameter
 const RAISE = BOT / 2 + 12; // top padding so the raised bot is reserved inside the bar (doesn't overlap screen content)
 
-// SVG path: stadium pill with a smooth concave dip in the top-center.
+// SVG path: rounded rectangle (16px corners) with a smooth concave dip in the top-center.
 function barPath(w: number) {
   const cx = w / 2;
+  const h = BAR_H;
   return [
-    `M ${R},0`,
+    `M ${CR},0`,
     `L ${cx - DIP_HALF},0`,
     `C ${cx - DIP_HALF + 16},0 ${cx - 28},${DIP_DEPTH} ${cx},${DIP_DEPTH}`,
     `C ${cx + 28},${DIP_DEPTH} ${cx + DIP_HALF - 16},0 ${cx + DIP_HALF},0`,
-    `L ${w - R},0`,
-    `A ${R},${R} 0 0 1 ${w - R},${BAR_H}`,
-    `L ${R},${BAR_H}`,
-    `A ${R},${R} 0 0 1 ${R},0`,
+    `L ${w - CR},0`,
+    `A ${CR},${CR} 0 0 1 ${w},${CR}`,
+    `L ${w},${h - CR}`,
+    `A ${CR},${CR} 0 0 1 ${w - CR},${h}`,
+    `L ${CR},${h}`,
+    `A ${CR},${CR} 0 0 1 0,${h - CR}`,
+    `L 0,${CR}`,
+    `A ${CR},${CR} 0 0 1 ${CR},0`,
     'Z',
   ].join(' ');
 }
 
 function TabItem({ focused, Icon, label, badge, onPress }: { focused: boolean; Icon: typeof Map; label: string; badge: number; onPress: () => void }) {
+  const reduce = useReducedMotion();
   const s = useSharedValue(1);
   const p = useSharedValue(focused ? 1 : 0);
   useEffect(() => {
+    if (reduce) {
+      p.value = focused ? 1 : 0;
+      return;
+    }
     p.value = withTiming(focused ? 1 : 0, { duration: 200 });
     if (focused) s.value = withSpring(1.14, { damping: 9, stiffness: 320 }, () => (s.value = withSpring(1, { damping: 16, stiffness: 220 })));
-  }, [focused, p, s]);
+  }, [focused, p, s, reduce]);
   const pill = useAnimatedStyle(() => ({ opacity: p.value, transform: [{ scale: 0.8 + p.value * 0.2 }] }));
   const icon = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
   return (
@@ -75,10 +85,11 @@ function TabItem({ focused, Icon, label, badge, onPress }: { focused: boolean; I
 }
 
 function BotButton({ focused, onPress }: { focused: boolean; onPress: () => void }) {
+  const reduce = useReducedMotion();
   const s = useSharedValue(1);
   useEffect(() => {
-    if (focused) s.value = withSpring(1.08, { damping: 8, stiffness: 300 }, () => (s.value = withSpring(1, { damping: 14, stiffness: 200 })));
-  }, [focused, s]);
+    if (!reduce && focused) s.value = withSpring(1.08, { damping: 8, stiffness: 300 }, () => (s.value = withSpring(1, { damping: 14, stiffness: 200 })));
+  }, [focused, s, reduce]);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
   return (
     <Animated.View style={[{ position: 'absolute', top: -BOT / 2 + 4, alignSelf: 'center', alignItems: 'center', justifyContent: 'center' }, style]}>

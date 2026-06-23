@@ -59,8 +59,8 @@ export default function Delivered() {
       <ScrollView contentContainerClassName="gap-5 p-4 pb-10" showsVerticalScrollIndicator={false}>
         {/* arrived */}
         <View className="items-center gap-3 rounded-3xl bg-background py-8">
-          <View className="size-16 items-center justify-center rounded-full" style={{ backgroundColor: `${C.teal}1F` }}>
-            <MapPin size={30} color={C.teal} />
+          <View className="size-16 items-center justify-center rounded-full" style={{ backgroundColor: C.accent }}>
+            <MapPin size={30} color={C.foreground} />
           </View>
           <Text className="font-sans-semibold text-xl text-foreground">Arrived at delivery</Text>
           <Text className="px-8 text-center font-sans text-base leading-6 text-muted-foreground">
@@ -72,7 +72,7 @@ export default function Delivered() {
         <View className="gap-2">
           <View className="flex-row items-center justify-between px-1">
             <Text className="font-sans-medium text-sm text-muted-foreground">REQUIRED DOCUMENTS</Text>
-            <Text className="font-sans-medium text-sm" style={{ color: canDeliver ? C.teal : C.amber }}>
+            <Text className="font-sans-medium text-sm" style={{ color: canDeliver ? C.foreground : C.amberText }}>
               {REQUIRED_DOCS.filter((d) => docs.includes(d)).length}/{REQUIRED_DOCS.length}
             </Text>
           </View>
@@ -92,12 +92,12 @@ export default function Delivered() {
                 >
                   <View
                     className="size-6 items-center justify-center rounded-full"
-                    style={{ backgroundColor: up ? C.teal : 'transparent', borderWidth: up ? 0 : 1.5, borderColor: C.border }}
+                    style={{ backgroundColor: up ? C.foreground : 'transparent', borderWidth: up ? 0 : 1.5, borderColor: C.border }}
                   >
-                    {up ? <Check size={14} color="#fff" strokeWidth={3} /> : null}
+                    {up ? <Check size={14} color={C.background} strokeWidth={3} /> : null}
                   </View>
                   <Text className="flex-1 font-sans-medium text-base text-foreground">{DOC_LABEL[d] ?? d}</Text>
-                  <Text className="font-sans-medium text-sm" style={{ color: up ? C.teal : C.foreground }}>
+                  <Text className="font-sans-medium text-sm" style={{ color: C.foreground }}>
                     {up ? 'Uploaded' : 'Upload'}
                   </Text>
                 </Pressable>

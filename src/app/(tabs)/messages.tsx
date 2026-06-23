@@ -11,7 +11,6 @@ import { ErrorState } from '@/components/error-state';
 import { EmptyState } from '@/components/empty-state';
 import { Logo } from '@/components/logo';
 import { useMockQuery } from '@/lib/use-mock-query';
-import { useNotifications } from '@/lib/notifications';
 import { C } from '@/lib/theme';
 import { CONVERSATIONS, type Conversation } from '@/lib/chat';
 import { convBadge } from '@/lib/status';
@@ -36,8 +35,8 @@ function ConvCard({ conv }: { conv: Conversation }) {
     >
       {/* avatar + online dot */}
       <View style={{ position: 'relative', alignSelf: 'flex-start' }}>
-        <View className="size-12 items-center justify-center rounded-full" style={{ backgroundColor: C.primary }}>
-          <Text className="font-sans-semibold text-base text-primary-foreground">{conv.dispatcher.initials}</Text>
+        <View className="size-12 items-center justify-center rounded-full" style={{ backgroundColor: C.border }}>
+          <Text className="font-sans-semibold text-base text-foreground">{conv.dispatcher.initials}</Text>
         </View>
         {conv.dispatcher.online ? (
           <View
@@ -48,7 +47,7 @@ function ConvCard({ conv }: { conv: Conversation }) {
               width: 15,
               height: 15,
               borderRadius: 8,
-              backgroundColor: C.teal,
+              backgroundColor: C.foreground,
               borderWidth: 3,
               borderColor: C.background,
             }}
@@ -88,7 +87,7 @@ function ConvCard({ conv }: { conv: Conversation }) {
         <View className="flex-row items-center gap-2">
           {conv.mineLast ? (
             conv.unread === 0 ? (
-              <CheckCheck size={15} color={C.teal} />
+              <CheckCheck size={15} color={C.foreground} />
             ) : (
               <Check size={15} color={C.mutedForeground} />
             )
@@ -126,7 +125,6 @@ function ConvCardSkeleton() {
 }
 
 export default function MessagesScreen() {
-  const { unread } = useNotifications();
   const [query, setQuery] = useState('');
   const mq = useMockQuery();
 
@@ -149,30 +147,13 @@ export default function MessagesScreen() {
               <Logo height={24} />
             </View>
             <Pressable
-              onPress={() => router.push('/notifications')}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
-              className="size-12 items-center justify-center rounded-full active:opacity-70"
-            >
-              <Bell size={20} color={C.foreground} />
-              {unread > 0 ? (
-                <View
-                  className="absolute right-1 top-1 size-4 items-center justify-center rounded-full"
-                  style={{ backgroundColor: C.destructive }}
-                >
-                  <Text className="font-sans-semibold text-[10px] text-white">{unread}</Text>
-                </View>
-              ) : null}
-            </Pressable>
-            <Pressable
               onPress={() => router.push('/profile')}
               accessibilityRole="button"
               accessibilityLabel="Profile"
               className="size-12 items-center justify-center rounded-full active:opacity-70"
-              style={{ backgroundColor: C.primary }}
+              style={{ backgroundColor: C.border }}
             >
-              <Text className="font-sans-semibold text-xs text-primary-foreground">DC</Text>
+              <Text className="font-sans-semibold text-xs text-foreground">DC</Text>
             </Pressable>
           </View>
 

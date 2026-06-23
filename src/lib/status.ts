@@ -11,30 +11,23 @@
 
 import { C } from './theme';
 
-const CHIP = {
-  amber: '#fbbf24',
-  teal: '#6f19da',
-  red: '#ef4444',
-  purple: '#7a5af8',
-  onDark: '#171717', // text on the (light) amber chip
-  onColor: '#ffffff', // text on saturated chips
-} as const;
-
 export type LoadVariant = 'offered' | 'scheduled' | 'current' | 'delivered' | 'tonu';
 export type Badge = { label: string; bg: string; color: string };
 
+// Muted pills — subtle tinted bg + readable text (no loud saturated fills).
+// Only states that need attention carry hue; done/scheduled stay neutral grey.
 export function loadBadge(v: LoadVariant): Badge {
   switch (v) {
     case 'offered':
-      return { label: 'New offer', bg: CHIP.purple, color: CHIP.onColor };
+      return { label: 'New offer', bg: C.accent, color: C.foreground };
     case 'scheduled':
       return { label: 'Scheduled', bg: C.accent, color: C.mutedForeground };
     case 'current':
-      return { label: 'Current load', bg: CHIP.amber, color: CHIP.onDark };
+      return { label: 'Current load', bg: `${C.amber}1F`, color: C.amberText };
     case 'delivered':
-      return { label: 'Delivered', bg: CHIP.teal, color: CHIP.onColor };
+      return { label: 'Delivered', bg: C.accent, color: C.foreground };
     case 'tonu':
-      return { label: 'Canceled', bg: CHIP.red, color: CHIP.onColor };
+      return { label: 'Canceled', bg: `${C.destructive}1A`, color: C.destructive };
   }
 }
 
@@ -55,7 +48,7 @@ export type DocStatusKey = 'valid' | 'expiring' | 'expired' | 'missing';
 export function docColor(s: DocStatusKey): { label: string; color: string } {
   switch (s) {
     case 'valid':
-      return { label: 'Valid', color: C.teal };
+      return { label: 'Valid', color: C.foreground };
     case 'expiring':
       return { label: 'Expiring', color: C.amber };
     case 'expired':

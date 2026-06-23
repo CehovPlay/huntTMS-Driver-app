@@ -127,7 +127,7 @@ export default function Onboarding() {
         <View style={{ width }} className="flex-1 justify-center gap-6 px-8">
           <View className="items-center gap-3">
             <View className="size-24 items-center justify-center rounded-4xl bg-accent">
-              <ShieldCheck size={44} color={C.teal} />
+              <ShieldCheck size={44} color={C.foreground} />
             </View>
             <Text className="text-center font-sans-bold text-2xl text-foreground">A few permissions</Text>
             <Text className="text-center font-sans text-base leading-6 text-muted-foreground">

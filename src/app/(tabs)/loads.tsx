@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable as RNPressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Bell, ChevronRight, Package, Search, X, Zap } from 'lucide-react-native';
+import { ChevronRight, Package, Search, X, Zap } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import { PressableScale } from '@/components/pressable-scale';
@@ -13,7 +13,6 @@ import { useSettings } from '@/lib/settings';
 import { useMockQuery } from '@/lib/use-mock-query';
 import { fmtMi } from '@/lib/units';
 import { Logo } from '@/components/logo';
-import { useNotifications } from '@/lib/notifications';
 import { EmptyState } from '@/components/empty-state';
 import { C, shadowXs, tnum } from '@/lib/theme';
 import { loadBadge } from '@/lib/status';
@@ -90,7 +89,7 @@ function TripCard({ trip }: { trip: Trip }) {
           <ChevronRight size={20} color={C.mutedForeground} />
         </View>
         {trip.partial ? (
-          <Text numberOfLines={1} className="font-sans-medium text-sm text-purple">
+          <Text numberOfLines={1} className="font-sans-medium text-sm text-muted-foreground">
             {trip.partial}
           </Text>
         ) : null}
@@ -180,7 +179,6 @@ export default function LoadsScreen() {
   const [query, setQuery] = useState('');
   const q = useMockQuery();
   const { completedRefs } = useActiveLoad();
-  const { unread } = useNotifications();
   const { units } = useSettings();
 
   // delivered active load(s) surface at the top of Completed
@@ -211,30 +209,13 @@ export default function LoadsScreen() {
             <Logo height={24} />
           </View>
           <Pressable
-            onPress={() => router.push('/notifications')}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
-            className="size-12 items-center justify-center rounded-full active:opacity-70"
-          >
-            <Bell size={20} color={C.foreground} />
-            {unread > 0 ? (
-              <View
-                className="absolute right-1 top-1 size-4 items-center justify-center rounded-full"
-                style={{ backgroundColor: C.destructive }}
-              >
-                <Text className="font-sans-semibold text-[10px] text-white">{unread}</Text>
-              </View>
-            ) : null}
-          </Pressable>
-          <Pressable
             onPress={() => router.push('/profile')}
             accessibilityRole="button"
             accessibilityLabel="Profile"
             className="size-12 items-center justify-center rounded-full active:opacity-70"
-            style={{ backgroundColor: C.primary }}
+            style={{ backgroundColor: C.border }}
           >
-            <Text className="font-sans-semibold text-xs text-primary-foreground">DC</Text>
+            <Text className="font-sans-semibold text-xs text-foreground">DC</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -341,12 +322,11 @@ export default function LoadsScreen() {
                 }
                 accessibilityRole="button"
                 accessibilityLabel={`New load offer ${offer.id}`}
-                className="gap-2 rounded-3xl bg-background p-4 active:opacity-90"
-                style={{ borderWidth: 1.5, borderColor: C.teal }}
+                className="gap-2 rounded-3xl border border-border bg-background p-4 active:opacity-90"
               >
                 <View className="flex-row items-center gap-2">
-                  <Zap size={16} color={C.teal} fill={C.teal} />
-                  <Text className="flex-1 font-sans-semibold text-sm" style={{ color: C.teal }}>New load offer</Text>
+                  <Zap size={16} color={C.foreground} fill={C.foreground} />
+                  <Text className="flex-1 font-sans-semibold text-sm" style={{ color: C.foreground }}>New load offer</Text>
                   <Text className="font-sans-medium text-xs text-muted-foreground" style={tnum}>{offer.id}</Text>
                 </View>
                 <Text className="font-sans-medium text-base text-foreground" numberOfLines={1}>
@@ -358,9 +338,9 @@ export default function LoadsScreen() {
                     {offer.miles ? ` · ${fmtMi(offer.miles, units)}` : ''}
                   </Text>
                   <View className="flex-1" />
-                  <View className="flex-row items-center gap-1 rounded-full px-3 py-1" style={{ backgroundColor: C.teal }}>
-                    <Text className="font-sans-medium text-xs text-white">Review</Text>
-                    <ChevronRight size={14} color="#ffffff" />
+                  <View className="flex-row items-center gap-1 rounded-full px-3 py-1" style={{ backgroundColor: C.accent }}>
+                    <Text className="font-sans-medium text-xs" style={{ color: C.foreground }}>Review</Text>
+                    <ChevronRight size={14} color={C.foreground} />
                   </View>
                 </View>
               </PressableScale>

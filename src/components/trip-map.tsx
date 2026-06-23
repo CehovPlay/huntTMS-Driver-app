@@ -120,7 +120,7 @@ export function TripMap({ routes, selected, onSelect, active, myLocation }: Prop
 
       {NAV_STOPS.map((s, i) => (
         <Marker key={i} coordinate={s.coordinate} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
-          <View className="size-7 items-center justify-center rounded-full border-2 border-white" style={{ backgroundColor: i === 0 ? C.teal : C.foreground, ...shadowSm }}>
+          <View className="size-7 items-center justify-center rounded-full border-2 border-white" style={{ backgroundColor: C.foreground, ...shadowSm }}>
             <Text className="font-sans-bold text-xs text-white">{i + 1}</Text>
           </View>
         </Marker>

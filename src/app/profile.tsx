@@ -150,8 +150,8 @@ export default function Profile() {
       <ScrollView contentContainerClassName="gap-5 p-4 pb-10" showsVerticalScrollIndicator={false}>
         {/* Driver card */}
         <View className="flex-row items-center gap-4 rounded-3xl bg-background p-4">
-          <View className="size-16 items-center justify-center rounded-full" style={{ backgroundColor: C.primary }}>
-            <Text className="font-sans-semibold text-xl text-primary-foreground">{DRIVER.initials}</Text>
+          <View className="size-16 items-center justify-center rounded-full" style={{ backgroundColor: C.border }}>
+            <Text className="font-sans-semibold text-xl text-foreground">{DRIVER.initials}</Text>
           </View>
           <View className="flex-1">
             <Text className="font-sans-semibold text-xl text-foreground">{DRIVER.name}</Text>
@@ -214,7 +214,7 @@ export default function Profile() {
         {/* Co-driver */}
         <Section title="CO-DRIVER">
           <View className="flex-row items-center gap-3 bg-background px-4 py-3.5">
-            <View className="size-10 items-center justify-center rounded-full bg-accent">
+            <View className="size-10 items-center justify-center rounded-full" style={{ backgroundColor: C.border }}>
               <Text className="font-sans-semibold text-sm text-foreground">{CO_DRIVER.initials}</Text>
             </View>
             <View className="flex-1">

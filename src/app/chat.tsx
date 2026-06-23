@@ -83,7 +83,7 @@ function Bubble({ m, onLongPress }: { m: ChatMessage; onLongPress: () => void })
             className="mx-2 mt-2 gap-0.5 rounded-xl px-3 py-1.5"
             style={{ backgroundColor: mine ? `${C.primaryForeground}1F` : `${C.foreground}0D` }}
           >
-            <Text className="font-sans-medium text-xs" style={{ color: mine ? C.primaryForeground : C.teal }}>
+            <Text className="font-sans-medium text-xs" style={{ color: mine ? C.primaryForeground : C.foreground }}>
               {m.replyTo.name}
             </Text>
             <Text className="font-sans text-xs" style={{ color: mine ? `${C.primaryForeground}B3` : C.mutedForeground }} numberOfLines={1}>
@@ -136,7 +136,7 @@ function Bubble({ m, onLongPress }: { m: ChatMessage; onLongPress: () => void })
       <View className="mt-1 flex-row items-center gap-1 px-1">
         <Text className="font-sans text-[11px] text-muted-foreground">{m.time}</Text>
         {mine ? (
-          m.read ? <CheckCheck size={13} color={C.teal} /> : <Check size={13} color={C.mutedForeground} />
+          m.read ? <CheckCheck size={13} color={C.foreground} /> : <Check size={13} color={C.mutedForeground} />
         ) : null}
       </View>
     </View>
@@ -216,13 +216,13 @@ export default function Chat() {
           <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Back" className="size-12 items-center justify-center rounded-2xl active:bg-accent">
             <ArrowLeft size={20} color={C.foreground} />
           </Pressable>
-          <View className="size-10 items-center justify-center rounded-full" style={{ backgroundColor: C.primary }}>
-            <Text className="font-sans-semibold text-sm text-primary-foreground">{dispatcher.initials}</Text>
+          <View className="size-10 items-center justify-center rounded-full" style={{ backgroundColor: C.border }}>
+            <Text className="font-sans-semibold text-sm text-foreground">{dispatcher.initials}</Text>
           </View>
           <View className="flex-1">
             <Text className="font-sans-semibold text-base text-foreground">{dispatcher.name}</Text>
             <View className="flex-row items-center gap-1.5">
-              {dispatcher.online ? <View className="size-2 rounded-full" style={{ backgroundColor: C.teal }} /> : null}
+              {dispatcher.online ? <View className="size-2 rounded-full" style={{ backgroundColor: C.foreground }} /> : null}
               <Text className="font-sans text-xs text-muted-foreground">
                 {dispatcher.role} · {dispatcher.online ? 'online' : 'offline'}
               </Text>
@@ -303,9 +303,9 @@ export default function Chat() {
         {/* reply preview */}
         {replyingTo ? (
           <View className="mx-3 mb-1 flex-row items-center gap-2 rounded-2xl bg-accent px-3 py-2">
-            <View className="w-0.5 self-stretch rounded-full" style={{ backgroundColor: C.teal }} />
+            <View className="w-0.5 self-stretch rounded-full" style={{ backgroundColor: C.border }} />
             <View className="flex-1">
-              <Text className="font-sans-medium text-xs" style={{ color: C.teal }}>
+              <Text className="font-sans-medium text-xs" style={{ color: C.foreground }}>
                 {replyingTo.mine ? 'You' : dispatcher.name}
               </Text>
               <Text className="font-sans text-sm text-muted-foreground" numberOfLines={1}>

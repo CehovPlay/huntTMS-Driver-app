@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withDelay,
   withSpring,
@@ -14,17 +15,24 @@ import { C } from '@/lib/theme';
 
 // Celebratory success badge: a ring pulses out, the filled circle springs in,
 // then the check pops. Fires a success haptic on mount.
-export function SuccessCheck({ size = 72, color = C.teal }: { size?: number; color?: string }) {
+export function SuccessCheck({ size = 72, color = C.foreground, iconColor = C.background }: { size?: number; color?: string; iconColor?: string }) {
+  const reduce = useReducedMotion();
   const circle = useSharedValue(0);
   const check = useSharedValue(0);
   const ring = useSharedValue(0);
 
   useEffect(() => {
     haptics.success();
+    if (reduce) {
+      circle.value = 1;
+      check.value = 1;
+      ring.value = 1; // fully expanded → ring is invisible, no pulse
+      return;
+    }
     circle.value = withSpring(1, { damping: 12, stiffness: 200 });
     check.value = withDelay(120, withSpring(1, { damping: 11, stiffness: 260 }));
     ring.value = withTiming(1, { duration: 700 });
-  }, [circle, check, ring]);
+  }, [circle, check, ring, reduce]);
 
   const circleStyle = useAnimatedStyle(() => ({
     transform: [{ scale: circle.value }],
@@ -54,7 +62,7 @@ export function SuccessCheck({ size = 72, color = C.teal }: { size?: number; col
         ]}
       >
         <Animated.View style={checkStyle}>
-          <Check size={size * 0.5} color="#fff" strokeWidth={3} />
+          <Check size={size * 0.5} color={iconColor} strokeWidth={3} />
         </Animated.View>
       </Animated.View>
     </View>

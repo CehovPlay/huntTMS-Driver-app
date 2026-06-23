@@ -23,7 +23,8 @@ export type Palette = {
   teal: string;
   purple: string;
   destructive: string;
-  amber: string;
+  amber: string; // warning FILL / icon (light yellow)
+  amberText: string; // warning TEXT on light surfaces (darkened for contrast)
   white: string;
   route: string; // map/route accent (blue line + nav progress) — fixed in both themes
 };
@@ -31,7 +32,7 @@ export type Palette = {
 export const lightColors: Palette = {
   background: '#ffffff',
   foreground: '#171717',
-  primary: '#171717', // neutral ink — CTAs/surfaces (premium monochrome); violet is the accent only
+  primary: '#26262c', // soft graphite ink — calmer than pure black on CTAs/surfaces
   primaryForeground: '#fafafa',
   accent: '#f5f5f5',
   accentForeground: '#171717',
@@ -42,6 +43,7 @@ export const lightColors: Palette = {
   purple: '#6f19da', // unified to the violet accent (offer banner, partial-load badges)
   destructive: '#ef4444',
   amber: '#fbbf24',
+  amberText: '#b45309', // amber-700 — readable on light
   white: '#ffffff',
   route: '#1e9df1',
 };
@@ -60,6 +62,7 @@ export const darkColors: Palette = {
   purple: '#8b4df0', // unified to the violet accent
   destructive: '#f87171',
   amber: '#fbbf24',
+  amberText: '#fcd34d', // bright — readable on dark
   white: '#ffffff',
   route: '#1e9df1',
 };
@@ -90,7 +93,7 @@ export const C: Palette = new Proxy({} as Palette, {
 export const lightVars = vars({
   '--background': '255 255 255',
   '--foreground': '23 23 23',
-  '--primary': '23 23 23',
+  '--primary': '38 38 44',
   '--primary-foreground': '250 250 250',
   '--accent': '245 245 245',
   '--accent-foreground': '23 23 23',
@@ -127,8 +130,36 @@ export const tnum: TextStyle = { fontVariant: ['tabular-nums'] };
 
 // Shared sizing tokens for consistency (Refero scale). Use these for new/edited
 // surfaces so radii and control heights stay uniform app-wide.
-export const radii = { sm: 10, md: 14, lg: 20, xl: 26 } as const;
+export const radii = { sm: 6, md: 10, lg: 12, xl: 16 } as const;
 export const sizes = { button: 56, input: 48, control: 48 } as const;
+
+// Motion — one set of durations + a default spring. ease-out on enter,
+// ease-in on exit. Keeps every transition coherent.
+export const motion = {
+  fast: 140,
+  base: 220,
+  slow: 360,
+  spring: { damping: 16, stiffness: 240, mass: 0.6 },
+} as const;
+
+// Elevation — L0 = hairline border (static cards); L1 = soft shadow, no border
+// (floating/overlay: tab bar, toast, sheet, FAB, success overlay).
+export const elevation = {
+  float: { shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8 },
+} as const;
+
+// Status surfaces — resolve at render (reads the live palette via C). Returns a
+// foreground (for text/icon) + a subtle tinted background + border. For SOLID
+// status fills, use `on` for legible text (amber/teal/route need dark ink).
+export function statusColors(kind: 'success' | 'warning' | 'danger' | 'info') {
+  const fg = kind === 'success' ? C.foreground : kind === 'warning' ? C.amber : kind === 'danger' ? C.destructive : C.route;
+  // Dark ink reads on amber/teal/route fills; white reads on red.
+  const on = kind === 'danger' ? '#ffffff' : '#171717';
+  return { fg, on, bg: `${fg}1A`, border: `${fg}33` };
+}
+
+// Subtle neutral surface for chips/active tints.
+export const accentSubtle = () => `${C.foreground}1A`;
 
 // shadow/xs — Figma: 0 1 2 rgba(0,0,0,0.05)
 export const shadowXs = {

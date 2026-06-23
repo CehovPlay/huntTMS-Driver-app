@@ -28,7 +28,7 @@ export default function NotificationsTab() {
           <Text className="font-sans-semibold text-base text-foreground">Notifications</Text>
           {unread > 0 ? (
             <Pressable onPress={markAllRead} hitSlop={8} accessibilityRole="button" accessibilityLabel="Mark all read" className="active:opacity-60">
-              <Text className="font-sans-medium text-sm" style={{ color: C.teal }}>
+              <Text className="font-sans-medium text-sm" style={{ color: C.foreground }}>
                 Read all
               </Text>
             </Pressable>
@@ -53,10 +53,10 @@ export default function NotificationsTab() {
               <Appear key={n.id} index={i}>
                 <PressableScale onPress={() => n.href && router.push(n.href as never)} className="flex-row gap-3 rounded-3xl bg-background p-4 active:opacity-90">
                   <View className="relative">
-                    <View className="size-11 items-center justify-center rounded-2xl" style={{ backgroundColor: `${color}1A` }}>
+                    <View className="size-11 items-center justify-center rounded-2xl" style={{ backgroundColor: C.accent }}>
                       <Icon size={20} color={color} />
                     </View>
-                    {!n.read ? <View className="absolute -right-1 -top-1 size-3 rounded-full border-2 border-background" style={{ backgroundColor: C.teal }} /> : null}
+                    {!n.read ? <View className="absolute -right-1 -top-1 size-3 rounded-full border-2 border-background" style={{ backgroundColor: C.foreground }} /> : null}
                   </View>
                   <View className="flex-1 gap-1">
                     <View className="flex-row items-start gap-2">

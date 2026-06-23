@@ -21,6 +21,7 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
   const [linkLoad, setLinkLoad] = useState(true);
   const [receiptUri, setReceiptUri] = useState<string | undefined>(undefined);
   const [done, setDone] = useState(false);
+  const [focus, setFocus] = useState<'amount' | 'note' | null>(null);
 
   const value = parseFloat(amount || '0');
   const valid = value > 0;
@@ -69,7 +70,7 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
     <View className="flex-1">
       <ScrollView contentContainerClassName="gap-5 p-4 pb-4" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* amount */}
-        <View className="items-center gap-1.5 rounded-3xl bg-background py-6" style={{ borderWidth: 1, borderColor: C.border }}>
+        <View className="items-center gap-1.5 rounded-3xl bg-background py-6" style={{ borderWidth: 1.5, borderColor: focus === 'amount' ? C.foreground : C.border }}>
           <Text className="font-sans-medium text-xs uppercase tracking-wide text-muted-foreground">Amount</Text>
           <View className="w-full flex-row items-center justify-center">
             <Text className="font-sans-semibold" style={{ fontSize: 28, color: C.mutedForeground, marginRight: 2 }}>$</Text>
@@ -82,6 +83,8 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
               textAlign="center"
               className="font-sans-bold text-foreground"
               style={[{ fontSize: 44, minWidth: 80, paddingVertical: 0, textAlign: 'center' }, tnum]}
+              onFocus={() => setFocus('amount')}
+              onBlur={() => setFocus(null)}
             />
           </View>
         </View>
@@ -115,7 +118,7 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
         {/* note */}
         <View className="gap-2">
           <Text className="px-1 font-sans-medium text-sm text-muted-foreground">NOTE</Text>
-          <View className="rounded-3xl bg-background px-4" style={{ minHeight: 56, justifyContent: 'center', borderWidth: 1, borderColor: C.border }}>
+          <View className="rounded-3xl bg-background px-4" style={{ minHeight: 56, justifyContent: 'center', borderWidth: 1.5, borderColor: focus === 'note' ? C.foreground : C.border }}>
             <TextInput
               value={note}
               onChangeText={setNote}
@@ -123,6 +126,8 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
               placeholderTextColor={C.mutedForeground}
               className="font-sans text-base text-foreground"
               style={{ paddingVertical: 16 }}
+              onFocus={() => setFocus('note')}
+              onBlur={() => setFocus(null)}
             />
           </View>
         </View>

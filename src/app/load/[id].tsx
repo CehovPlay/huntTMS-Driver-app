@@ -147,16 +147,16 @@ export default function LoadDetailScreen() {
             </View>
             <View
               className="flex-row items-center gap-3 rounded-2xl px-4 py-3"
-              style={{ backgroundColor: `${C.teal}14`, borderWidth: 1, borderColor: `${C.teal}33` }}
+              style={{ backgroundColor: C.accent, borderWidth: 1, borderColor: C.border }}
             >
-              <View className="size-10 items-center justify-center rounded-full" style={{ backgroundColor: `${C.teal}1F` }}>
-                <DollarSign size={18} color={C.teal} />
+              <View className="size-10 items-center justify-center rounded-full" style={{ backgroundColor: C.background }}>
+                <DollarSign size={18} color={C.foreground} />
               </View>
               <View className="flex-1">
                 <Text className="font-sans-medium text-base text-foreground">TONU fee</Text>
                 <Text className="font-sans text-sm text-muted-foreground">Paid for the canceled trip</Text>
               </View>
-              <Text className="font-sans-semibold text-lg" style={{ color: C.teal }}>
+              <Text className="font-sans-semibold text-lg" style={{ color: C.foreground }}>
                 {load.tonu.fee}
               </Text>
             </View>
@@ -238,7 +238,7 @@ export default function LoadDetailScreen() {
               <MessageSquare size={18} color={C.amber} />
             </View>
             <View className="flex-1 gap-1">
-              <Text className="font-sans-medium text-xs uppercase tracking-wide" style={{ color: C.amber }}>
+              <Text className="font-sans-medium text-xs uppercase tracking-wide" style={{ color: C.amberText }}>
                 Comment
               </Text>
               <Text className="font-sans-semibold text-[15px] leading-5 text-foreground">{d.comment}</Text>
@@ -250,10 +250,10 @@ export default function LoadDetailScreen() {
         {load.partials.length > 0 ? (
           <View className="gap-3 rounded-3xl bg-background p-4">
             <View className="flex-row items-center gap-2">
-              <Layers size={18} color={C.purple} />
+              <Layers size={18} color={C.foreground} />
               <Text className="flex-1 font-sans-semibold text-base text-foreground">Partial loads on this trailer</Text>
-              <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: `${C.purple}1A` }}>
-                <Text className="font-sans-medium text-xs" style={{ color: C.purple }}>{load.partials.length}</Text>
+              <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: C.accent }}>
+                <Text className="font-sans-medium text-xs" style={{ color: C.foreground }}>{load.partials.length}</Text>
               </View>
             </View>
             {load.partials.map((p) => (

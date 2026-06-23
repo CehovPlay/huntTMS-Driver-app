@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { AlertTriangle, Camera, Check, TriangleAlert, X } from 'lucide-react-native';
@@ -23,6 +23,8 @@ export function IssueForm({ onClose }: { onClose: () => void }) {
   const [comment, setComment] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [detailsFocus, setDetailsFocus] = useState(false);
 
   const addPhoto = async () => {
     if (photos.length >= 3) return;
@@ -33,20 +35,26 @@ export function IssueForm({ onClose }: { onClose: () => void }) {
   };
 
   const submit = () => {
+    if (busy) return;
     haptics.warning();
-    notify({
-      type: 'alert',
-      title: `${type} reported`,
-      body: cantDrive ? 'Sent with your location — truck cannot continue.' : 'Sent with your location.',
-    });
-    setDone(true);
+    setBusy(true);
+    // Brief sending state (real API would resolve here).
+    setTimeout(() => {
+      notify({
+        type: 'alert',
+        title: `${type} reported`,
+        body: cantDrive ? 'Sent with your location — truck cannot continue.' : 'Sent with your location.',
+      });
+      setBusy(false);
+      setDone(true);
+    }, 650);
   };
 
   if (done) {
     return (
       <View className="flex-1">
         <View className="flex-1 items-center justify-center gap-4 px-8 py-10">
-          <SuccessCheck size={80} color={C.amber} />
+          <SuccessCheck size={80} color={C.amber} iconColor="#171717" />
           <Text className="text-center font-sans-bold text-2xl text-foreground">Issue reported</Text>
           <Text className="text-center font-sans text-base leading-6 text-muted-foreground">
             Your report{cantDrive ? ' (truck down)' : ''} was sent with your current location. Dispatch and the safety
@@ -162,7 +170,7 @@ export function IssueForm({ onClose }: { onClose: () => void }) {
         {/* comment */}
         <View className="gap-2">
           <Text className="px-1 font-sans-medium text-sm text-muted-foreground">DETAILS</Text>
-          <View className="rounded-3xl bg-background p-4" style={{ borderWidth: 1, borderColor: C.border }}>
+          <View className="rounded-3xl bg-background p-4" style={{ borderWidth: 1.5, borderColor: detailsFocus ? C.foreground : C.border }}>
             <TextInput
               value={comment}
               onChangeText={setComment}
@@ -171,6 +179,8 @@ export function IssueForm({ onClose }: { onClose: () => void }) {
               multiline
               className="font-sans text-base text-foreground"
               style={{ minHeight: 96, textAlignVertical: 'top' }}
+              onFocus={() => setDetailsFocus(true)}
+              onBlur={() => setDetailsFocus(false)}
             />
           </View>
         </View>
@@ -180,12 +190,14 @@ export function IssueForm({ onClose }: { onClose: () => void }) {
         <View className="px-4 pb-2 pt-2">
           <Pressable
             onPress={submit}
+            disabled={busy}
             accessibilityRole="button"
             accessibilityLabel="Send report"
-            className="h-16 items-center justify-center rounded-2xl active:opacity-90"
-            style={{ backgroundColor: C.destructive }}
+            className="h-16 flex-row items-center justify-center gap-2 rounded-2xl active:opacity-90"
+            style={{ backgroundColor: C.destructive, opacity: busy ? 0.85 : 1 }}
           >
-            <Text className="font-sans-medium text-base text-white">Send report to dispatch</Text>
+            {busy ? <ActivityIndicator size="small" color="#fff" /> : null}
+            <Text className="font-sans-medium text-base text-white">{busy ? 'Sending…' : 'Send report to dispatch'}</Text>
           </Pressable>
         </View>
       </SafeAreaView>

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { Bell, CheckCircle2, MessageCircle, Package, TriangleAlert } from 'lucide-react-native';
 
@@ -29,17 +29,10 @@ const ICON_COMP: Record<NotifType, typeof Bell> = {
   alert: TriangleAlert,
   success: CheckCircle2,
 };
-function iconColor(type: NotifType): string {
-  switch (type) {
-    case 'message':
-      return C.route;
-    case 'alert':
-      return C.amber;
-    case 'success':
-      return C.teal;
-    default:
-      return C.foreground;
-  }
+// Monochrome: all notification icons share the neutral ink color on a gray
+// chip — no per-type color (keeps the feed calm).
+function iconColor(_type: NotifType): string {
+  return C.foreground;
 }
 
 const SEED: Notif[] = [
@@ -99,15 +92,24 @@ function ToastHost({ toasts, onDismiss }: { toasts: Notif[]; onDismiss: (id: str
 }
 
 function ToastCard({ n, onDismiss }: { n: Notif; onDismiss: () => void }) {
-  const ty = useSharedValue(-160);
+  const reduce = useReducedMotion();
+  const ty = useSharedValue(reduce ? 0 : -160);
   const Icon = ICON_COMP[n.type];
   const color = iconColor(n.type);
 
   useEffect(() => {
+    if (reduce) {
+      ty.value = 0;
+      return;
+    }
     ty.value = withSpring(0, { damping: 16, stiffness: 320, mass: 0.5 });
-  }, []);
+  }, [reduce]);
 
   const close = () => {
+    if (reduce) {
+      onDismiss();
+      return;
+    }
     ty.value = withTiming(-180, { duration: 140 });
     setTimeout(onDismiss, 140);
   };
@@ -121,10 +123,10 @@ function ToastCard({ n, onDismiss }: { n: Notif; onDismiss: () => void }) {
           close();
           if (n.href) router.push(n.href as never);
         }}
-        className="mx-3 mb-2 flex-row items-center gap-3 rounded-2xl border border-border bg-background p-3"
-        style={{ shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 6 }}
+        className="mx-3 mb-2 flex-row items-center gap-3 rounded-2xl bg-background p-3"
+        style={{ shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8 }}
       >
-        <View className="size-9 items-center justify-center rounded-full" style={{ backgroundColor: `${color}1A` }}>
+        <View className="size-9 items-center justify-center rounded-full" style={{ backgroundColor: C.accent }}>
           <Icon size={18} color={color} />
         </View>
         <View className="flex-1">

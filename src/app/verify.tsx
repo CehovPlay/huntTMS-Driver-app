@@ -89,7 +89,7 @@ export default function EnterCode() {
                     const borderColor = error
                       ? C.destructive
                       : filled
-                        ? C.teal
+                        ? C.foreground
                         : active
                           ? C.foreground
                           : C.input;
