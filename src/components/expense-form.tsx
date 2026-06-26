@@ -1,30 +1,50 @@
 import { useEffect, useState } from 'react';
-import { Image, ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
-import { Camera, Check, X } from 'lucide-react-native';
+import { Building2, Check, CircleDollarSign, Fuel, PackageOpen, ParkingCircle, ReceiptText, Shield, Wrench } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import { SuccessCheck } from '@/components/success-check';
 import { haptics } from '@/lib/haptics';
-import { EXPENSE_CATEGORIES, EXPENSE_META, money, useExpenses, type ExpenseCategory } from '@/lib/expenses';
-import { CURRENT_LOAD } from '@/lib/mock';
+import {
+  EXPENSE_CATEGORY_OPTIONS,
+  createDriverExpense,
+  money,
+  type ExpenseCategoryName,
+} from '@/lib/api/expenses';
+import { useDriverLoads } from '@/lib/api/use-api-query';
 import { C, tnum } from '@/lib/theme';
 
-// Add-expense form — shared by the /add-expense route and the AddExpenseSheet
-// modal. Receipt photo comes from the driver's own camera/library.
+const ICONS: Record<ExpenseCategoryName, typeof Fuel> = {
+  FUEL: Fuel,
+  TRUCK_LEASE: PackageOpen,
+  MAINTENANCE: Wrench,
+  REPAIR: Wrench,
+  TOLL: CircleDollarSign,
+  OFFICE: Building2,
+  INSURANCE: Shield,
+  PARKING: ParkingCircle,
+  LUMPER: PackageOpen,
+  PERMIT: ReceiptText,
+  OTHER: ReceiptText,
+};
+
+// Add-expense form — shared by the /add-expense route and the AddExpenseSheet modal.
 export function ExpenseForm({ onClose }: { onClose: () => void }) {
-  const { add } = useExpenses();
-  const [category, setCategory] = useState<ExpenseCategory>('Fuel');
+  const loads = useDriverLoads();
+  const activeLoad = loads.data?.activeLoad;
+  const [category, setCategory] = useState<ExpenseCategoryName>('FUEL');
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [linkLoad, setLinkLoad] = useState(true);
-  const [receiptUri, setReceiptUri] = useState<string | undefined>(undefined);
   const [done, setDone] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(false);
   const [focus, setFocus] = useState<'amount' | 'note' | null>(null);
 
   const value = parseFloat(amount || '0');
-  const valid = value > 0;
+  const valid = value > 0 && !saving;
+  const linkedLoadId = linkLoad && activeLoad ? Number(activeLoad.id) : null;
 
   // Auto-dismiss shortly after the success confirmation.
   useEffect(() => {
@@ -33,25 +53,25 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
     return () => clearTimeout(t);
   }, [done, onClose]);
 
-  const pickReceipt = async () => {
-    try {
-      const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
-      if (!res.canceled && res.assets[0]?.uri) setReceiptUri(res.assets[0].uri);
-    } catch {}
-  };
-
-  const save = () => {
+  const save = async () => {
     if (!valid) return;
-    haptics.success();
-    add({
-      category,
-      amount: Math.round(value * 100) / 100,
-      date: 'Today',
-      note: note.trim() || undefined,
-      loadId: linkLoad ? CURRENT_LOAD.reference.replace(/^#/, '') : undefined,
-      receiptUri,
-    });
-    setDone(true);
+    setSaving(true);
+    setError(false);
+    try {
+      await createDriverExpense({
+        category,
+        amount: Math.round(value * 100) / 100,
+        notes: note.trim() || null,
+        loadId: Number.isFinite(linkedLoadId) ? linkedLoadId : null,
+      });
+      haptics.success();
+      setDone(true);
+    } catch {
+      setError(true);
+      haptics.error();
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (done) {
@@ -93,13 +113,13 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
         <View className="gap-2">
           <Text className="px-1 font-sans-medium text-sm text-muted-foreground">CATEGORY</Text>
           <View className="flex-row flex-wrap gap-2">
-            {EXPENSE_CATEGORIES.map((c) => {
-              const on = category === c;
-              const Icon = EXPENSE_META[c].icon;
+            {EXPENSE_CATEGORY_OPTIONS.map((c) => {
+              const on = category === c.name;
+              const Icon = ICONS[c.name] ?? ReceiptText;
               return (
                 <Pressable
-                  key={c}
-                  onPress={() => setCategory(c)}
+                  key={c.name}
+                  onPress={() => setCategory(c.name)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
                   className="flex-row items-center gap-2 rounded-2xl px-4 active:opacity-70"
@@ -107,7 +127,7 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
                 >
                   <Icon size={16} color={on ? C.primaryForeground : C.foreground} />
                   <Text className="font-sans-medium text-sm" style={{ color: on ? C.primaryForeground : C.foreground }}>
-                    {c}
+                    {c.label}
                   </Text>
                 </Pressable>
               );
@@ -134,11 +154,12 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
 
         {/* link to current load */}
         <Pressable
-          onPress={() => setLinkLoad((v) => !v)}
+          onPress={() => activeLoad && setLinkLoad((v) => !v)}
+          disabled={!activeLoad}
           accessibilityRole="button"
           accessibilityState={{ checked: linkLoad }}
           className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-80"
-          style={{ borderWidth: 1, borderColor: C.border }}
+          style={{ borderWidth: 1, borderColor: C.border, opacity: activeLoad ? 1 : 0.55 }}
         >
           <View
             className="size-6 items-center justify-center rounded-md"
@@ -147,39 +168,22 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
             {linkLoad ? <Check size={14} color={C.primaryForeground} strokeWidth={3} /> : null}
           </View>
           <Text className="flex-1 font-sans-medium text-base text-foreground">
-            Link to load #{CURRENT_LOAD.reference.replace(/^#/, '')}
+            {activeLoad ? `Link to load #${activeLoad.id}` : 'No active load to link'}
           </Text>
         </Pressable>
 
-        {/* receipt */}
-        <View className="gap-2">
-          <Text className="px-1 font-sans-medium text-sm text-muted-foreground">RECEIPT</Text>
-          {receiptUri ? (
-            <View className="overflow-hidden rounded-3xl bg-background">
-              <Image source={{ uri: receiptUri }} style={{ width: '100%', height: 200 }} resizeMode="cover" />
-              <Pressable
-                onPress={() => setReceiptUri(undefined)}
-                accessibilityRole="button"
-                accessibilityLabel="Remove receipt"
-                className="absolute right-3 top-3 size-9 items-center justify-center rounded-full active:opacity-70"
-                style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
-              >
-                <X size={18} color="#fff" />
-              </Pressable>
-            </View>
-          ) : (
-            <Pressable
-              onPress={pickReceipt}
-              accessibilityRole="button"
-              accessibilityLabel="Attach receipt"
-              className="h-16 flex-row items-center justify-center gap-2 rounded-3xl bg-background active:opacity-80"
-              style={{ borderWidth: 1, borderColor: C.border }}
-            >
-              <Camera size={18} color={C.foreground} />
-              <Text className="font-sans-medium text-base text-foreground">Attach receipt photo</Text>
-            </Pressable>
-          )}
+        <View className="rounded-3xl bg-background p-4" style={{ borderWidth: 1, borderColor: C.border }}>
+          <Text className="font-sans-medium text-base text-foreground">Receipt needed later</Text>
+          <Text className="mt-1 font-sans text-sm text-muted-foreground">
+            This milestone creates the expense only. It will show as NEEDS RECEIPT until receipt upload is wired.
+          </Text>
         </View>
+
+        {error ? (
+          <Text className="px-1 text-center font-sans-medium text-sm" style={{ color: C.destructive }}>
+            Expense was not saved. Check the details and try again.
+          </Text>
+        ) : null}
       </ScrollView>
 
       <SafeAreaView edges={['bottom']}>
@@ -192,7 +196,7 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
             className="h-16 items-center justify-center rounded-2xl bg-primary"
             style={{ opacity: valid ? 1 : 0.4 }}
           >
-            <Text className="font-sans-medium text-base text-primary-foreground">Save expense</Text>
+            <Text className="font-sans-medium text-base text-primary-foreground">{saving ? 'Saving...' : 'Save expense'}</Text>
           </Pressable>
         </View>
       </SafeAreaView>

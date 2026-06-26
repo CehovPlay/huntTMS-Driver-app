@@ -9,13 +9,17 @@ import { Pressable } from '@/components/pressable';
 import { haptics } from '@/lib/haptics';
 import { C } from '@/lib/theme';
 import { useActiveLoad } from '@/lib/active-load';
+import { uploadDriverLoadFile } from '@/lib/api/load-mutations';
+import { useDriverLoads } from '@/lib/api/use-api-query';
 
 // Receiver's signature for Proof of Delivery. Drawing uses RN's responder
 // system (locationX/Y), which works identically on native and web (RNW), so a
 // single implementation covers iOS and the Telegram Mini App.
 export default function Signature() {
   const { addDoc } = useActiveLoad();
+  const q = useDriverLoads();
   const [paths, setPaths] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
   const cur = useRef('');
   const [, force] = useState(0);
   const rerender = () => force((n) => n + 1);
@@ -46,10 +50,23 @@ export default function Signature() {
 
   const hasInk = paths.length > 0 || cur.current.length > 0;
 
-  const confirm = () => {
+  const confirm = async () => {
+    if (submitting || !q.data?.activeLoad) return;
+    setSubmitting(true);
     haptics.success();
-    addDoc('Proof of delivery');
-    router.back();
+    try {
+      await uploadDriverLoadFile({
+        loadId: q.data.activeLoad.id,
+        uri: signatureDataUri([...paths, cur.current].filter(Boolean)),
+        label: 'Proof of delivery',
+        name: 'proof-of-delivery-signature.svg',
+        mime: 'image/svg+xml',
+      });
+      addDoc('Proof of delivery');
+      router.back();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -129,16 +146,30 @@ export default function Signature() {
         <View className="px-4 pb-2 pt-2">
           <Pressable
             onPress={confirm}
-            disabled={!hasInk}
+            disabled={!hasInk || submitting}
             accessibilityRole="button"
             accessibilityLabel="Confirm signature"
             className="h-16 items-center justify-center rounded-2xl bg-primary"
-            style={{ opacity: hasInk ? 1 : 0.4 }}
+            style={{ opacity: hasInk && !submitting ? 1 : 0.4 }}
           >
-            <Text className="font-sans-medium text-base text-primary-foreground">Confirm signature</Text>
+            <Text className="font-sans-medium text-base text-primary-foreground">
+              {submitting ? 'Uploading...' : 'Confirm signature'}
+            </Text>
           </Pressable>
         </View>
       </SafeAreaView>
     </View>
   );
+}
+
+function signatureDataUri(paths: string[]): string {
+  const body = paths
+    .map((d) => `<path d="${escapeXml(d)}" stroke="black" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" fill="none"/>`)
+    .join('');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="420" viewBox="0 0 800 420">${body}</svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function escapeXml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

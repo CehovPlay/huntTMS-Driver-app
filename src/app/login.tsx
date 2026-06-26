@@ -7,11 +7,16 @@ import { router } from 'expo-router';
 import { Logo } from '@/components/logo';
 import { Pressable } from '@/components/pressable';
 import { Appear } from '@/components/appear';
+import { webappLinkRequestSms } from '@/lib/api/endpoints';
+import { useAuth } from '@/lib/auth/auth';
+import { getAuthInitData } from '@/lib/auth/auth-init-data';
 import { C, shadowXs } from '@/lib/theme';
 
 export default function LogIn() {
   const [phone, setPhone] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { initData, error: authError } = useAuth();
   const focus = useSharedValue(0);
 
   // Read tokens on the JS thread — the `C` proxy isn't available inside the
@@ -24,18 +29,35 @@ export default function LogIn() {
   }));
 
   const digits = phone.replace(/[^0-9]/g, '');
+  const normalizedDigits = digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits;
+  const phoneNumber = `+1${normalizedDigits}`;
 
   const onChange = (t: string) => {
     setPhone(t);
-    if (error) setError(false);
+    if (error) setError('');
   };
 
-  const submit = () => {
-    if (digits.length < 10) {
-      setError(true);
+  const submit = async () => {
+    if (normalizedDigits.length !== 10) {
+      setError('Please enter a valid phone number');
       return;
     }
-    router.push('/verify');
+    const nextInitData = initData || getAuthInitData();
+    if (!nextInitData) {
+      setError('Open this app from Telegram to continue.');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+    try {
+      await webappLinkRequestSms(nextInitData, phoneNumber);
+      router.push({ pathname: '/verify', params: { phone: phoneNumber } });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not send verification code');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -45,7 +67,6 @@ export default function LogIn() {
         source={require('../../assets/images/login-bg.png')}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }}
         resizeMode="cover"
-        pointerEvents="none"
       />
 
       <SafeAreaView edges={['top', 'bottom']} className="flex-1">
@@ -60,10 +81,10 @@ export default function LogIn() {
             <Appear delay={120} className="w-full flex-1 items-center justify-end gap-5">
               <View className="w-full items-center gap-2">
                 <Text className="text-center font-sans-medium text-2xl leading-8 text-foreground">
-                  Sign in with phone
+                  Link your driver account
                 </Text>
                 <Text className="text-center font-sans text-base text-muted-foreground">
-                  US phone numbers only
+                  Enter the US phone number on your driver profile
                 </Text>
               </View>
 
@@ -89,21 +110,24 @@ export default function LogIn() {
                     onChangeText={onChange}
                   />
                 </Animated.View>
-                {error ? (
+                {error || authError ? (
                   <Text className="px-1 font-sans text-sm" style={{ color: C.destructive }}>
-                    Please enter a valid phone number
+                    {error || authError}
                   </Text>
                 ) : null}
               </View>
 
               <Pressable
                 className="h-16 w-full flex-row items-center justify-center rounded-2xl bg-primary active:opacity-90"
-                style={shadowXs}
+                style={{ ...shadowXs, opacity: submitting ? 0.6 : 1 }}
                 onPress={submit}
+                disabled={submitting}
                 accessibilityRole="button"
-                accessibilityLabel="Sign in"
+                accessibilityLabel="Send verification code"
               >
-                <Text className="font-sans-medium text-base text-primary-foreground">Sign in</Text>
+                <Text className="font-sans-medium text-base text-primary-foreground">
+                  {submitting ? 'Sending...' : 'Send code'}
+                </Text>
               </Pressable>
             </Appear>
           </View>

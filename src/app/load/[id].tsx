@@ -10,11 +10,9 @@ import {
   Layers,
   MapPin,
   Maximize2,
-  MessageCircle,
   MessageSquare,
   Navigation2,
   Package,
-  Phone,
   Route,
   Ruler,
   Scale,
@@ -23,7 +21,6 @@ import {
   User,
 } from 'lucide-react-native';
 
-import { getLoadDetail } from '@/lib/mock';
 import { StopMiniMap } from '@/components/stop-mini-map';
 import { Pressable } from '@/components/pressable';
 import { QuickActions } from '@/components/quick-actions';
@@ -31,7 +28,7 @@ import { RouteTimeline } from '@/components/route-timeline';
 import { SwipeButton } from '@/components/swipe-button';
 import { Skeleton } from '@/components/skeleton';
 import { ErrorState } from '@/components/error-state';
-import { useMockQuery } from '@/lib/use-mock-query';
+import { useDriverLoads } from '@/lib/api/use-api-query';
 import { C, shadowSm, tnum } from '@/lib/theme';
 import { loadBadge, type LoadVariant } from '@/lib/status';
 
@@ -84,17 +81,25 @@ function DetailSkeleton() {
 
 export default function LoadDetailScreen() {
   const { id, variant: variantParam } = useLocalSearchParams<{ id: string; variant?: string }>();
-  const q = useMockQuery();
+  const q = useDriverLoads();
+  const load = id ? q.data?.details.get(id) : undefined;
+  const derivedVariant: Variant =
+    load?.status === 'En route'
+      ? 'current'
+      : load?.status === 'Delivered'
+        ? 'delivered'
+        : load?.status === 'TONU'
+          ? 'tonu'
+          : 'scheduled';
   const variant: Variant =
     variantParam === 'current' ||
     variantParam === 'delivered' ||
     variantParam === 'tonu' ||
     variantParam === 'offered'
       ? variantParam
-      : 'scheduled';
-  const load = getLoadDetail(id ?? '');
+      : derivedVariant;
   const status = loadBadge(variant);
-  const d = load.details;
+  const d = load?.details;
   const done = variant === 'delivered';
 
   return (
@@ -114,17 +119,19 @@ export default function LoadDetailScreen() {
           </Pressable>
           <View pointerEvents="none" className="absolute inset-x-0 flex-row items-center justify-center gap-2">
             <Package size={18} color={C.foreground} />
-            <Text className="font-sans-medium text-base text-foreground">{load.id}</Text>
+            <Text className="font-sans-medium text-base text-foreground">{load?.id ?? id ?? 'Load'}</Text>
           </View>
         </View>
       </SafeAreaView>
 
       {/* Body */}
-      {q.loading ? (
+      {q.loading && !load ? (
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           <DetailSkeleton />
         </ScrollView>
       ) : q.error ? (
+        <ErrorState onRetry={q.refetch} />
+      ) : !load || !d ? (
         <ErrorState onRetry={q.refetch} />
       ) : (
       <ScrollView className="flex-1" contentContainerClassName="gap-3 p-4 pb-4" showsVerticalScrollIndicator={false}>
@@ -315,22 +322,6 @@ export default function LoadDetailScreen() {
               <Text className="font-sans text-xs text-muted-foreground">Dispatcher</Text>
               <Text className="font-sans-medium text-base text-foreground">{load.dispatcher.name}</Text>
             </View>
-            <Pressable
-              onPress={() => router.push('/chat')}
-              accessibilityRole="button"
-              accessibilityLabel={`Message ${load.dispatcher.name}`}
-              className="size-12 items-center justify-center rounded-2xl bg-accent active:opacity-80"
-            >
-              <MessageCircle size={20} color={C.foreground} />
-            </Pressable>
-            <Pressable
-              onPress={() => router.push('/call')}
-              accessibilityRole="button"
-              accessibilityLabel={`Call ${load.dispatcher.name}`}
-              className="size-12 items-center justify-center rounded-2xl bg-accent active:opacity-80"
-            >
-              <Phone size={20} color={C.foreground} />
-            </Pressable>
           </View>
         </View>
 
@@ -391,20 +382,6 @@ export default function LoadDetailScreen() {
             >
               <Navigation2 size={18} color={C.primaryForeground} fill={C.primaryForeground} />
               <Text className="font-sans-medium text-base text-primary-foreground">Open map</Text>
-            </Pressable>
-          </View>
-        </SafeAreaView>
-      ) : variant === 'tonu' ? (
-        <SafeAreaView edges={['bottom']} className="border-t border-border bg-background">
-          <View className="px-4 pb-2 pt-3">
-            <Pressable
-              onPress={() => router.push('/chat')}
-              accessibilityRole="button"
-              accessibilityLabel="Message dispatcher"
-              className="h-16 flex-row items-center justify-center gap-2 rounded-2xl bg-primary active:opacity-90"
-            >
-              <MessageCircle size={18} color={C.primaryForeground} />
-              <Text className="font-sans-medium text-base text-primary-foreground">Message dispatcher</Text>
             </Pressable>
           </View>
         </SafeAreaView>

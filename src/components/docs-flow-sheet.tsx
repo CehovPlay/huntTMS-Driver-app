@@ -51,7 +51,7 @@ export function DocsFlowSheet({
   labels: Record<string, string>;
   uploaded: string[];
   title?: string;
-  onUpload: (type: string) => void;
+  onUpload: (type: string, uri?: string) => void | Promise<void>;
   onConfirm?: () => void;
   onClose: () => void;
   onSkip?: () => void;
@@ -133,10 +133,15 @@ export function DocsFlowSheet({
 
   const pagesReady = pages.length > 0 && pages.every((p) => p.status === 'done');
 
-  const finishType = () => {
+  const finishType = async () => {
     if (!pagesReady || !activeType) return;
+    try {
+      await onUpload(activeType, pages[0]?.uri);
+    } catch {
+      setPages((list) => list.map((p) => ({ ...p, status: 'error', progress: 0 })));
+      return;
+    }
     haptics.success();
-    onUpload(activeType);
     setStep('list');
     setActiveType(null);
     setPages([]);

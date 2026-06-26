@@ -1,9 +1,9 @@
-// Web / Telegram: request the browser permissions HuntBot and the driver tools
+// Web / Telegram: request the browser permissions the driver tools
 // need. Must be called from a user gesture (the modal's "Allow" button) — the
 // browser only shows prompts in response to a tap. All best-effort: denied or
 // unsupported just no-ops.
 
-export type PermKind = 'microphone' | 'camera' | 'location' | 'notifications';
+export type PermKind = 'camera' | 'location' | 'notifications';
 
 async function getMedia(constraints: MediaStreamConstraints) {
   const md = (navigator as any)?.mediaDevices;
@@ -13,18 +13,9 @@ async function getMedia(constraints: MediaStreamConstraints) {
 }
 
 export async function requestAllPermissions(): Promise<void> {
-  // Microphone (HuntBot voice) + camera (scan/POD). Try together, then fall back
-  // to individual prompts so one denial doesn't block the other.
   try {
-    await getMedia({ audio: true, video: true });
-  } catch {
-    try {
-      await getMedia({ audio: true });
-    } catch {}
-    try {
-      await getMedia({ video: true });
-    } catch {}
-  }
+    await getMedia({ video: true });
+  } catch {}
 
   // Notifications
   try {

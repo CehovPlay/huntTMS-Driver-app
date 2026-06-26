@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 
 import { TabBar } from '@/components/tab-bar';
 
-// Order: loads · map · [copilot, center] · chat · notifications.
+// Chat and HuntBot routes remain in the tree but are hidden until backend support exists.
 export default function TabsLayout() {
   return (
     <Tabs
@@ -14,9 +14,9 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="loads" options={{ title: 'Loads' }} />
       <Tabs.Screen name="map" options={{ title: 'Map' }} />
-      <Tabs.Screen name="copilot" options={{ title: 'HuntBot' }} />
-      <Tabs.Screen name="messages" options={{ title: 'Chat' }} />
       <Tabs.Screen name="notifications" options={{ title: 'Notifications' }} />
+      <Tabs.Screen name="copilot" options={{ href: null }} />
+      <Tabs.Screen name="messages" options={{ href: null }} />
     </Tabs>
   );
 }

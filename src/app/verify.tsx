@@ -1,19 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 
 import { Logo } from '@/components/logo';
 import { Pressable } from '@/components/pressable';
+import { webappLinkRequestSms } from '@/lib/api/endpoints';
+import { useAuth } from '@/lib/auth/auth';
+import { getAuthInitData } from '@/lib/auth/auth-init-data';
 import { C, shadowXs } from '@/lib/theme';
 
 const CODE_LENGTH = 5;
 
 export default function EnterCode() {
+  const params = useLocalSearchParams<{ phone?: string }>();
+  const phone = typeof params.phone === 'string' ? params.phone : '';
+  const auth = useAuth();
   const [code, setCode] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
   const [seconds, setSeconds] = useState(59);
+  const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
   const inputRef = useRef<TextInput>(null);
   const digits = Array.from({ length: CODE_LENGTH }, (_, i) => code[i] ?? '');
   const filled = code.length === CODE_LENGTH;
@@ -26,21 +34,42 @@ export default function EnterCode() {
 
   const onChange = (t: string) => {
     setCode(t.replace(/[^0-9]/g, '').slice(0, CODE_LENGTH));
-    if (error) setError(false);
+    if (error) setError('');
   };
 
-  const submit = () => {
-    if (!filled) return;
-    // demo: 000000 is treated as invalid; any other code signs in
-    if (code === '000000') setError(true);
-    else router.replace('/loads');
+  const submit = async () => {
+    if (!filled || !phone) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      await auth.linkVerify(phone, code);
+      router.replace('/loads');
+    } catch {
+      setError('Invalid code, please try again');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const resend = () => {
-    if (seconds > 0) return;
-    setSeconds(59);
-    setCode('');
-    setError(false);
+  const resend = async () => {
+    if (seconds > 0 || !phone) return;
+    const initData = auth.initData || getAuthInitData();
+    if (!initData) {
+      setError('Open this app from Telegram to continue.');
+      return;
+    }
+
+    setResending(true);
+    setError('');
+    try {
+      await webappLinkRequestSms(initData, phone);
+      setSeconds(59);
+      setCode('');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not resend verification code');
+    } finally {
+      setResending(false);
+    }
   };
 
   return (
@@ -76,7 +105,7 @@ export default function EnterCode() {
                 Enter verification code
               </Text>
               <Text className="font-sans text-base leading-6 text-muted-foreground">
-                We sent a code to +1 (xxx) xxx-xxxx
+                {phone ? `We sent a code to ${phone}` : 'Enter your phone number first'}
               </Text>
             </View>
 
@@ -119,19 +148,19 @@ export default function EnterCode() {
 
               {error ? (
                 <Text className="font-sans text-sm" style={{ color: C.destructive }}>
-                  Invalid code, please try again
+                  {error}
                 </Text>
               ) : null}
 
               {/* Resend */}
               <Pressable
                 onPress={resend}
-                disabled={seconds > 0}
+                disabled={seconds > 0 || resending || !phone}
                 className="mt-2 h-16 flex-row items-center justify-center rounded-2xl border border-input bg-background"
-                style={{ ...shadowXs, opacity: seconds > 0 ? 0.5 : 1 }}
+                style={{ ...shadowXs, opacity: seconds > 0 || resending || !phone ? 0.5 : 1 }}
               >
                 <Text className="font-sans-medium text-base text-foreground">
-                  {seconds > 0 ? `Resend code (${seconds})` : 'Resend code'}
+                  {resending ? 'Sending...' : seconds > 0 ? `Resend code (${seconds})` : 'Resend code'}
                 </Text>
               </Pressable>
             </View>
@@ -141,11 +170,13 @@ export default function EnterCode() {
         <View className="px-8 pb-8 pt-2">
           <Pressable
             onPress={submit}
-            disabled={!filled || error}
+            disabled={!filled || !!error || submitting || !phone}
             className="h-16 flex-row items-center justify-center rounded-2xl bg-primary"
-            style={{ ...shadowXs, opacity: !filled || error ? 0.5 : 1 }}
+            style={{ ...shadowXs, opacity: !filled || error || submitting || !phone ? 0.5 : 1 }}
           >
-            <Text className="font-sans-medium text-base text-primary-foreground">Enter app</Text>
+            <Text className="font-sans-medium text-base text-primary-foreground">
+              {submitting ? 'Verifying...' : 'Enter app'}
+            </Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>

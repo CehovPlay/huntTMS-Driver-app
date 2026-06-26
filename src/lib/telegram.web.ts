@@ -20,6 +20,7 @@ type TgBackButton = {
 type TgInset = { top?: number; bottom?: number; left?: number; right?: number };
 
 type TgWebApp = {
+  initData?: string;
   ready?: () => void;
   expand?: () => void;
   requestFullscreen?: () => void;
@@ -55,6 +56,10 @@ let started = false;
 
 export function getTelegramWebApp(): TgWebApp | undefined {
   return (window as unknown as { Telegram?: { WebApp?: TgWebApp } }).Telegram?.WebApp;
+}
+
+export function getInitData(): string {
+  return getTelegramWebApp()?.initData ?? '';
 }
 
 function applyTelegram() {

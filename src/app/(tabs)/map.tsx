@@ -4,7 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Check, Clock, LocateFixed, Navigation2, Upload } from 'lucide-react-native';
 
-import { CURRENT_LOAD, DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
+import { useDriverLoads } from '@/lib/api/use-api-query';
+import {
+  reportDriverLocation,
+  updateDriverLoadStatus,
+  uploadDriverLoadFile,
+} from '@/lib/api/load-mutations';
 import { fetchRoutes, etaText, milesText, type LatLng } from '@/lib/route';
 import { locateOnce } from '@/lib/geo';
 import { Pressable } from '@/components/pressable';
@@ -30,8 +35,10 @@ function EtaDistance({ meters }: { meters: number }) {
 }
 
 export default function MapScreen() {
-  const load = CURRENT_LOAD;
-  const { stage, docs, advance, canDeliver, addDoc } = useActiveLoad();
+  const q = useDriverLoads();
+  const load = q.data?.activeLoad;
+  const navStops = q.data?.activeNavStops ?? [];
+  const { stage, setStage, docs, advance, canDeliver, addDoc } = useActiveLoad();
   const { notify } = useNotifications();
   const [sheet, setSheet] = useState(false);
   const [uploadType, setUploadType] = useState<string | undefined>(undefined);
@@ -40,27 +47,50 @@ export default function MapScreen() {
   const [routes, setRoutes] = useState<MapRoutes | null>(null);
   const [selected, setSelected] = useState(0); // 0 = fastest, 1 = alt
   const [myLocation, setMyLocation] = useState<LatLng | null>(null);
+  const [mutating, setMutating] = useState(false);
 
-  const stop = stage === 'pickup' ? load.pickup : load.delivery;
-  const active = stage !== 'delivered';
+  const stop = load ? (stage === 'pickup' ? load.pickup : load.delivery) : null;
+  const active = !!load && stage !== 'delivered';
+  const driverLocation = myLocation ?? navStops[0]?.coordinate ?? null;
 
   const locateMe = async () => {
     const loc = await locateOnce();
-    if (loc) setMyLocation(loc);
+    if (!loc) return;
+    setMyLocation(loc);
+    reportDriverLocation(loc).catch(() => {
+      notify({ type: 'alert', title: 'Location not sent', body: 'Dispatch will keep the previous GPS point.' });
+    });
   };
+
+  useEffect(() => {
+    locateOnce().then((loc) => {
+      if (loc) setMyLocation(loc);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!load) return;
+    if (pickupDocs) return;
+    if (load.status === 'Scheduled') setStage('pickup');
+    else if (load.status === 'En route') setStage('delivery');
+    else if (load.status === 'Delivered') setStage('delivered');
+  }, [load?.id, load?.status, pickupDocs, setStage]);
 
   // fetch deadhead (driver -> pickup) + loaded route (pickup -> deliveries) + a visual alternative
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const driver = DRIVER_LOCATION;
-      const pickup = NAV_STOPS[0].coordinate;
-      const dels = NAV_STOPS.slice(1).map((s) => s.coordinate);
-      const last = NAV_STOPS[NAV_STOPS.length - 1].coordinate;
+      if (navStops.length < 2) {
+        setRoutes(null);
+        return;
+      }
+      const pickup = navStops[0].coordinate;
+      const dels = navStops.slice(1).map((s) => s.coordinate);
+      const last = navStops[navStops.length - 1].coordinate;
       const [loaded, altR, dead] = await Promise.all([
         fetchRoutes([pickup, ...dels]),
         fetchRoutes([pickup, last]),
-        fetchRoutes([driver, pickup]),
+        driverLocation ? fetchRoutes([driverLocation, pickup]) : Promise.resolve(null),
       ]);
       if (!cancelled && loaded) {
         setRoutes({
@@ -73,9 +103,10 @@ export default function MapScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [driverLocation, navStops]);
 
-  const finishPickup = () => {
+  const finishPickup = async () => {
+    if (mutating) return;
     setPickupDocs(false);
     advance();
     notify({ type: 'success', title: 'Pickup confirmed', body: 'Status sent to dispatch · next: Delivery' });
@@ -83,21 +114,45 @@ export default function MapScreen() {
     setTimeout(() => setPickupDone(false), 1300);
   };
 
-  const onSwipe = () => {
+  const uploadDoc = async (type: string, uri?: string) => {
+    if (!load || !uri) return;
+    await uploadDriverLoadFile({ loadId: load.id, uri, label: type });
+    addDoc(type);
+  };
+
+  const onSwipe = async () => {
+    if (!load || mutating) return;
     if (stage === 'delivery') {
       // Docs are mandatory AFTER the swipe — the Delivered screen blocks
       // completion until BOL + POD are uploaded. Swipe itself is always allowed.
       advance();
       router.push('/delivered');
-    } else {
-      // Pickup (arrived + loaded): collect pickup docs (BOL) — but skippable.
+      return;
+    }
+
+    setMutating(true);
+    try {
+      await updateDriverLoadStatus(load.id, 'EN_ROUTE');
       setPickupDocs(true);
+      await q.refetch();
+    } catch {
+      notify({ type: 'alert', title: 'Status not sent', body: 'Try again before confirming pickup.' });
+    } finally {
+      setMutating(false);
     }
   };
 
   return (
     <View className="flex-1 bg-background">
-      <TripMap routes={routes} selected={selected} onSelect={setSelected} active={active} myLocation={myLocation} />
+      <TripMap
+        routes={routes}
+        selected={selected}
+        onSelect={setSelected}
+        active={active}
+        myLocation={myLocation}
+        navStops={navStops}
+        driverLocation={driverLocation}
+      />
 
       {/* ETA pill (remaining time + distance for the active route) */}
       {active && routes?.fastest ? (
@@ -131,12 +186,18 @@ export default function MapScreen() {
       {/* bottom card — sits above the floating tab bar (≈ bar height clearance) */}
       <SafeAreaView edges={['bottom']} className="mt-auto">
         <View className="mx-3 gap-3 rounded-3xl border border-border bg-background p-4" style={[shadowSm, { marginBottom: 108 }]}>
-          {stage === 'delivered' ? (
+          {q.loading && !load ? (
+            <Text className="py-2 text-center font-sans text-base text-muted-foreground">Loading route…</Text>
+          ) : q.error ? (
+            <Pressable onPress={q.refetch} className="py-2 active:opacity-70">
+              <Text className="text-center font-sans text-base text-muted-foreground">Could not load route. Tap to retry.</Text>
+            </Pressable>
+          ) : stage === 'delivered' || !load || !stop ? (
             <Text className="py-2 text-center font-sans text-base text-muted-foreground">No active load</Text>
           ) : (
             <>
               <Pressable
-                onPress={() => router.push({ pathname: '/load/[id]', params: { id: '1832888', variant: 'current' } })}
+                onPress={() => router.push({ pathname: '/load/[id]', params: { id: load.id, variant: 'current' } })}
                 className="gap-2 active:opacity-70"
               >
                 <View className="flex-row items-center gap-2">
@@ -235,7 +296,7 @@ export default function MapScreen() {
               </View>
 
               <SwipeButton
-                label={stage === 'pickup' ? 'Swipe to Picked up' : 'Swipe to Delivered'}
+                label={mutating ? 'Sending status...' : stage === 'pickup' ? 'Swipe to Picked up' : 'Swipe to Delivered'}
                 onConfirm={onSwipe}
               />
               {stage === 'delivery' ? (
@@ -264,7 +325,7 @@ export default function MapScreen() {
         labels={DOC_LABEL}
         uploaded={docs}
         title="Upload pickup documents"
-        onUpload={addDoc}
+        onUpload={uploadDoc}
         onConfirm={finishPickup}
         onSkip={finishPickup}
         onClose={() => setPickupDocs(false)}

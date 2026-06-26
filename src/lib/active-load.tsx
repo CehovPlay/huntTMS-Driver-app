@@ -13,6 +13,7 @@ type ActiveLoad = {
   missingDocs: string[]; // required docs not yet uploaded
   canDeliver: boolean; // all required docs uploaded
   advance: () => void; // pickup -> delivery -> delivered
+  setStage: (stage: Stage) => void;
   addDoc: (type: string) => void;
   markDelivered: (ref: string) => void;
   reset: () => void;
@@ -40,7 +41,7 @@ export function ActiveLoadProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider
-      value={{ stage, docs, completedRefs, missingDocs, canDeliver, advance, addDoc, markDelivered, reset }}
+      value={{ stage, docs, completedRefs, missingDocs, canDeliver, advance, setStage, addDoc, markDelivered, reset }}
     >
       {children}
     </Ctx.Provider>

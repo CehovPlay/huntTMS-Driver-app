@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowUp, CornerUpLeft, CornerUpRight, Flag, MapPin, Navigation2, Package, Pause, Play, Sparkles, Volume2, VolumeX, X } from 'lucide-react-native';
+import { ArrowUp, CornerUpLeft, CornerUpRight, Flag, MapPin, Navigation2, Package, Pause, Play, Volume2, VolumeX, X } from 'lucide-react-native';
 
 import { Speech } from '@/lib/speech';
-import { useCopilot } from '@/lib/use-assistant';
 import { NavMap } from '@/components/nav-map';
-import { DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
+import { useDriverLoads } from '@/lib/api/use-api-query';
+import { locateOnce } from '@/lib/geo';
 import { fetchRoutes, etaText, milesText, type Maneuver, type RouteData, type LatLng } from '@/lib/route';
 
 function maneuverIcon(m?: Maneuver) {
@@ -26,17 +26,20 @@ export default function Navigate() {
   const [idx, setIdx] = useState(0); // driver position index along route coords
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
-  const { openCopilot } = useCopilot();
   const [rerouting, setRerouting] = useState(false);
+  const [origin, setOrigin] = useState<LatLng | null>(null);
+  const loads = useDriverLoads();
+  const navStops = loads.data?.activeNavStops ?? [];
   const spoken = useRef<number>(-1);
   const started = useRef(false);
   const insets = useSafeAreaInsets();
 
   // recalculate from a new origin (real off-route deviation, or tap-to-simulate)
   const recalc = async (from: LatLng) => {
+    if (!navStops.length) return;
     setRerouting(true);
     Speech.stop();
-    const r = await fetchRoutes([from, ...NAV_STOPS.map((s) => s.coordinate)]);
+    const r = await fetchRoutes([from, ...navStops.map((s) => s.coordinate)]);
     if (r) {
       setRoute(r.primary);
       setIdx(0);
@@ -48,14 +51,21 @@ export default function Navigate() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const pts = [DRIVER_LOCATION, ...NAV_STOPS.map((s) => s.coordinate)];
+      if (!navStops.length) {
+        setRoute(null);
+        return;
+      }
+      const loc = await locateOnce();
+      const start = loc ?? navStops[0].coordinate;
+      if (!cancelled) setOrigin(start);
+      const pts = [start, ...navStops.map((s) => s.coordinate)];
       const r = await fetchRoutes(pts);
       if (!cancelled && r) {
         setRoute(r.primary);
         // voice: announce route on start
         if (!started.current) {
           started.current = true;
-          const last = NAV_STOPS[NAV_STOPS.length - 1];
+          const last = navStops[navStops.length - 1];
           Speech.speak(
             `Starting route to ${last.city}. ${milesText(r.primary.distance)}, about ${etaText(r.primary.duration)}.`,
           );
@@ -65,7 +75,7 @@ export default function Navigate() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [navStops]);
 
   const coords = route?.coords ?? [];
 
@@ -85,7 +95,7 @@ export default function Navigate() {
   const upcoming = route?.steps.find((s) => s.offset > traveled + 8) ?? route?.steps[(route?.steps.length ?? 1) - 1];
   const distToNext = upcoming ? Math.max(0, upcoming.offset - traveled) : 0;
   const ManIcon = maneuverIcon(upcoming);
-  const here = coords[Math.min(idx, Math.max(coords.length - 1, 0))] ?? DRIVER_LOCATION;
+  const here = coords[Math.min(idx, Math.max(coords.length - 1, 0))] ?? origin ?? navStops[0]?.coordinate ?? { latitude: 39.5, longitude: -98.35 };
   const headingTo = coords[Math.min(idx + 3, Math.max(coords.length - 1, 0))] ?? here;
 
   // voice guidance: announce each maneuver once as it becomes the target
@@ -107,7 +117,7 @@ export default function Navigate() {
 
   return (
     <View className="flex-1 bg-background">
-      <NavMap coords={coords} here={here} headingTo={headingTo} onPress={recalc} />
+      <NavMap coords={coords} here={here} headingTo={headingTo} stops={navStops} onPress={recalc} />
 
       {/* overlay: compact maneuver chip + controls (top), progress sheet (bottom) */}
       <View
@@ -152,15 +162,6 @@ export default function Navigate() {
               className="size-10 items-center justify-center rounded-full active:opacity-70"
             >
               {muted ? <VolumeX size={18} color={C.mutedForeground} /> : <Volume2 size={18} color={C.foreground} />}
-            </Pressable>
-            <Pressable
-              onPress={openCopilot}
-              accessibilityRole="button"
-              accessibilityLabel="Open HuntBot"
-              className="size-10 items-center justify-center rounded-full"
-              style={{ backgroundColor: C.teal }}
-            >
-              <Sparkles size={18} color="#fff" />
             </Pressable>
           </View>
         </View>

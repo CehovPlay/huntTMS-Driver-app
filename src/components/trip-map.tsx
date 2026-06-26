@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { Navigation2 } from 'lucide-react-native';
 
-import { DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
+import { type NavStop } from '@/lib/mock';
 import { etaText, milesText, type RouteData, type LatLng } from '@/lib/route';
 import { C, shadowSm } from '@/lib/theme';
 import { useSettings } from '@/lib/settings';
@@ -22,9 +22,19 @@ type Props = {
   onSelect: (i: number) => void;
   active: boolean;
   myLocation?: LatLng | null;
+  navStops?: NavStop[];
+  driverLocation?: LatLng | null;
 };
 
-export function TripMap({ routes, selected, onSelect, active, myLocation }: Props) {
+export function TripMap({
+  routes,
+  selected,
+  onSelect,
+  active,
+  myLocation,
+  navStops = [],
+  driverLocation,
+}: Props) {
   const mapRef = useRef<MapView>(null);
   const { scheme } = useSettings();
   const [drawn, setDrawn] = useState<LatLng[]>([]);
@@ -41,12 +51,12 @@ export function TripMap({ routes, selected, onSelect, active, myLocation }: Prop
   // fit to the whole run when routes arrive
   useEffect(() => {
     if (!routes) return;
-    const fit = [...(routes.deadhead?.coords ?? [DRIVER_LOCATION]), ...routes.fastest.coords];
+    const fit = [...(routes.deadhead?.coords ?? (driverLocation ? [driverLocation] : [])), ...routes.fastest.coords];
     mapRef.current?.fitToCoordinates(fit, {
       edgePadding: { top: 130, bottom: 320, left: 60, right: 60 },
       animated: true,
     });
-  }, [routes]);
+  }, [driverLocation, routes]);
 
   // animated reveal of the selected route
   useEffect(() => {
@@ -118,7 +128,7 @@ export function TripMap({ routes, selected, onSelect, active, myLocation }: Prop
         </Marker>
       ) : null}
 
-      {NAV_STOPS.map((s, i) => (
+      {navStops.map((s, i) => (
         <Marker key={i} coordinate={s.coordinate} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
           <View className="size-7 items-center justify-center rounded-full border-2 border-white" style={{ backgroundColor: C.foreground, ...shadowSm }}>
             <Text className="font-sans-bold text-xs text-white">{i + 1}</Text>
@@ -126,11 +136,13 @@ export function TripMap({ routes, selected, onSelect, active, myLocation }: Prop
         </Marker>
       ))}
 
-      <Marker coordinate={DRIVER_LOCATION} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
-        <View className="size-9 items-center justify-center rounded-full border-2 border-white shadow" style={{ backgroundColor: BLUE }}>
-          <Navigation2 size={18} color="#fff" fill="#fff" />
-        </View>
-      </Marker>
+      {driverLocation ? (
+        <Marker coordinate={driverLocation} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
+          <View className="size-9 items-center justify-center rounded-full border-2 border-white shadow" style={{ backgroundColor: BLUE }}>
+            <Navigation2 size={18} color="#fff" fill="#fff" />
+          </View>
+        </Marker>
+      ) : null}
 
       {myLocation ? (
         <Marker coordinate={myLocation} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>

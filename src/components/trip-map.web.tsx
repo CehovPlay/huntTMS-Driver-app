@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import L from 'leaflet';
 import { MapContainer, Marker, Polyline, TileLayer, useMap } from 'react-leaflet';
 
-import { DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
+import { type NavStop } from '@/lib/mock';
 import { etaText, milesText, type RouteData, type LatLng } from '@/lib/route';
 import { C } from '@/lib/theme';
 import { useSettings } from '@/lib/settings';
@@ -18,13 +18,13 @@ export type MapRoutes = { fastest: RouteData; alt?: RouteData; deadhead?: RouteD
 const ll = (c: LatLng): [number, number] => [c.latitude, c.longitude];
 const mid = (c: LatLng[]): LatLng | null => (c.length ? c[Math.floor(c.length / 2)] : null);
 
-function FitBounds({ routes }: { routes: MapRoutes | null }) {
+function FitBounds({ routes, driverLocation }: { routes: MapRoutes | null; driverLocation?: LatLng | null }) {
   const map = useMap();
   useEffect(() => {
     if (!routes) return;
-    const pts = [...(routes.deadhead?.coords ?? [DRIVER_LOCATION]), ...routes.fastest.coords].map(ll);
+    const pts = [...(routes.deadhead?.coords ?? (driverLocation ? [driverLocation] : [])), ...routes.fastest.coords].map(ll);
     if (pts.length) map.fitBounds(pts as [number, number][], { padding: [50, 60] });
-  }, [routes, map]);
+  }, [driverLocation, routes, map]);
   return null;
 }
 
@@ -74,9 +74,11 @@ type Props = {
   onSelect: (i: number) => void;
   active: boolean;
   myLocation?: LatLng | null;
+  navStops?: NavStop[];
+  driverLocation?: LatLng | null;
 };
 
-export function TripMap({ routes, selected, onSelect, active, myLocation }: Props) {
+export function TripMap({ routes, selected, onSelect, active, myLocation, navStops = [], driverLocation }: Props) {
   const { scheme } = useSettings();
   const altDur = routes?.alt ? Math.max(routes.alt.duration, routes.fastest.duration * 1.1) : 0;
   const altDist = routes?.alt ? Math.max(routes.alt.distance, routes.fastest.distance * 1.05) : 0;
@@ -93,7 +95,7 @@ export function TripMap({ routes, selected, onSelect, active, myLocation }: Prop
       style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}
     >
       <TileLayer key={scheme} url={tileUrl(scheme)} subdomains={TILE_SUBDOMAINS} />
-      <FitBounds routes={routes} />
+      <FitBounds routes={routes} driverLocation={driverLocation} />
       <RecenterMe at={myLocation} />
       {myLocation ? <Marker position={ll(myLocation)} icon={myDotIcon} /> : null}
 
@@ -125,10 +127,10 @@ export function TripMap({ routes, selected, onSelect, active, myLocation }: Prop
         <Marker position={ll(fastMid)} icon={badgeIcon('Fastest', `${etaText(routes.fastest.duration)} · ${milesText(routes.fastest.distance)}`, selected === 0)} eventHandlers={{ click: () => onSelect(0) }} />
       ) : null}
 
-      {NAV_STOPS.map((s, i) => (
+      {navStops.map((s, i) => (
         <Marker key={i} position={ll(s.coordinate)} icon={stopIcon(i)} />
       ))}
-      <Marker position={ll(DRIVER_LOCATION)} icon={driverIcon} />
+      {driverLocation ? <Marker position={ll(driverLocation)} icon={driverIcon} /> : null}
     </MapContainer>
   );
 }

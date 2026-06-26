@@ -4,4 +4,7 @@ export function initTelegram(): void {}
 export function getTelegramWebApp(): undefined {
   return undefined;
 }
+export function getInitData(): string {
+  return '';
+}
 export function syncTelegramBackButton(_visible: boolean, _onBack: () => void): void {}

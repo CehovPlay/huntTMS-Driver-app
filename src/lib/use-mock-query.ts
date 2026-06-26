@@ -34,7 +34,7 @@ export type QueryResult = {
 export function useMockQuery(delay = 800): QueryResult {
   const [state, setState] = useState({ loading: true, refreshing: false, error: false });
   const loadedOnce = useRef(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const run = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
