@@ -27,12 +27,6 @@ export type Expense = {
 
 export const money = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const SEED: Expense[] = [
-  { id: 'e3', category: 'Fuel', amount: 412.5, date: 'Mar 14', note: "Pilot #482 · 96 gal", loadId: '1832888', receiptUri: 'x' },
-  { id: 'e2', category: 'Tolls', amount: 18.75, date: 'Mar 14', loadId: '1832888' },
-  { id: 'e1', category: 'Scale', amount: 12.0, date: 'Mar 13', note: 'CAT scale', receiptUri: 'x' },
-];
-
 type ExpensesValue = {
   expenses: Expense[];
   total: number;
@@ -42,7 +36,7 @@ type ExpensesValue = {
 const Ctx = createContext<ExpensesValue | null>(null);
 
 export function ExpensesProvider({ children }: { children: ReactNode }) {
-  const [expenses, setExpenses] = useState<Expense[]>(SEED);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const add = (e: Omit<Expense, 'id'>) =>
     setExpenses((list) => [{ ...e, id: `e${list.length + 1}_${list.length}` }, ...list]);
   const total = expenses.reduce((s, e) => s + e.amount, 0);

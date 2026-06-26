@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Text, useWindowDimensions, View } from 'react-native';
+import { usePathname } from 'expo-router';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -78,8 +79,14 @@ function TabItem({ focused, Icon, label, badge, onPress }: { focused: boolean; I
 export function TabBar({ state, navigation }: TabBarProps) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const unread = useDriverNotificationUnreadCount().data ?? 0;
+  const pathname = usePathname();
+  const unreadQuery = useDriverNotificationUnreadCount();
+  const unread = unreadQuery.data ?? 0;
   const barW = width - MARGIN * 2;
+
+  useEffect(() => {
+    unreadQuery.refetch();
+  }, [pathname, unreadQuery.refetch]);
 
   const press = (name: string, key: string, focused: boolean) => {
     const event = navigation.emit({ type: 'tabPress', target: key, canPreventDefault: true });

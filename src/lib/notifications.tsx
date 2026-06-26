@@ -35,12 +35,6 @@ function iconColor(_type: NotifType): string {
   return C.foreground;
 }
 
-const SEED: Notif[] = [
-  { id: 'n1', type: 'load', title: 'New load assigned', body: 'Load #48213 · New Berlin, WI → Chicago, IL', time: '8:00 AM', read: false, href: '/load/1832888?variant=current' },
-  { id: 'n2', type: 'message', title: 'Edward Dean', body: 'Morning! You good to take the New Berlin pickup at 10?', time: '8:02 AM', read: false, href: '/chat' },
-  { id: 'n3', type: 'alert', title: 'Document expiring', body: 'Medical examiner certificate expires 02 Jul 2026', time: 'Yesterday', read: true, href: '/profile' },
-];
-
 type Ctx = {
   feed: Notif[];
   unread: number;
@@ -58,7 +52,7 @@ export const useNotifications = () => {
 let counter = 0;
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const [feed, setFeed] = useState<Notif[]>(SEED);
+  const [feed, setFeed] = useState<Notif[]>([]);
   const [toasts, setToasts] = useState<Notif[]>([]);
   const unread = feed.filter((n) => !n.read).length;
 
