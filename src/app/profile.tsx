@@ -31,14 +31,13 @@ import { C } from '@/lib/theme';
 import { docColor } from '@/lib/status';
 import { Appear } from '@/components/appear';
 import {
-  DRIVER_DOCS,
   NOTIFICATION_PREFS,
   PERMISSIONS,
-  VEHICLE_DOCS,
   type Doc,
   type DocStatus,
 } from '@/lib/profile';
 import { useDriverEquipment, truckMakeModel, plateLabel } from '@/lib/api/equipment';
+import { useDriverDocuments, type DriverDocumentItem } from '@/lib/api/documents';
 
 const PERM_ICON: Record<string, typeof Camera> = {
   camera: Camera,
@@ -68,20 +67,32 @@ function initials(name?: string | null): string {
     .toUpperCase();
 }
 
-function DocRow({ doc, status, onPress }: { doc: Doc; status: DocStatus; onPress: () => void }) {
+function formatDocDate(epochMs: number | null): string {
+  if (!epochMs) return '—';
+  const d = new Date(epochMs);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function toDoc(item: DriverDocumentItem): Doc {
+  const status = item.status.toLowerCase() as DocStatus;
+  return {
+    name: item.label,
+    status,
+    expires: status === 'missing' ? 'Not on file' : formatDocDate(item.expiryDate),
+  };
+}
+
+function DocRow({ doc, status, onPress }: { doc: Doc; status: DocStatus; onPress?: () => void }) {
   const s = docColor(status);
-  const expiresText =
-    status === 'missing'
-      ? 'Not on file — tap to upload'
-      : status === 'valid' && doc.status === 'missing'
-        ? 'Uploaded · in review'
-        : `Expires ${doc.expires}`;
+  const expiresText = status === 'missing' ? 'Not on file' : `Expires ${doc.expires}`;
   return (
     <Pressable
       onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${doc.name}, ${s.label}. ${status === 'valid' ? 'Replace' : 'Upload'}`}
-      className="flex-row items-center gap-3 bg-background px-4 py-3.5 active:opacity-80"
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={`${doc.name}, ${s.label}. ${expiresText}`}
+      className="flex-row items-center gap-3 bg-background px-4 py-3.5"
     >
       <FileText size={18} color={C.mutedForeground} />
       <View className="flex-1">
@@ -93,8 +104,50 @@ function DocRow({ doc, status, onPress }: { doc: Doc; status: DocStatus; onPress
           {s.label}
         </Text>
       </View>
-      <ChevronRight size={16} color={C.mutedForeground} />
+      {onPress ? <ChevronRight size={16} color={C.mutedForeground} /> : null}
     </Pressable>
+  );
+}
+
+function DocumentRows({
+  docs,
+  loading,
+  error,
+  onRetry,
+}: {
+  docs: DriverDocumentItem[];
+  loading: boolean;
+  error: boolean;
+  onRetry: () => void;
+}) {
+  if (loading) {
+    return (
+      <View className="bg-background px-4 py-3.5">
+        <Text className="font-sans text-sm text-muted-foreground">Loading documents...</Text>
+      </View>
+    );
+  }
+  if (error) {
+    return (
+      <Pressable onPress={onRetry} className="bg-background px-4 py-3.5 active:opacity-70">
+        <Text className="font-sans text-sm text-muted-foreground">Could not load documents. Tap to retry.</Text>
+      </Pressable>
+    );
+  }
+  if (!docs.length) {
+    return (
+      <View className="bg-background px-4 py-3.5">
+        <Text className="font-sans text-sm text-muted-foreground">No document checklist available</Text>
+      </View>
+    );
+  }
+  return (
+    <>
+      {docs.map((item) => {
+        const doc = toDoc(item);
+        return <DocRow key={item.type} doc={doc} status={doc.status} />;
+      })}
+    </>
   );
 }
 
@@ -107,6 +160,7 @@ const THEME_OPTS: { val: ThemeMode; label: string; icon: typeof Sun }[] = [
 export default function Profile() {
   const { driver, signOut: authSignOut } = useAuth();
   const equipment = useDriverEquipment();
+  const documents = useDriverDocuments();
   const truck = equipment.data?.truck ?? null;
   const trailer = equipment.data?.trailer ?? null;
   const driverName = driver?.fullName || driver?.username || 'Driver';
@@ -114,15 +168,10 @@ export default function Profile() {
   const { theme, setTheme, appLock, setAppLock } = useSettings();
   const offline = useOffline();
   const [bio, setBio] = useState<{ available: boolean; label: string }>({ available: false, label: 'Face ID' });
-  // Document status overrides + active upload (flips a doc to "valid" on confirm).
+  // Kept for the upcoming document upload handoff; rows are read-only for now.
   const [docOverride, setDocOverride] = useState<Record<string, DocStatus>>({});
   const [uploadDoc, setUploadDoc] = useState<string | null>(null);
   const [uploadedTypes, setUploadedTypes] = useState<string[]>([]);
-  const statusOf = (d: Doc): DocStatus => docOverride[d.name] ?? d.status;
-  const openUpload = (d: Doc) => {
-    setUploadedTypes([]);
-    setUploadDoc(d.name);
-  };
 
   useEffect(() => {
     biometricAvailable().then(setBio);
@@ -194,9 +243,12 @@ export default function Profile() {
 
         {/* Driver documents */}
         <Section title="DRIVER & MEDICAL DOCUMENTS">
-          {DRIVER_DOCS.map((d) => (
-            <DocRow key={d.name} doc={d} status={statusOf(d)} onPress={() => openUpload(d)} />
-          ))}
+          <DocumentRows
+            docs={documents.data?.driver ?? []}
+            loading={documents.loading}
+            error={documents.error}
+            onRetry={documents.refetch}
+          />
         </Section>
 
         {/* Vehicle — real assigned equipment (/api/driver/equipment) */}
@@ -238,9 +290,12 @@ export default function Profile() {
         </Section>
 
         <Section title="VEHICLE DOCUMENTS">
-          {VEHICLE_DOCS.map((d) => (
-            <DocRow key={d.name} doc={d} status={statusOf(d)} onPress={() => openUpload(d)} />
-          ))}
+          <DocumentRows
+            docs={documents.data?.vehicle ?? []}
+            loading={documents.loading}
+            error={documents.error}
+            onRetry={documents.refetch}
+          />
         </Section>
 
         {/* Appearance + units */}
