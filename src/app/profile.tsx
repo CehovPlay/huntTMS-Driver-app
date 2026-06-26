@@ -34,12 +34,11 @@ import {
   DRIVER_DOCS,
   NOTIFICATION_PREFS,
   PERMISSIONS,
-  TRAILER,
-  TRUCK,
   VEHICLE_DOCS,
   type Doc,
   type DocStatus,
 } from '@/lib/profile';
+import { useDriverEquipment, truckMakeModel, plateLabel } from '@/lib/api/equipment';
 
 const PERM_ICON: Record<string, typeof Camera> = {
   camera: Camera,
@@ -107,6 +106,9 @@ const THEME_OPTS: { val: ThemeMode; label: string; icon: typeof Sun }[] = [
 
 export default function Profile() {
   const { driver, signOut: authSignOut } = useAuth();
+  const equipment = useDriverEquipment();
+  const truck = equipment.data?.truck ?? null;
+  const trailer = equipment.data?.trailer ?? null;
   const driverName = driver?.fullName || driver?.username || 'Driver';
   const [prefs, setPrefs] = useState(NOTIFICATION_PREFS.filter((p) => p.key !== 'messages'));
   const { theme, setTheme, appLock, setAppLock } = useSettings();
@@ -197,30 +199,42 @@ export default function Profile() {
           ))}
         </Section>
 
-        {/* Vehicle */}
+        {/* Vehicle — real assigned equipment (/api/driver/equipment) */}
         <Section title="TRUCK & TRAILER">
-          <View className="flex-row items-center gap-3 bg-background px-4 py-3.5">
-            <View className="size-10 items-center justify-center rounded-2xl bg-accent">
-              <Truck size={18} color={C.foreground} />
+          {truck ? (
+            <View className="flex-row items-center gap-3 bg-background px-4 py-3.5">
+              <View className="size-10 items-center justify-center rounded-2xl bg-accent">
+                <Truck size={18} color={C.foreground} />
+              </View>
+              <View className="flex-1">
+                <Text className="font-sans-medium text-base text-foreground">{truck.unit || 'Truck'}</Text>
+                <Text className="font-sans text-sm text-muted-foreground">
+                  {[truckMakeModel(truck), plateLabel(truck)].filter(Boolean).join(' · ')}
+                </Text>
+              </View>
             </View>
-            <View className="flex-1">
-              <Text className="font-sans-medium text-base text-foreground">{TRUCK.unit}</Text>
-              <Text className="font-sans text-sm text-muted-foreground">
-                {TRUCK.makeModel} · {TRUCK.year} · {TRUCK.plate}
-              </Text>
+          ) : equipment.loading ? null : (
+            <View className="bg-background px-4 py-3.5">
+              <Text className="font-sans text-sm text-muted-foreground">No truck assigned</Text>
             </View>
-          </View>
-          <View className="flex-row items-center gap-3 bg-background px-4 py-3.5">
-            <View className="size-10 items-center justify-center rounded-2xl bg-accent">
-              <Truck size={18} color={C.foreground} />
+          )}
+          {trailer ? (
+            <View className="flex-row items-center gap-3 bg-background px-4 py-3.5">
+              <View className="size-10 items-center justify-center rounded-2xl bg-accent">
+                <Truck size={18} color={C.foreground} />
+              </View>
+              <View className="flex-1">
+                <Text className="font-sans-medium text-base text-foreground">{trailer.unit || 'Trailer'}</Text>
+                <Text className="font-sans text-sm text-muted-foreground">
+                  {[trailer.type, plateLabel(trailer)].filter(Boolean).join(' · ')}
+                </Text>
+              </View>
             </View>
-            <View className="flex-1">
-              <Text className="font-sans-medium text-base text-foreground">{TRAILER.unit}</Text>
-              <Text className="font-sans text-sm text-muted-foreground">
-                {TRAILER.type} · {TRAILER.plate}
-              </Text>
+          ) : equipment.loading ? null : (
+            <View className="bg-background px-4 py-3.5">
+              <Text className="font-sans text-sm text-muted-foreground">No trailer assigned</Text>
             </View>
-          </View>
+          )}
         </Section>
 
         <Section title="VEHICLE DOCUMENTS">
