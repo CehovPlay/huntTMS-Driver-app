@@ -33,10 +33,15 @@ jobs:
           EXPO_PUBLIC_API_URL: https://apidev.huntms.ai
         run: npx expo export --platform web
 
-      - name: SPA fallback (GitHub Pages)
+      - name: Inject Telegram WebApp SDK + SPA fallback (GitHub Pages)
         run: |
+          # web.output is "single" (SPA), so +html.tsx is ignored. Inject the Telegram WebApp SDK into
+          # <head> synchronously so window.Telegram.WebApp.initData is populated before the app bundle runs
+          # (otherwise auth reads empty initData -> "open this app from Telegram").
+          sed -i 's#</head>#<script src="https://telegram.org/js/telegram-web-app.js"></script></head>#' dist/index.html
           touch dist/.nojekyll
           cp dist/index.html dist/404.html
+          grep -q "telegram-web-app.js" dist/index.html || { echo "Telegram SDK not injected"; exit 1; }
 
       - name: Publish to gh-pages
         uses: peaceiris/actions-gh-pages@v4
