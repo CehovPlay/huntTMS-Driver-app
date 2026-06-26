@@ -11,7 +11,8 @@ export type TripStop = {
 export type TripStatus = 'current' | 'scheduled' | 'tonu' | 'delivered';
 
 export type Trip = {
-  id: string;
+  id: string; // display reference (referenceId) — NOT unique, do not use as a React key / route id
+  loadId?: number; // stable unique identity (real loads); use for keys + the /load/[id] route param
   partial?: string;
   status: TripStatus;
   broker?: string;

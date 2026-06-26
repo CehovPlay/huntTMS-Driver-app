@@ -2,7 +2,7 @@ import '../global.css';
 
 import { useCallback, useEffect, useState } from 'react';
 import { AppState, Platform, ScrollView, Text, View, Text as RNText } from 'react-native';
-import { Stack, type ErrorBoundaryProps } from 'expo-router';
+import { router, Stack, useSegments, type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Lock } from 'lucide-react-native';
 
@@ -35,13 +35,13 @@ import {
 } from '@expo-google-fonts/geist';
 
 import { ActiveLoadProvider } from '@/lib/active-load';
+import { AuthProvider, useAuth } from '@/lib/auth/auth';
 import { ExpensesProvider } from '@/lib/expenses';
 import { NotificationProvider } from '@/lib/notifications';
 import { SettingsProvider, useSettings } from '@/lib/settings';
 import { CopilotProvider } from '@/lib/use-assistant';
 import { biometricAuth } from '@/lib/biometric';
 import { initTelegram } from '@/lib/telegram';
-import { HuntBotFab } from '@/components/huntbot-fab';
 import { PermissionsGate } from '@/components/permissions-gate';
 import { Pressable } from '@/components/pressable';
 import { Logo } from '@/components/logo';
@@ -97,6 +97,29 @@ function BiometricGate({ children }: { children: React.ReactNode }) {
   return <LockScreen onUnlock={unlock} />;
 }
 
+function AuthRouteGuard() {
+  const { onboarded } = useSettings();
+  const { status } = useAuth();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (!onboarded || status === 'loading') return;
+
+    const root = segments[0] as string | undefined;
+    const atIndex = !root;
+    const inAuthFlow = root === 'login' || root === 'verify';
+
+    if (status === 'signed-in') {
+      if (atIndex || inAuthFlow) router.replace('/loads');
+      return;
+    }
+
+    if (!inAuthFlow) router.replace('/login');
+  }, [onboarded, segments, status]);
+
+  return null;
+}
+
 // Theme-aware app shell — StatusBar + screen-transition background follow the
 // resolved color scheme so nothing flashes white in dark mode.
 function ThemedShell() {
@@ -120,6 +143,7 @@ function ThemedShell() {
     // (on web expo-router restores the current route from the URL).
     <Animated.View key={scheme} style={[{ flex: 1 }, themeVars(scheme), fadeStyle]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <AuthRouteGuard />
       <BiometricGate>
         <CopilotProvider>
           <Stack
@@ -136,9 +160,6 @@ function ThemedShell() {
             <Stack.Screen name="confirm-scan" options={{ presentation: 'modal' }} />
             <Stack.Screen name="navigate" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
           </Stack>
-          {/* HuntBot reachable from every stack screen (tab screens use the
-              center bot in the tab bar instead) */}
-          <HuntBotFab />
           {/* One-time permissions prompt on entering the platform */}
           <PermissionsGate />
         </CopilotProvider>
@@ -201,13 +222,15 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <WebSafeAreaReset>
         <SettingsProvider>
-          <ActiveLoadProvider>
-            <ExpensesProvider>
-              <NotificationProvider>
-                <ThemedShell />
-              </NotificationProvider>
-            </ExpensesProvider>
-          </ActiveLoadProvider>
+          <AuthProvider>
+            <ActiveLoadProvider>
+              <ExpensesProvider>
+                <NotificationProvider>
+                  <ThemedShell />
+                </NotificationProvider>
+              </ExpensesProvider>
+            </ActiveLoadProvider>
+          </AuthProvider>
         </SettingsProvider>
         </WebSafeAreaReset>
       </SafeAreaProvider>

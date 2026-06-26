@@ -4,7 +4,7 @@ import { usePathname } from 'expo-router';
 
 import { PermissionsModal } from '@/components/permissions-modal';
 
-const KEY = 'huntbot.permsPrompted.v1';
+const KEY = 'driver.permsPrompted.v1';
 // Routes that are NOT "inside the platform" — don't prompt here.
 const OUTSIDE = new Set(['/', '/login', '/verify', '/onboarding']);
 

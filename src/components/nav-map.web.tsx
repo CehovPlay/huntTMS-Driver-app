@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import L from 'leaflet';
 import { MapContainer, Marker, Polyline, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 
-import { NAV_STOPS } from '@/lib/mock';
+import { type NavStop } from '@/lib/mock';
 import { type LatLng } from '@/lib/route';
 import { C } from '@/lib/theme';
 import { useSettings } from '@/lib/settings';
@@ -64,10 +64,11 @@ type Props = {
   coords: LatLng[];
   here: LatLng;
   headingTo?: LatLng;
+  stops?: NavStop[];
   onPress?: (c: LatLng) => void;
 };
 
-export function NavMap({ coords, here, headingTo, onPress }: Props) {
+export function NavMap({ coords, here, headingTo, stops = [], onPress }: Props) {
   const { scheme } = useSettings();
   return (
     <MapContainer
@@ -81,7 +82,7 @@ export function NavMap({ coords, here, headingTo, onPress }: Props) {
       <Follow here={here} />
       <Clicker onPress={onPress} />
       {coords.length ? <Polyline positions={coords.map(ll)} pathOptions={{ color: C.route, weight: 8 }} /> : null}
-      {NAV_STOPS.map((s, i) => (
+      {stops.map((s, i) => (
         <Marker key={i} position={ll(s.coordinate)} icon={stopIcon(i)} />
       ))}
       <Marker position={ll(here)} icon={truckPuck(headingTo ? bearing(here, headingTo) : 0)} />

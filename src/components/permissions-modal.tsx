@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { Bell, Camera, Lock, MapPin, Mic, Sparkles } from 'lucide-react-native';
+import { Bell, Camera, Lock, MapPin } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import { requestAllPermissions } from '@/lib/permissions';
 import { C } from '@/lib/theme';
 
 const ITEMS = [
-  { icon: Mic, label: 'Microphone', body: 'Talk to HuntBot hands-free — “Hey Bot…”' },
   { icon: Camera, label: 'Camera', body: 'Scan BOL / POD and capture proof of delivery' },
   { icon: MapPin, label: 'Location', body: 'Live ETA and turn-by-turn while on a load' },
   { icon: Bell, label: 'Notifications', body: 'Load offers, stop reminders, dispatcher' },
@@ -52,11 +51,11 @@ export function PermissionsModal({ onAllow, onSkip }: { onAllow: () => void; onS
               className="size-16 items-center justify-center"
               style={{ backgroundColor: C.teal, borderRadius: 14, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}
             >
-              <Sparkles size={30} color="#fff" strokeWidth={2.2} />
+              <MapPin size={30} color="#fff" strokeWidth={2.2} />
             </View>
-            <Text className="text-center font-sans-bold text-[22px] leading-7 text-foreground">Set up HuntBot</Text>
+            <Text className="text-center font-sans-bold text-[22px] leading-7 text-foreground">Set up driver tools</Text>
             <Text className="px-2 text-center font-sans text-sm leading-5 text-muted-foreground">
-              A couple of permissions so the assistant and driver tools work properly.
+              A couple of permissions so navigation and document capture work properly.
             </Text>
           </View>
 

@@ -5,14 +5,33 @@ import { Image } from 'expo-image';
 
 import { Pressable } from '@/components/pressable';
 import { useActiveLoad } from '@/lib/active-load';
+import { uploadDriverLoadFile } from '@/lib/api/load-mutations';
+import { useDriverLoads } from '@/lib/api/use-api-query';
+import { useNotifications } from '@/lib/notifications';
+import { C } from '@/lib/theme';
+import { useState } from 'react';
 
 export default function ConfirmScan() {
   const { uri, type } = useLocalSearchParams<{ uri?: string; type?: string }>();
   const { addDoc } = useActiveLoad();
+  const q = useDriverLoads();
+  const { notify } = useNotifications();
+  const [submitting, setSubmitting] = useState(false);
 
-  const onContinue = () => {
+  const onContinue = async () => {
+    if (submitting) return;
     if (type) {
-      addDoc(type);
+      if (!uri || !q.data?.activeLoad) return;
+      setSubmitting(true);
+      try {
+        await uploadDriverLoadFile({ loadId: q.data.activeLoad.id, uri, label: type });
+        addDoc(type);
+        notify({ type: 'success', title: 'Document uploaded', body: type });
+      } catch {
+        notify({ type: 'alert', title: 'Upload failed', body: 'Try again before completing the load.' });
+        setSubmitting(false);
+        return;
+      }
       router.replace('/map'); // came from the active-load upload flow
     } else {
       router.replace('/upload');
@@ -46,15 +65,19 @@ export default function ConfirmScan() {
         <View className="gap-3 px-5 pb-2 pt-3">
           <Pressable
             onPress={onContinue}
+            disabled={submitting}
             className="h-16 flex-row items-center justify-center rounded-2xl bg-primary active:opacity-90"
+            style={{ opacity: submitting ? 0.6 : 1 }}
           >
-            <Text className="font-sans-medium text-base text-primary-foreground">Continue</Text>
+            <Text className="font-sans-medium text-base text-primary-foreground">
+              {submitting ? 'Uploading...' : 'Continue'}
+            </Text>
           </Pressable>
           <Pressable
             onPress={() => router.replace({ pathname: '/scan', params: { type: type ?? '' } })}
             className="h-16 flex-row items-center justify-center rounded-2xl bg-accent active:opacity-80"
           >
-            <Text className="font-sans-medium text-base text-foreground">Try again</Text>
+            <Text className="font-sans-medium text-base" style={{ color: C.foreground }}>Try again</Text>
           </Pressable>
         </View>
       </SafeAreaView>

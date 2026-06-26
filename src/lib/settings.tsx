@@ -70,8 +70,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>(() => load<ThemeMode>(KEYS.theme, 'system'));
   const [units, setUnitsState] = useState<Units>(() => load<Units>(KEYS.units, 'mi'));
   const [locale, setLocaleState] = useState<Locale>(() => load<Locale>(KEYS.locale, 'en'));
-  const [onboarded, setOnboardedState] = useState<boolean>(() => load(KEYS.onboarded, '') === '1');
-  const [appLock, setAppLockState] = useState<boolean>(() => load(KEYS.appLock, '') === '1');
+  const [onboarded, setOnboardedState] = useState<boolean>(() => load<string>(KEYS.onboarded, '') === '1');
+  const [appLock, setAppLockState] = useState<boolean>(() => load<string>(KEYS.appLock, '') === '1');
   const [sysScheme, setSysScheme] = useState<'light' | 'dark'>(() =>
     Platform.OS === 'web' || Platform.OS === 'ios' || Platform.OS === 'android' ? systemScheme() : 'light',
   );
@@ -131,8 +131,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       const bg = scheme === 'dark' ? '#0a0a0b' : '#ffffff';
       const tg = getTelegramWebApp();
       try {
-        (tg as { setBackgroundColor?: (c: string) => void })?.setBackgroundColor?.(bg);
-        (tg as { setHeaderColor?: (c: string) => void })?.setHeaderColor?.(bg);
+        (tg as unknown as { setBackgroundColor?: (c: string) => void })?.setBackgroundColor?.(bg);
+        (tg as unknown as { setHeaderColor?: (c: string) => void })?.setHeaderColor?.(bg);
       } catch {}
     }
   }, [scheme, theme]);

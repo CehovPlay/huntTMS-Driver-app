@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable as RNPressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ChevronRight, Package, Search, X, Zap } from 'lucide-react-native';
+import { ChevronRight, Package, Search, X } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import { PressableScale } from '@/components/pressable-scale';
@@ -10,21 +10,14 @@ import { Skeleton } from '@/components/skeleton';
 import { ErrorState } from '@/components/error-state';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/lib/settings';
-import { useMockQuery } from '@/lib/use-mock-query';
 import { fmtMi } from '@/lib/units';
 import { Logo } from '@/components/logo';
 import { EmptyState } from '@/components/empty-state';
 import { C, shadowXs, tnum } from '@/lib/theme';
 import { loadBadge } from '@/lib/status';
 import { Appear } from '@/components/appear';
-import {
-  COMPLETED_TRIPS,
-  DELIVERED_CURRENT,
-  SCHEDULED_TRIPS,
-  type Trip,
-  type TripStop,
-} from '@/lib/mock';
-import { useActiveLoad } from '@/lib/active-load';
+import { type Trip, type TripStop } from '@/lib/mock';
+import { useDriverLoads } from '@/lib/api/use-api-query';
 
 function StopRow({ stop, isFirst, isLast }: { stop: TripStop; isFirst: boolean; isLast: boolean }) {
   return (
@@ -69,7 +62,7 @@ function TripCard({ trip }: { trip: Trip }) {
   const { units } = useSettings();
   return (
     <PressableScale
-      onPress={() => router.push({ pathname: '/load/[id]', params: { id: trip.id, variant: trip.status } })}
+      onPress={() => router.push({ pathname: '/load/[id]', params: { id: String(trip.loadId ?? trip.id), variant: trip.status } })}
       className="w-full gap-2 rounded-3xl bg-background p-4 active:opacity-90"
     >
       {/* title — single stable row; partial indicator drops to its own line */}
@@ -153,9 +146,11 @@ const MONTHS: Record<string, number> = {
 };
 function tripDate(t: Trip) {
   const s = t.stops[0];
+  if (!s) return new Date();
   return new Date(2026, MONTHS[s.month] ?? 0, parseInt(s.day, 10) || 1);
 }
 const BUCKETS = ['Today', 'Tomorrow', 'This week', 'Later'] as const;
+const EMPTY_TRIP: Trip = { id: '', status: 'scheduled', stops: [] };
 function bucketOf(anchorMs: number, t: Trip) {
   const diff = Math.round((tripDate(t).getTime() - anchorMs) / 86_400_000);
   if (diff <= 0) return 'Today';
@@ -177,28 +172,23 @@ function matchesQuery(t: Trip, q: string) {
 export default function LoadsScreen() {
   const [tab, setTab] = useState<'scheduled' | 'completed'>('scheduled');
   const [query, setQuery] = useState('');
-  const q = useMockQuery();
-  const { completedRefs } = useActiveLoad();
+  const q = useDriverLoads();
   const { units } = useSettings();
+  const scheduledTrips = q.data?.scheduledTrips ?? [];
+  const completedTrips = q.data?.completedTrips ?? [];
 
-  // delivered active load(s) surface at the top of Completed
-  const delivered = completedRefs.includes(DELIVERED_CURRENT.id) ? [DELIVERED_CURRENT] : [];
-  const completed = [...delivered, ...COMPLETED_TRIPS].filter((t) => matchesQuery(t, query));
+  const completed = completedTrips.filter((t) => matchesQuery(t, query));
 
   // Scheduled is grouped by pickup day; anchored to the current load so it reads as "Today".
   const anchorMs = tripDate(
-    SCHEDULED_TRIPS.find((t) => t.status === 'current') ?? SCHEDULED_TRIPS[0],
+    scheduledTrips.find((t) => t.status === 'current') ?? scheduledTrips[0] ?? completedTrips[0] ?? EMPTY_TRIP,
   ).getTime();
   const groups = BUCKETS.map((label) => ({
     label,
-    trips: SCHEDULED_TRIPS.filter((t) => bucketOf(anchorMs, t) === label && matchesQuery(t, query)),
+    trips: scheduledTrips.filter((t) => bucketOf(anchorMs, t) === label && matchesQuery(t, query)),
   })).filter((g) => g.trips.length > 0);
 
   const empty = tab === 'completed' ? completed.length === 0 : groups.length === 0;
-
-  // A pending load offer the dispatcher just sent — taps through to Accept/Decline.
-  const offer = SCHEDULED_TRIPS.find((t) => t.status === 'scheduled');
-  const showOffer = tab === 'scheduled' && !query && !!offer;
 
   return (
     <View className="flex-1 bg-accent">
@@ -314,46 +304,14 @@ export default function LoadsScreen() {
           />
         ) : (
           <View className="gap-3 p-4">
-            {showOffer && offer ? (
-              <Appear>
-              <PressableScale
-                onPress={() =>
-                  router.push({ pathname: '/load/[id]', params: { id: offer.id, variant: 'offered' } })
-                }
-                accessibilityRole="button"
-                accessibilityLabel={`New load offer ${offer.id}`}
-                className="gap-2 rounded-3xl border border-border bg-background p-4 active:opacity-90"
-              >
-                <View className="flex-row items-center gap-2">
-                  <Zap size={16} color={C.foreground} fill={C.foreground} />
-                  <Text className="flex-1 font-sans-semibold text-sm" style={{ color: C.foreground }}>New load offer</Text>
-                  <Text className="font-sans-medium text-xs text-muted-foreground" style={tnum}>{offer.id}</Text>
-                </View>
-                <Text className="font-sans-medium text-base text-foreground" numberOfLines={1}>
-                  {offer.stops[0]?.city} → {offer.stops[offer.stops.length - 1]?.city}
-                </Text>
-                <View className="flex-row items-center gap-2">
-                  <Text className="font-sans text-sm text-muted-foreground" style={tnum}>
-                    {offer.broker ?? 'Broker'}
-                    {offer.miles ? ` · ${fmtMi(offer.miles, units)}` : ''}
-                  </Text>
-                  <View className="flex-1" />
-                  <View className="flex-row items-center gap-1 rounded-full px-3 py-1" style={{ backgroundColor: C.accent }}>
-                    <Text className="font-sans-medium text-xs" style={{ color: C.foreground }}>Review</Text>
-                    <ChevronRight size={14} color={C.foreground} />
-                  </View>
-                </View>
-              </PressableScale>
-              </Appear>
-            ) : null}
             {tab === 'scheduled'
               ? (() => {
-                  let k = showOffer ? 1 : 0;
+                  let k = 0;
                   return groups.map((g) => (
                     <View key={g.label} className="gap-3">
                       <Text className="px-1 font-sans-medium text-sm text-muted-foreground">{g.label}</Text>
                       {g.trips.map((trip) => (
-                        <Appear key={trip.id} index={k++}>
+                        <Appear key={String(trip.loadId ?? trip.id)} index={k++}>
                           <TripCard trip={trip} />
                         </Appear>
                       ))}
@@ -361,7 +319,7 @@ export default function LoadsScreen() {
                   ));
                 })()
               : completed.map((trip, i) => (
-                  <Appear key={trip.id} index={i}>
+                  <Appear key={String(trip.loadId ?? trip.id)} index={i}>
                     <TripCard trip={trip} />
                   </Appear>
                 ))}

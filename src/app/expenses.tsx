@@ -1,15 +1,50 @@
+import { useCallback } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { ArrowLeft, Paperclip, Plus, ReceiptText } from 'lucide-react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { ArrowLeft, Building2, CircleDollarSign, Fuel, PackageOpen, ParkingCircle, Plus, ReceiptText, Shield, Wrench } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import { EmptyState } from '@/components/empty-state';
-import { EXPENSE_META, money, useExpenses } from '@/lib/expenses';
+import {
+  expenseCategoryLabel,
+  money,
+  useDriverExpenses,
+  type DriverExpense,
+  type ExpenseCategoryName,
+} from '@/lib/api/expenses';
 import { C, tnum } from '@/lib/theme';
 
+const ICONS: Record<ExpenseCategoryName, typeof Fuel> = {
+  FUEL: Fuel,
+  TRUCK_LEASE: PackageOpen,
+  MAINTENANCE: Wrench,
+  REPAIR: Wrench,
+  TOLL: CircleDollarSign,
+  OFFICE: Building2,
+  INSURANCE: Shield,
+  PARKING: ParkingCircle,
+  LUMPER: PackageOpen,
+  PERMIT: ReceiptText,
+  OTHER: ReceiptText,
+};
+
+function expenseDate(e: DriverExpense): string {
+  if (!e.expenseDate) return 'Today';
+  const d = new Date(e.expenseDate);
+  return Number.isNaN(d.getTime()) ? String(e.expenseDate) : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
 export default function Expenses() {
-  const { expenses, total } = useExpenses();
+  const q = useDriverExpenses();
+  const expenses = q.data ?? [];
+  const total = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+  useFocusEffect(
+    useCallback(() => {
+      q.refetch();
+    }, [q.refetch]),
+  );
 
   return (
     <View className="flex-1 bg-accent">
@@ -32,25 +67,31 @@ export default function Expenses() {
       </SafeAreaView>
 
       <ScrollView contentContainerClassName="gap-5 p-4 pb-28" showsVerticalScrollIndicator={false}>
-        {/* total */}
         <View className="items-center gap-1 rounded-3xl bg-background py-7">
-          <Text className="font-sans-medium text-sm text-muted-foreground">Logged this week</Text>
+          <Text className="font-sans-medium text-sm text-muted-foreground">Logged expenses</Text>
           <Text className="font-sans-bold text-foreground" style={[{ fontSize: 40 }, tnum]}>{money(total)}</Text>
           <Text className="font-sans text-sm text-muted-foreground">{expenses.length} expenses</Text>
         </View>
 
-        {expenses.length === 0 ? (
+        {q.loading ? (
+          <Text className="py-6 text-center font-sans text-base text-muted-foreground">Loading expenses...</Text>
+        ) : q.error ? (
+          <Pressable onPress={q.refetch} className="rounded-3xl bg-background p-5 active:opacity-70">
+            <Text className="text-center font-sans text-base text-muted-foreground">Could not load expenses. Tap to retry.</Text>
+          </Pressable>
+        ) : expenses.length === 0 ? (
           <EmptyState
             icon={ReceiptText}
             title="No expenses yet"
-            subtitle="Log fuel, tolls, scales and more — tap “Add expense” or tell HuntBot."
+            subtitle="Log fuel, tolls, parking and more."
             actionLabel="Add expense"
             onAction={() => router.push('/add-expense')}
           />
         ) : (
           <View className="gap-px overflow-hidden rounded-3xl bg-background">
             {expenses.map((e) => {
-              const Icon = EXPENSE_META[e.category].icon;
+              const Icon = ICONS[e.category] ?? ReceiptText;
+              const status = e.status ?? 'NEEDS_RECEIPT';
               return (
                 <View key={e.id} className="flex-row items-center gap-3 bg-background px-4 py-3.5">
                   <View className="size-10 items-center justify-center rounded-2xl bg-accent">
@@ -58,12 +99,14 @@ export default function Expenses() {
                   </View>
                   <View className="flex-1">
                     <View className="flex-row items-center gap-2">
-                      <Text className="font-sans-medium text-base text-foreground">{e.category}</Text>
-                      {e.receiptUri ? <Paperclip size={13} color={C.mutedForeground} /> : null}
+                      <Text className="font-sans-medium text-base text-foreground">{expenseCategoryLabel(e.category)}</Text>
+                      <View className="rounded-full bg-accent px-2 py-0.5">
+                        <Text className="font-sans-medium text-[10px] text-muted-foreground">{String(status).replaceAll('_', ' ')}</Text>
+                      </View>
                     </View>
                     <Text className="font-sans text-sm text-muted-foreground" numberOfLines={1}>
-                      {e.date}
-                      {e.note ? ` · ${e.note}` : ''}
+                      {expenseDate(e)}
+                      {e.notes ? ` · ${e.notes}` : ''}
                       {e.loadId ? ` · #${e.loadId}` : ''}
                     </Text>
                   </View>

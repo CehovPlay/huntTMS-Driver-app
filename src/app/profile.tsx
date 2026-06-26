@@ -3,19 +3,16 @@ import { Alert, Linking, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {
-  AlertTriangle,
   ArrowLeft,
   Bell,
   Camera,
   ChevronRight,
-  ClipboardCheck,
   FileText,
   Fingerprint,
   LogOut,
   MapPin,
   Mic,
   Moon,
-  Phone,
   ReceiptText,
   Smartphone,
   Sun,
@@ -29,12 +26,11 @@ import { DocsFlowSheet } from '@/components/docs-flow-sheet';
 import { useSettings, type ThemeMode } from '@/lib/settings';
 import { useOffline, setOffline } from '@/lib/use-mock-query';
 import { biometricAvailable } from '@/lib/biometric';
+import { useAuth } from '@/lib/auth/auth';
 import { C } from '@/lib/theme';
 import { docColor } from '@/lib/status';
 import { Appear } from '@/components/appear';
 import {
-  CO_DRIVER,
-  DRIVER,
   DRIVER_DOCS,
   NOTIFICATION_PREFS,
   PERMISSIONS,
@@ -61,6 +57,16 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <View className="gap-px overflow-hidden rounded-3xl bg-background">{children}</View>
     </Appear>
   );
+}
+
+function initials(name?: string | null): string {
+  return (name ?? 'Driver')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 function DocRow({ doc, status, onPress }: { doc: Doc; status: DocStatus; onPress: () => void }) {
@@ -100,7 +106,9 @@ const THEME_OPTS: { val: ThemeMode; label: string; icon: typeof Sun }[] = [
 ];
 
 export default function Profile() {
-  const [prefs, setPrefs] = useState(NOTIFICATION_PREFS);
+  const { driver, signOut: authSignOut } = useAuth();
+  const driverName = driver?.fullName || driver?.username || 'Driver';
+  const [prefs, setPrefs] = useState(NOTIFICATION_PREFS.filter((p) => p.key !== 'messages'));
   const { theme, setTheme, appLock, setAppLock } = useSettings();
   const offline = useOffline();
   const [bio, setBio] = useState<{ available: boolean; label: string }>({ available: false, label: 'Face ID' });
@@ -124,7 +132,7 @@ export default function Profile() {
   const signOut = () =>
     Alert.alert('Sign out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: () => router.replace('/login') },
+      { text: 'Sign out', style: 'destructive', onPress: authSignOut },
     ]);
 
   return (
@@ -151,31 +159,19 @@ export default function Profile() {
         {/* Driver card */}
         <View className="flex-row items-center gap-4 rounded-3xl bg-background p-4">
           <View className="size-16 items-center justify-center rounded-full" style={{ backgroundColor: C.border }}>
-            <Text className="font-sans-semibold text-xl text-foreground">{DRIVER.initials}</Text>
+            <Text className="font-sans-semibold text-xl text-foreground">{initials(driverName)}</Text>
           </View>
           <View className="flex-1">
-            <Text className="font-sans-semibold text-xl text-foreground">{DRIVER.name}</Text>
-            <Text className="font-sans text-sm text-muted-foreground">{DRIVER.role}</Text>
-            <Text className="font-sans text-sm text-muted-foreground">{DRIVER.cdl}</Text>
+            <Text className="font-sans-semibold text-xl text-foreground">{driverName}</Text>
+            <Text className="font-sans text-sm text-muted-foreground">
+              {driver?.carrierName ?? (driver?.carrierId ? `Carrier #${driver.carrierId}` : 'Driver')}
+            </Text>
+            <Text className="font-sans text-sm text-muted-foreground">
+              Driver #{driver?.driverId ?? '—'}
+              {driver?.username ? ` · ${driver.username}` : ''}
+            </Text>
           </View>
         </View>
-
-        {/* DVIR quick entry */}
-        <Pressable
-          onPress={() => router.push('/dvir')}
-          accessibilityRole="button"
-          accessibilityLabel="Vehicle inspection"
-          className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-90"
-        >
-          <View className="size-11 items-center justify-center rounded-2xl bg-accent">
-            <ClipboardCheck size={20} color={C.foreground} />
-          </View>
-          <View className="flex-1">
-            <Text className="font-sans-medium text-base text-foreground">Vehicle inspection</Text>
-            <Text className="font-sans text-sm text-muted-foreground">DVIR · pre / post-trip checklist</Text>
-          </View>
-          <ChevronRight size={18} color={C.mutedForeground} />
-        </Pressable>
 
         {/* Expenses quick entry */}
         <Pressable
@@ -189,49 +185,10 @@ export default function Profile() {
           </View>
           <View className="flex-1">
             <Text className="font-sans-medium text-base text-foreground">Expenses</Text>
-            <Text className="font-sans text-sm text-muted-foreground">Fuel, tolls, repairs · attach receipts</Text>
+            <Text className="font-sans text-sm text-muted-foreground">Fuel, tolls, repairs</Text>
           </View>
           <ChevronRight size={18} color={C.mutedForeground} />
         </Pressable>
-
-        {/* Report a problem */}
-        <Pressable
-          onPress={() => router.push('/report-issue')}
-          accessibilityRole="button"
-          accessibilityLabel="Report a problem"
-          className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-90"
-        >
-          <View className="size-11 items-center justify-center rounded-2xl" style={{ backgroundColor: `${C.destructive}14` }}>
-            <AlertTriangle size={20} color={C.destructive} />
-          </View>
-          <View className="flex-1">
-            <Text className="font-sans-medium text-base text-foreground">Report a problem</Text>
-            <Text className="font-sans text-sm text-muted-foreground">Breakdown, flat tire, accident…</Text>
-          </View>
-          <ChevronRight size={18} color={C.mutedForeground} />
-        </Pressable>
-
-        {/* Co-driver */}
-        <Section title="CO-DRIVER">
-          <View className="flex-row items-center gap-3 bg-background px-4 py-3.5">
-            <View className="size-10 items-center justify-center rounded-full" style={{ backgroundColor: C.border }}>
-              <Text className="font-sans-semibold text-sm text-foreground">{CO_DRIVER.initials}</Text>
-            </View>
-            <View className="flex-1">
-              <Text className="font-sans-medium text-base text-foreground">{CO_DRIVER.name}</Text>
-              <Text className="font-sans text-sm text-muted-foreground">Co-driver</Text>
-            </View>
-            <Pressable
-              onPress={() => router.push('/call')}
-              accessibilityRole="button"
-              accessibilityLabel={`Call ${CO_DRIVER.name}`}
-              hitSlop={8}
-              className="size-12 items-center justify-center rounded-full bg-accent active:opacity-80"
-            >
-              <Phone size={16} color={C.foreground} />
-            </Pressable>
-          </View>
-        </Section>
 
         {/* Driver documents */}
         <Section title="DRIVER & MEDICAL DOCUMENTS">
@@ -330,7 +287,7 @@ export default function Profile() {
 
         {/* Permissions */}
         <Section title="PERMISSIONS & ACCESS">
-          {PERMISSIONS.map((p) => {
+          {PERMISSIONS.filter((p) => p.key !== 'microphone').map((p) => {
             const Icon = PERM_ICON[p.key] ?? Camera;
             return (
               <Pressable

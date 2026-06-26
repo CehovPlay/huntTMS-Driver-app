@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { Navigation2 } from 'lucide-react-native';
 
-import { DRIVER_LOCATION, NAV_STOPS } from '@/lib/mock';
+import { type NavStop } from '@/lib/mock';
 import { type LatLng } from '@/lib/route';
 import { C } from '@/lib/theme';
 import { useSettings } from '@/lib/settings';
@@ -22,10 +22,11 @@ type Props = {
   coords: LatLng[];
   here: LatLng;
   headingTo: LatLng;
+  stops?: NavStop[];
   onPress?: (c: LatLng) => void;
 };
 
-export function NavMap({ coords, here, headingTo, onPress }: Props) {
+export function NavMap({ coords, here, headingTo, stops = [], onPress }: Props) {
   const mapRef = useRef<MapView>(null);
   const { scheme } = useSettings();
 
@@ -48,10 +49,10 @@ export function NavMap({ coords, here, headingTo, onPress }: Props) {
       showsBuildings
       pitchEnabled
       onPress={(e) => onPress?.(e.nativeEvent.coordinate)}
-      initialRegion={{ latitude: DRIVER_LOCATION.latitude, longitude: DRIVER_LOCATION.longitude, latitudeDelta: 0.02, longitudeDelta: 0.02 }}
+      initialRegion={{ latitude: here.latitude, longitude: here.longitude, latitudeDelta: 0.02, longitudeDelta: 0.02 }}
     >
       {coords.length ? <Polyline coordinates={coords} strokeColor={C.route} strokeWidth={8} /> : null}
-      {NAV_STOPS.map((s, i) => (
+      {stops.map((s, i) => (
         <Marker key={i} coordinate={s.coordinate} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
           <View className="size-7 items-center justify-center rounded-full border-2 border-white" style={{ backgroundColor: C.foreground }}>
             <Text className="font-sans-bold text-xs text-white">{i + 1}</Text>
