@@ -30,18 +30,18 @@ import { useAuth } from '@/lib/auth/auth';
 import { C } from '@/lib/theme';
 import { docColor } from '@/lib/status';
 import { Appear } from '@/components/appear';
-import {
-  NOTIFICATION_PREFS,
-  PERMISSIONS,
-  type Doc,
-  type DocStatus,
-} from '@/lib/profile';
+import { PERMISSIONS, type Doc, type DocStatus } from '@/lib/profile';
 import { useDriverEquipment, truckMakeModel, plateLabel } from '@/lib/api/equipment';
 import {
   uploadDriverDocument,
   useDriverDocuments,
   type DriverDocumentItem,
 } from '@/lib/api/documents';
+import {
+  updateNotificationPreferences,
+  useNotificationPreferences,
+  type DriverNotificationPreference,
+} from '@/lib/api/notification-preferences';
 import { useNotifications } from '@/lib/notifications';
 
 const PERM_ICON: Record<string, typeof Camera> = {
@@ -222,11 +222,13 @@ export default function Profile() {
   const { driver, signOut: authSignOut } = useAuth();
   const equipment = useDriverEquipment();
   const documents = useDriverDocuments();
+  const preferenceQuery = useNotificationPreferences();
   const { notify } = useNotifications();
   const truck = equipment.data?.truck ?? null;
   const trailer = equipment.data?.trailer ?? null;
   const driverName = driver?.fullName || driver?.username || 'Driver';
-  const [prefs, setPrefs] = useState(NOTIFICATION_PREFS.filter((p) => p.key !== 'messages'));
+  const [preferences, setPreferences] = useState<DriverNotificationPreference[]>([]);
+  const [savingPreferenceKeys, setSavingPreferenceKeys] = useState<string[]>([]);
   const { theme, setTheme, appLock, setAppLock } = useSettings();
   const offline = useOffline();
   const [bio, setBio] = useState<{ available: boolean; label: string }>({ available: false, label: 'Face ID' });
@@ -239,8 +241,40 @@ export default function Profile() {
     biometricAvailable().then(setBio);
   }, []);
 
-  const toggle = (key: string) =>
-    setPrefs((p) => p.map((x) => (x.key === key ? { ...x, on: !x.on } : x)));
+  useEffect(() => {
+    if (preferenceQuery.data) setPreferences(preferenceQuery.data);
+  }, [preferenceQuery.data]);
+
+  const togglePreference = async (key: string, enabled: boolean) => {
+    if (savingPreferenceKeys.includes(key)) return;
+    const previous = preferences.find((preference) => preference.key === key);
+    if (!previous) return;
+
+    setPreferences((items) =>
+      items.map((item) => (item.key === key ? { ...item, enabled } : item)),
+    );
+    setSavingPreferenceKeys((keys) => [...keys, key]);
+    try {
+      const updated = await updateNotificationPreferences({ [key]: enabled });
+      const saved = updated.find((preference) => preference.key === key);
+      if (saved) {
+        setPreferences((items) =>
+          items.map((item) => (item.key === key ? saved : item)),
+        );
+      }
+    } catch {
+      setPreferences((items) =>
+        items.map((item) => (item.key === key ? previous : item)),
+      );
+      notify({
+        type: 'alert',
+        title: 'Preference not saved',
+        body: `${previous.label} was restored. Try again.`,
+      });
+    } finally {
+      setSavingPreferenceKeys((keys) => keys.filter((item) => item !== key));
+    }
+  };
 
   const openDocumentUpload = (item: DriverDocumentItem) => {
     setUploadFile(undefined);
@@ -439,15 +473,31 @@ export default function Profile() {
 
         {/* Notifications */}
         <Section title="NOTIFICATIONS">
-          {prefs.map((p) => (
-            <View key={p.key} className="flex-row items-center gap-3 bg-background px-4 py-3">
-              <View className="flex-1">
-                <Text className="font-sans-medium text-base text-foreground">{p.label}</Text>
-                <Text className="font-sans text-sm text-muted-foreground">{p.desc}</Text>
-              </View>
-              <Switch value={p.on} onValueChange={() => toggle(p.key)} />
+          {preferenceQuery.loading && !preferences.length ? (
+            <View className="bg-background px-4 py-3.5">
+              <Text className="font-sans text-sm text-muted-foreground">Loading preferences...</Text>
             </View>
-          ))}
+          ) : preferenceQuery.error && !preferences.length ? (
+            <Pressable onPress={preferenceQuery.refetch} className="bg-background px-4 py-3.5 active:opacity-70">
+              <Text className="font-sans text-sm text-muted-foreground">
+                Could not load preferences. Tap to retry.
+              </Text>
+            </Pressable>
+          ) : (
+            preferences.map((preference) => (
+              <View key={preference.key} className="flex-row items-center gap-3 bg-background px-4 py-3">
+                <View className="flex-1">
+                  <Text className="font-sans-medium text-base text-foreground">{preference.label}</Text>
+                  <Text className="font-sans text-sm text-muted-foreground">{preference.description}</Text>
+                </View>
+                <Switch
+                  value={preference.enabled}
+                  onValueChange={(enabled) => togglePreference(preference.key, enabled)}
+                  disabled={savingPreferenceKeys.includes(preference.key)}
+                />
+              </View>
+            ))
+          )}
         </Section>
 
         {/* Permissions */}
