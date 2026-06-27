@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Text, useWindowDimensions, View } from 'react-native';
+import { useCallback, useEffect, useRef } from 'react';
+import { AppState, Text, useWindowDimensions, View } from 'react-native';
 import { usePathname } from 'expo-router';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +19,7 @@ type TabBarProps = {
 
 import { Pressable } from '@/components/pressable';
 import { useDriverNotificationUnreadCount } from '@/lib/api/notifications';
+import { refreshDriverLoads } from '@/lib/api/use-api-query';
 import { haptics } from '@/lib/haptics';
 import { C } from '@/lib/theme';
 
@@ -83,10 +84,58 @@ export function TabBar({ state, navigation }: TabBarProps) {
   const unreadQuery = useDriverNotificationUnreadCount();
   const unread = unreadQuery.data ?? 0;
   const barW = width - MARGIN * 2;
+  // The query hook already fetches on mount; suppress the tab effect's duplicate initial request.
+  const lastUnreadRefreshAt = useRef(Date.now());
+  const previousUnread = useRef<number | null>(null);
+
+  const refreshUnread = useCallback(() => {
+    if (Date.now() - lastUnreadRefreshAt.current < 1_500) return;
+    lastUnreadRefreshAt.current = Date.now();
+    unreadQuery.refetch();
+  }, [unreadQuery.refetch]);
 
   useEffect(() => {
-    unreadQuery.refetch();
-  }, [pathname, unreadQuery.refetch]);
+    refreshUnread();
+  }, [pathname, refreshUnread]);
+
+  useEffect(() => {
+    let nativeActive = AppState.currentState === 'active';
+    let webVisible = typeof document === 'undefined' || document.visibilityState === 'visible';
+    let active = nativeActive && webVisible;
+    const updateActive = () => {
+      const next = nativeActive && webVisible;
+      if (next && !active) refreshUnread();
+      active = next;
+    };
+    const appStateSubscription = AppState.addEventListener('change', (state) => {
+      nativeActive = state === 'active';
+      updateActive();
+    });
+    const onVisibilityChange = () => {
+      webVisible = document.visibilityState === 'visible';
+      updateActive();
+    };
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisibilityChange);
+    }
+    const poll = setInterval(() => {
+      if (active) refreshUnread();
+    }, 30_000);
+    return () => {
+      clearInterval(poll);
+      appStateSubscription.remove();
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+      }
+    };
+  }, [refreshUnread]);
+
+  useEffect(() => {
+    if (previousUnread.current !== null && unread > previousUnread.current) {
+      refreshDriverLoads().catch(() => undefined);
+    }
+    previousUnread.current = unread;
+  }, [unread]);
 
   const press = (name: string, key: string, focused: boolean) => {
     const event = navigation.emit({ type: 'tabPress', target: key, canPreventDefault: true });

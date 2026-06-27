@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable as RNPressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { ChevronRight, Package, Search, X } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
@@ -174,6 +174,13 @@ export default function LoadsScreen() {
   const [query, setQuery] = useState('');
   const q = useDriverLoads();
   const { units } = useSettings();
+
+  useFocusEffect(
+    useCallback(() => {
+      q.refetch();
+    }, [q.refetch]),
+  );
+
   const scheduledTrips = q.data?.scheduledTrips ?? [];
   const completedTrips = q.data?.completedTrips ?? [];
 

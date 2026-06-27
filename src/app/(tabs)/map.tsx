@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Check, Clock, LocateFixed, Navigation2, Upload } from 'lucide-react-native';
 
 import { useDriverLoads } from '@/lib/api/use-api-query';
@@ -48,6 +48,12 @@ export default function MapScreen() {
   const [selected, setSelected] = useState(0); // 0 = fastest, 1 = alt
   const [myLocation, setMyLocation] = useState<LatLng | null>(null);
   const [mutating, setMutating] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      q.refetch();
+    }, [q.refetch]),
+  );
 
   const stop = load ? (stage === 'pickup' ? load.pickup : load.delivery) : null;
   const active = !!load && stage !== 'delivered';
