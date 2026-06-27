@@ -8,15 +8,19 @@ import { Pressable } from '@/components/pressable';
 import { haptics } from '@/lib/haptics';
 import { C } from '@/lib/theme';
 import { DVIR_ALL_ITEMS, DVIR_SECTIONS } from '@/lib/dvir';
+import { submitDvir } from '@/lib/api/dvir';
+import { useNotifications } from '@/lib/notifications';
 
 type ItemState = 'ok' | 'defect';
 
 export default function Dvir() {
+  const { notify } = useNotifications();
   const [type, setType] = useState<'Pre-trip' | 'Post-trip'>('Pre-trip');
   const [odometer, setOdometer] = useState('');
   const [states, setStates] = useState<Record<string, ItemState>>({});
   const [notes, setNotes] = useState('');
   const [done, setDone] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const defects = useMemo(
     () => DVIR_ALL_ITEMS.filter((i) => states[i] === 'defect'),
@@ -24,9 +28,31 @@ export default function Dvir() {
   );
   const safe = defects.length === 0;
 
-  const submit = () => {
-    haptics.success();
-    setDone(true);
+  const submit = async () => {
+    if (submitting) return;
+    const trimmedNotes = notes.trim();
+    setSubmitting(true);
+    try {
+      await submitDvir({
+        inspectionType: type === 'Pre-trip' ? 'PRE_TRIP' : 'POST_TRIP',
+        odometer: odometer ? Number(odometer) : undefined,
+        notes: trimmedNotes || undefined,
+        defects: defects.map((item) => ({
+          item,
+          note: trimmedNotes || undefined,
+        })),
+      });
+      haptics.success();
+      setDone(true);
+    } catch {
+      notify({
+        type: 'alert',
+        title: 'Inspection not submitted',
+        body: 'Review your connection and try again.',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (done) {
@@ -202,11 +228,15 @@ export default function Dvir() {
         <View className="px-4 pb-2 pt-2">
           <Pressable
             onPress={submit}
+            disabled={submitting}
             accessibilityRole="button"
             accessibilityLabel="Submit inspection"
             className="h-16 items-center justify-center rounded-2xl bg-primary active:opacity-90"
+            style={{ opacity: submitting ? 0.6 : 1 }}
           >
-            <Text className="font-sans-medium text-base text-primary-foreground">Submit inspection</Text>
+            <Text className="font-sans-medium text-base text-primary-foreground">
+              {submitting ? 'Submitting...' : 'Submit inspection'}
+            </Text>
           </Pressable>
         </View>
       </SafeAreaView>
