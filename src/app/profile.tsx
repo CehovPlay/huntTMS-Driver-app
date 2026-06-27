@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Linking, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {
@@ -22,7 +22,7 @@ import {
 
 import { Pressable } from '@/components/pressable';
 import { Switch } from '@/components/switch';
-import { DocsFlowSheet } from '@/components/docs-flow-sheet';
+import { DocsFlowSheet, type SelectedDocumentFile } from '@/components/docs-flow-sheet';
 import { useSettings, type ThemeMode } from '@/lib/settings';
 import { useOffline, setOffline } from '@/lib/use-mock-query';
 import { biometricAvailable } from '@/lib/biometric';
@@ -37,7 +37,12 @@ import {
   type DocStatus,
 } from '@/lib/profile';
 import { useDriverEquipment, truckMakeModel, plateLabel } from '@/lib/api/equipment';
-import { useDriverDocuments, type DriverDocumentItem } from '@/lib/api/documents';
+import {
+  uploadDriverDocument,
+  useDriverDocuments,
+  type DriverDocumentItem,
+} from '@/lib/api/documents';
+import { useNotifications } from '@/lib/notifications';
 
 const PERM_ICON: Record<string, typeof Camera> = {
   camera: Camera,
@@ -74,6 +79,36 @@ function formatDocDate(epochMs: number | null): string {
   return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function formatDateInput(epochMs: number | null): string {
+  if (!epochMs) return '';
+  const date = new Date(epochMs);
+  if (Number.isNaN(date.getTime())) return '';
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, '0'),
+    String(date.getUTCDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function parseDateInput(value: string): number | undefined {
+  if (!value.trim()) return undefined;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) return undefined;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const epochMs = Date.UTC(year, month - 1, day);
+  const date = new Date(epochMs);
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return undefined;
+  }
+  return epochMs;
+}
+
 function toDoc(item: DriverDocumentItem): Doc {
   const status = item.status.toLowerCase() as DocStatus;
   return {
@@ -83,13 +118,23 @@ function toDoc(item: DriverDocumentItem): Doc {
   };
 }
 
-function DocRow({ doc, status, onPress }: { doc: Doc; status: DocStatus; onPress?: () => void }) {
+function DocRow({
+  doc,
+  status,
+  onPress,
+  pending = false,
+}: {
+  doc: Doc;
+  status: DocStatus;
+  onPress?: () => void;
+  pending?: boolean;
+}) {
   const s = docColor(status);
   const expiresText = status === 'missing' ? 'Not on file' : `Expires ${doc.expires}`;
   return (
     <Pressable
       onPress={onPress}
-      disabled={!onPress}
+      disabled={!onPress || pending}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={`${doc.name}, ${s.label}. ${expiresText}`}
       className="flex-row items-center gap-3 bg-background px-4 py-3.5"
@@ -99,12 +144,16 @@ function DocRow({ doc, status, onPress }: { doc: Doc; status: DocStatus; onPress
         <Text className="font-sans-medium text-base text-foreground">{doc.name}</Text>
         <Text className="font-sans text-sm text-muted-foreground">{expiresText}</Text>
       </View>
-      <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: `${s.color}1A` }}>
-        <Text className="font-sans-medium text-xs" style={{ color: s.color }}>
-          {s.label}
-        </Text>
-      </View>
-      {onPress ? <ChevronRight size={16} color={C.mutedForeground} /> : null}
+      {pending ? (
+        <ActivityIndicator size="small" color={C.foreground} />
+      ) : (
+        <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: `${s.color}1A` }}>
+          <Text className="font-sans-medium text-xs" style={{ color: s.color }}>
+            {s.label}
+          </Text>
+        </View>
+      )}
+      {onPress && !pending ? <ChevronRight size={16} color={C.mutedForeground} /> : null}
     </Pressable>
   );
 }
@@ -114,11 +163,15 @@ function DocumentRows({
   loading,
   error,
   onRetry,
+  onSelect,
+  pendingType,
 }: {
   docs: DriverDocumentItem[];
   loading: boolean;
   error: boolean;
   onRetry: () => void;
+  onSelect: (item: DriverDocumentItem) => void;
+  pendingType: string | null;
 }) {
   if (loading) {
     return (
@@ -145,7 +198,15 @@ function DocumentRows({
     <>
       {docs.map((item) => {
         const doc = toDoc(item);
-        return <DocRow key={item.type} doc={doc} status={doc.status} />;
+        return (
+          <DocRow
+            key={item.type}
+            doc={doc}
+            status={doc.status}
+            pending={pendingType === item.type}
+            onPress={() => onSelect(item)}
+          />
+        );
       })}
     </>
   );
@@ -161,6 +222,7 @@ export default function Profile() {
   const { driver, signOut: authSignOut } = useAuth();
   const equipment = useDriverEquipment();
   const documents = useDriverDocuments();
+  const { notify } = useNotifications();
   const truck = equipment.data?.truck ?? null;
   const trailer = equipment.data?.trailer ?? null;
   const driverName = driver?.fullName || driver?.username || 'Driver';
@@ -168,10 +230,10 @@ export default function Profile() {
   const { theme, setTheme, appLock, setAppLock } = useSettings();
   const offline = useOffline();
   const [bio, setBio] = useState<{ available: boolean; label: string }>({ available: false, label: 'Face ID' });
-  // Kept for the upcoming document upload handoff; rows are read-only for now.
-  const [docOverride, setDocOverride] = useState<Record<string, DocStatus>>({});
-  const [uploadDoc, setUploadDoc] = useState<string | null>(null);
-  const [uploadedTypes, setUploadedTypes] = useState<string[]>([]);
+  const [uploadDoc, setUploadDoc] = useState<DriverDocumentItem | null>(null);
+  const [uploadFile, setUploadFile] = useState<SelectedDocumentFile | undefined>();
+  const [expiryDate, setExpiryDate] = useState('');
+  const [uploadingType, setUploadingType] = useState<string | null>(null);
 
   useEffect(() => {
     biometricAvailable().then(setBio);
@@ -179,6 +241,36 @@ export default function Profile() {
 
   const toggle = (key: string) =>
     setPrefs((p) => p.map((x) => (x.key === key ? { ...x, on: !x.on } : x)));
+
+  const openDocumentUpload = (item: DriverDocumentItem) => {
+    setUploadFile(undefined);
+    setExpiryDate(formatDateInput(item.expiryDate));
+    setUploadDoc(item);
+  };
+
+  const submitDocument = async () => {
+    if (!uploadDoc || uploadingType) return;
+    const expiry = parseDateInput(expiryDate);
+    if (expiryDate.trim() && expiry === undefined) {
+      notify({ type: 'alert', title: 'Invalid expiry date', body: 'Use YYYY-MM-DD.' });
+      return;
+    }
+    if (!uploadFile && expiry === undefined) return;
+
+    const item = uploadDoc;
+    setUploadingType(item.type);
+    setUploadDoc(null);
+    try {
+      await uploadDriverDocument({ docType: item.type, expiryDate: expiry, file: uploadFile });
+      await documents.refetch();
+      notify({ type: 'success', title: 'Document updated', body: item.label });
+    } catch {
+      notify({ type: 'alert', title: 'Upload failed', body: `${item.label} was not updated. Try again.` });
+    } finally {
+      setUploadingType(null);
+      setUploadFile(undefined);
+    }
+  };
 
   const signOut = () =>
     Alert.alert('Sign out', 'Are you sure you want to sign out?', [
@@ -248,6 +340,8 @@ export default function Profile() {
             loading={documents.loading}
             error={documents.error}
             onRetry={documents.refetch}
+            onSelect={openDocumentUpload}
+            pendingType={uploadingType}
           />
         </Section>
 
@@ -295,6 +389,8 @@ export default function Profile() {
             loading={documents.loading}
             error={documents.error}
             onRetry={documents.refetch}
+            onSelect={openDocumentUpload}
+            pendingType={uploadingType}
           />
         </Section>
 
@@ -404,18 +500,20 @@ export default function Profile() {
         </Pressable>
       </ScrollView>
 
-      {/* single-document upload — flips the doc to "valid" on confirm */}
+      {/* Single-document upload; the server derives ownership from docType. */}
       <DocsFlowSheet
         visible={!!uploadDoc}
-        required={uploadDoc ? [uploadDoc] : []}
-        labels={{}}
-        uploaded={uploadedTypes}
-        title={uploadDoc ? `Upload ${uploadDoc}` : 'Upload document'}
-        onUpload={(t) => setUploadedTypes((u) => (u.includes(t) ? u : [...u, t]))}
-        onConfirm={() => {
-          if (uploadDoc) setDocOverride((o) => ({ ...o, [uploadDoc]: 'valid' }));
-          setUploadDoc(null);
-        }}
+        required={uploadDoc ? [uploadDoc.type] : []}
+        labels={uploadDoc ? { [uploadDoc.type]: uploadDoc.label } : {}}
+        uploaded={uploadDoc && uploadFile ? [uploadDoc.type] : []}
+        title={uploadDoc ? `Update ${uploadDoc.label}` : 'Update document'}
+        onUpload={() => {}}
+        onFileSelected={(_type, file) => setUploadFile(file)}
+        expiryDate={expiryDate}
+        onExpiryDateChange={setExpiryDate}
+        canConfirm={!!expiryDate.trim()}
+        confirmPending={!!uploadDoc && uploadingType === uploadDoc.type}
+        onConfirm={submitDocument}
         onClose={() => setUploadDoc(null)}
       />
     </View>

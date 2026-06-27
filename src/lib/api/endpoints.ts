@@ -68,18 +68,32 @@ export type UploadLoadFileInput = {
   label: string;
 };
 
-export async function uploadLoadFile(input: UploadLoadFileInput): Promise<number> {
-  const form = new FormData();
+export type MultipartUploadFile = {
+  uri: string;
+  name: string;
+  mime: string;
+};
+
+export async function appendMultipartFile(
+  form: FormData,
+  field: string,
+  file: MultipartUploadFile,
+): Promise<void> {
   if (typeof window !== 'undefined') {
-    const file = await fetch(input.uri).then((r) => r.blob());
-    form.append('file', file, input.name);
+    const blob = await fetch(file.uri).then((response) => response.blob());
+    form.append(field, blob, file.name);
   } else {
-    form.append('file', {
-      uri: input.uri,
-      name: input.name,
-      type: input.mime,
+    form.append(field, {
+      uri: file.uri,
+      name: file.name,
+      type: file.mime,
     } as unknown as Blob);
   }
+}
+
+export async function uploadLoadFile(input: UploadLoadFileInput): Promise<number> {
+  const form = new FormData();
+  await appendMultipartFile(form, 'file', input);
   form.append('loadId', String(input.loadId));
   form.append('type', input.type);
   form.append('label', input.label);

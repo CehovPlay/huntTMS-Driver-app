@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Modal, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -22,7 +22,13 @@ import { C } from '@/lib/theme';
 
 type Step = 'list' | 'source' | 'pages';
 type PageStatus = 'uploading' | 'done' | 'error';
-type Page = { id: string; uri?: string; name: string; status: PageStatus; progress: number; sizeMb: number };
+export type SelectedDocumentFile = { uri: string; name: string; mime: string };
+type Page = SelectedDocumentFile & {
+  id: string;
+  status: PageStatus;
+  progress: number;
+  sizeMb: number;
+};
 
 let _seq = 0;
 const nextId = () => `p${++_seq}`;
@@ -42,9 +48,14 @@ export function DocsFlowSheet({
   uploaded,
   title = 'Upload documents',
   onUpload,
+  onFileSelected,
   onConfirm,
   onClose,
   onSkip,
+  expiryDate,
+  onExpiryDateChange,
+  canConfirm = false,
+  confirmPending = false,
 }: {
   visible: boolean;
   required: string[];
@@ -52,9 +63,14 @@ export function DocsFlowSheet({
   uploaded: string[];
   title?: string;
   onUpload: (type: string, uri?: string) => void | Promise<void>;
+  onFileSelected?: (type: string, file: SelectedDocumentFile) => void;
   onConfirm?: () => void;
   onClose: () => void;
   onSkip?: () => void;
+  expiryDate?: string;
+  onExpiryDateChange?: (value: string) => void;
+  canConfirm?: boolean;
+  confirmPending?: boolean;
 }) {
   const [step, setStep] = useState<Step>('list');
   const [activeType, setActiveType] = useState<string | null>(null);
@@ -71,6 +87,7 @@ export function DocsFlowSheet({
   useEffect(() => () => Object.values(timers.current).forEach(clearInterval), []);
 
   const allDone = required.every((r) => uploaded.includes(r));
+  const confirmEnabled = !confirmPending && (allDone || canConfirm);
 
   const simulate = (id: string) => {
     timers.current[id] = setInterval(() => {
@@ -110,8 +127,9 @@ export function DocsFlowSheet({
       const a = res.assets[0];
       const page: Page = {
         id: nextId(),
-        uri: a?.uri,
-        name: `${labels[activeType ?? ''] ?? 'Document'} · page ${pages.length + 1}`,
+        uri: a.uri,
+        name: a.fileName ?? `${labels[activeType ?? ''] ?? 'document'}-${pages.length + 1}.jpg`,
+        mime: a.mimeType ?? 'image/jpeg',
         status: 'uploading',
         progress: 0,
         sizeMb: Math.round((a?.fileSize ? a.fileSize / 1e6 : 2 + Math.random() * 6) * 10) / 10,
@@ -136,7 +154,9 @@ export function DocsFlowSheet({
   const finishType = async () => {
     if (!pagesReady || !activeType) return;
     try {
-      await onUpload(activeType, pages[0]?.uri);
+      const page = pages[0];
+      if (page) onFileSelected?.(activeType, { uri: page.uri, name: page.name, mime: page.mime });
+      await onUpload(activeType, page?.uri);
     } catch {
       setPages((list) => list.map((p) => ({ ...p, status: 'error', progress: 0 })));
       return;
@@ -198,17 +218,35 @@ export function DocsFlowSheet({
                   );
                 })}
               </View>
+              {onExpiryDateChange ? (
+                <View className="gap-2">
+                  <Text className="font-sans-medium text-sm text-foreground">Expiry date (optional)</Text>
+                  <TextInput
+                    value={expiryDate ?? ''}
+                    onChangeText={onExpiryDateChange}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor={C.mutedForeground}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    className="h-12 rounded-2xl bg-accent px-4 font-sans text-base text-foreground"
+                  />
+                </View>
+              ) : null}
               <SafeAreaView edges={['bottom']}>
                 <View className="gap-3">
                   <Pressable
                     onPress={() => (onConfirm ? onConfirm() : onClose())}
-                    disabled={!allDone}
+                    disabled={!confirmEnabled}
                     accessibilityRole="button"
                     accessibilityLabel="Confirm documents"
                     className="h-14 items-center justify-center rounded-2xl bg-primary"
-                    style={{ opacity: allDone ? 1 : 0.4 }}
+                    style={{ opacity: confirmEnabled ? 1 : 0.4 }}
                   >
-                    <Text className="font-sans-medium text-base text-primary-foreground">Confirm</Text>
+                    {confirmPending ? (
+                      <ActivityIndicator color={C.background} />
+                    ) : (
+                      <Text className="font-sans-medium text-base text-primary-foreground">Confirm</Text>
+                    )}
                   </Pressable>
                   {onSkip ? (
                     <Pressable onPress={onSkip} accessibilityRole="button" accessibilityLabel="Skip for now" className="h-10 items-center justify-center active:opacity-60">
