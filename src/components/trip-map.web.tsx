@@ -90,11 +90,16 @@ export function TripMap({ routes, selected, onSelect, active, myLocation, navSto
     <MapContainer
       center={[42.6, -87.9]}
       zoom={7}
+      minZoom={3}
+      maxBounds={[[-85, -180], [85, 180]]}
+      maxBoundsViscosity={1.0}
       zoomControl={false}
       attributionControl={false}
-      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}
+      // backgroundColor matches the theme so zooming/panning past the tile coverage shows the map background,
+      // not the default white container; minZoom + maxBounds keep the viewport filled with one world copy.
+      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, backgroundColor: C.background }}
     >
-      <TileLayer key={scheme} url={tileUrl(scheme)} subdomains={TILE_SUBDOMAINS} />
+      <TileLayer key={scheme} url={tileUrl(scheme)} subdomains={TILE_SUBDOMAINS} noWrap />
       <FitBounds routes={routes} driverLocation={driverLocation} />
       <RecenterMe at={myLocation} />
       {myLocation ? <Marker position={ll(myLocation)} icon={myDotIcon} /> : null}
