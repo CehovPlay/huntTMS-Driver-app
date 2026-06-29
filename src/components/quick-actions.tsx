@@ -10,10 +10,16 @@ import { C, shadowSm } from '@/lib/theme';
 
 type Sheet = 'expense' | null;
 
-// Quick actions for the active trip.
-// `floating` = round FAB stack over the navigation map; `inline` = a labelled
-// button row inside Load Details.
-export function QuickActions({ variant }: { variant: 'floating' | 'inline' }) {
+// Quick actions for a load.
+// `floating` = round FAB stack over the navigation map (links to the active trip); `inline` = a labelled
+// button row inside Load Details (pass `load` to link a new expense to that specific load).
+export function QuickActions({
+  variant,
+  load,
+}: {
+  variant: 'floating' | 'inline';
+  load?: { id: number; label?: string };
+}) {
   const [sheet, setSheet] = useState<Sheet>(null);
   const open = (s: Sheet) => {
     haptics.light();
@@ -24,7 +30,7 @@ export function QuickActions({ variant }: { variant: 'floating' | 'inline' }) {
   const sheets = (
     <>
       <FormSheet visible={sheet === 'expense'} title="Add expense" onClose={close}>
-        <ExpenseForm onClose={close} />
+        <ExpenseForm onClose={close} load={load} />
       </FormSheet>
     </>
   );

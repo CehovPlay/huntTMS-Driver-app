@@ -232,8 +232,18 @@ export default function LoadDetailScreen() {
           </View>
         </View>
 
-        {/* Quick actions — active trip only (report breakdown / add expense) */}
-        {variant === 'current' ? <QuickActions variant="inline" /> : null}
+        {/* Add expense — only for en route / active (current) and completed (delivered) loads, linked to
+            this load. Hidden for offered / not-yet-started / canceled loads. */}
+        {variant === 'current' || variant === 'delivered' ? (
+          <QuickActions
+            variant="inline"
+            load={
+              id != null && Number.isFinite(Number(id))
+                ? { id: Number(id), label: load.id }
+                : undefined
+            }
+          />
+        ) : null}
 
         {/* Dispatcher comment — highlighted amber callout */}
         {d.comment ? (

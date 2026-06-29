@@ -29,10 +29,23 @@ const ICONS: Record<ExpenseCategoryName, typeof Fuel> = {
   OTHER: ReceiptText,
 };
 
-// Add-expense form — shared by the /add-expense route and the AddExpenseSheet modal.
-export function ExpenseForm({ onClose }: { onClose: () => void }) {
+// Add-expense form — opened from a load window (pass `load` to link to that specific load) or, with no
+// `load`, falls back to the driver's current active load (e.g. the floating action over the trip map).
+export function ExpenseForm({
+  onClose,
+  load,
+}: {
+  onClose: () => void;
+  load?: { id: number; label?: string };
+}) {
   const loads = useDriverLoads();
   const activeLoad = loads.data?.activeLoad;
+  // An explicit load (the one whose window opened this form) wins; otherwise link to the active trip.
+  const linkTarget: { id: number; label: string } | null = load
+    ? { id: load.id, label: load.label ?? String(load.id) }
+    : activeLoad
+      ? { id: Number(activeLoad.id), label: String(activeLoad.id) }
+      : null;
   const [category, setCategory] = useState<ExpenseCategoryName>('FUEL');
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
@@ -44,7 +57,7 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
 
   const value = parseFloat(amount || '0');
   const valid = value > 0 && !saving;
-  const linkedLoadId = linkLoad && activeLoad ? Number(activeLoad.id) : null;
+  const linkedLoadId = linkLoad && linkTarget ? linkTarget.id : null;
 
   // Auto-dismiss shortly after the success confirmation.
   useEffect(() => {
@@ -152,14 +165,14 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
           </View>
         </View>
 
-        {/* link to current load */}
+        {/* link to the load */}
         <Pressable
-          onPress={() => activeLoad && setLinkLoad((v) => !v)}
-          disabled={!activeLoad}
+          onPress={() => linkTarget && setLinkLoad((v) => !v)}
+          disabled={!linkTarget}
           accessibilityRole="button"
           accessibilityState={{ checked: linkLoad }}
           className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-80"
-          style={{ borderWidth: 1, borderColor: C.border, opacity: activeLoad ? 1 : 0.55 }}
+          style={{ borderWidth: 1, borderColor: C.border, opacity: linkTarget ? 1 : 0.55 }}
         >
           <View
             className="size-6 items-center justify-center rounded-md"
@@ -168,7 +181,7 @@ export function ExpenseForm({ onClose }: { onClose: () => void }) {
             {linkLoad ? <Check size={14} color={C.primaryForeground} strokeWidth={3} /> : null}
           </View>
           <Text className="flex-1 font-sans-medium text-base text-foreground">
-            {activeLoad ? `Link to load #${activeLoad.id}` : 'No active load to link'}
+            {linkTarget ? `Link to load #${linkTarget.label}` : 'No load to link'}
           </Text>
         </Pressable>
 

@@ -350,19 +350,19 @@ export default function Profile() {
           </View>
         </View>
 
-        {/* Expenses quick entry */}
+        {/* Expense history (read-only) — expenses are now added from a load's window, not here. */}
         <Pressable
           onPress={() => router.push('/expenses')}
           accessibilityRole="button"
-          accessibilityLabel="Expenses"
+          accessibilityLabel="Expense history"
           className="flex-row items-center gap-3 rounded-3xl bg-background p-4 active:opacity-90"
         >
           <View className="size-11 items-center justify-center rounded-2xl bg-accent">
             <ReceiptText size={20} color={C.foreground} />
           </View>
           <View className="flex-1">
-            <Text className="font-sans-medium text-base text-foreground">Expenses</Text>
-            <Text className="font-sans text-sm text-muted-foreground">Fuel, tolls, repairs</Text>
+            <Text className="font-sans-medium text-base text-foreground">Expense history</Text>
+            <Text className="font-sans text-sm text-muted-foreground">View logged expenses &amp; status</Text>
           </View>
           <ChevronRight size={18} color={C.mutedForeground} />
         </Pressable>

@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
-import { ArrowLeft, Building2, CircleDollarSign, Fuel, PackageOpen, ParkingCircle, Plus, ReceiptText, Shield, Wrench } from 'lucide-react-native';
+import { ArrowLeft, Building2, CircleDollarSign, Fuel, PackageOpen, ParkingCircle, ReceiptText, Shield, Wrench } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import { EmptyState } from '@/components/empty-state';
@@ -66,7 +66,7 @@ export default function Expenses() {
         </View>
       </SafeAreaView>
 
-      <ScrollView contentContainerClassName="gap-5 p-4 pb-28" showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerClassName="gap-5 p-4 pb-10" showsVerticalScrollIndicator={false}>
         <View className="items-center gap-1 rounded-3xl bg-background py-7">
           <Text className="font-sans-medium text-sm text-muted-foreground">Logged expenses</Text>
           <Text className="font-sans-bold text-foreground" style={[{ fontSize: 40 }, tnum]}>{money(total)}</Text>
@@ -83,9 +83,7 @@ export default function Expenses() {
           <EmptyState
             icon={ReceiptText}
             title="No expenses yet"
-            subtitle="Log fuel, tolls, parking and more."
-            actionLabel="Add expense"
-            onAction={() => router.push('/add-expense')}
+            subtitle="Open an active or completed load to log fuel, tolls, parking and more."
           />
         ) : (
           <View className="gap-px overflow-hidden rounded-3xl bg-background">
@@ -117,20 +115,6 @@ export default function Expenses() {
           </View>
         )}
       </ScrollView>
-
-      <SafeAreaView edges={['bottom']} className="absolute inset-x-0 bottom-0">
-        <View className="px-4 pb-2 pt-2">
-          <Pressable
-            onPress={() => router.push('/add-expense')}
-            accessibilityRole="button"
-            accessibilityLabel="Add expense"
-            className="h-16 flex-row items-center justify-center gap-2 rounded-2xl bg-primary active:opacity-90"
-          >
-            <Plus size={20} color={C.primaryForeground} />
-            <Text className="font-sans-medium text-base text-primary-foreground">Add expense</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
     </View>
   );
 }
