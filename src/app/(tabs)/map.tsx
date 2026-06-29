@@ -11,7 +11,7 @@ import {
   uploadDriverLoadFile,
 } from '@/lib/api/load-mutations';
 import { fetchRoutes, etaText, milesText, type LatLng } from '@/lib/route';
-import { locateOnce } from '@/lib/geo';
+import { locateWithStatus, type GpsPermission } from '@/lib/geo';
 import { Pressable } from '@/components/pressable';
 import { SwipeButton } from '@/components/swipe-button';
 import { SuccessCheck } from '@/components/success-check';
@@ -47,6 +47,7 @@ export default function MapScreen() {
   const [routes, setRoutes] = useState<MapRoutes | null>(null);
   const [selected, setSelected] = useState(0); // 0 = fastest, 1 = alt
   const [myLocation, setMyLocation] = useState<LatLng | null>(null);
+  const [gpsPermission, setGpsPermission] = useState<GpsPermission | 'unknown'>('unknown');
   const [mutating, setMutating] = useState(false);
 
   useFocusEffect(
@@ -59,20 +60,28 @@ export default function MapScreen() {
   const active = !!load && stage !== 'delivered';
   const driverLocation = myLocation ?? navStops[0]?.coordinate ?? null;
 
-  const locateMe = async () => {
-    const loc = await locateOnce();
-    if (!loc) return;
-    setMyLocation(loc);
-    reportDriverLocation(loc).catch(() => {
-      notify({ type: 'alert', title: 'Location not sent', body: 'Dispatch will keep the previous GPS point.' });
-    });
-  };
+  // Capture device GPS + report it live. Records the permission outcome so the map can show a badge when
+  // location is off, and keeps reporting on an interval while the app is open (foreground live tracking).
+  const pushLocation = useCallback(async (notifyOnFail = false) => {
+    const { permission, location } = await locateWithStatus();
+    setGpsPermission(permission);
+    if (location) {
+      setMyLocation(location);
+      reportDriverLocation(location).catch(() => {
+        if (notifyOnFail) {
+          notify({ type: 'alert', title: 'Location not sent', body: 'Dispatch will keep the previous GPS point.' });
+        }
+      });
+    }
+  }, [notify]);
+
+  const locateMe = () => pushLocation(true);
 
   useEffect(() => {
-    locateOnce().then((loc) => {
-      if (loc) setMyLocation(loc);
-    });
-  }, []);
+    pushLocation();
+    const id = setInterval(() => pushLocation(), 45_000);
+    return () => clearInterval(id);
+  }, [pushLocation]);
 
   useEffect(() => {
     if (!load) return;
@@ -173,6 +182,25 @@ export default function MapScreen() {
             <View className="size-1 rounded-full" style={{ backgroundColor: C.mutedForeground }} />
             <EtaDistance meters={routes.fastest.distance} />
           </View>
+        </SafeAreaView>
+      ) : null}
+
+      {/* location-off badge — shown when GPS permission is denied/unavailable so the driver knows their live
+          location isn't being shared (the carrier map then shows them with no recent fix). Tap to re-request. */}
+      {gpsPermission === 'denied' || gpsPermission === 'unavailable' ? (
+        <SafeAreaView edges={['top']} pointerEvents="box-none" className="absolute inset-x-0 top-0 items-start">
+          <Pressable
+            onPress={locateMe}
+            accessibilityRole="button"
+            accessibilityLabel="Location sharing is off. Tap to enable."
+            className="m-3 flex-row items-center gap-2 rounded-full border border-border bg-background px-3 py-2 active:opacity-80"
+            style={shadowSm}
+          >
+            <View className="size-2 rounded-full" style={{ backgroundColor: '#ef4444' }} />
+            <Text className="font-sans-semibold text-xs text-foreground">
+              {gpsPermission === 'denied' ? 'Location off · tap to enable' : 'No GPS signal'}
+            </Text>
+          </Pressable>
         </SafeAreaView>
       ) : null}
 
