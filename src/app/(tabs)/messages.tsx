@@ -12,7 +12,6 @@ import { EmptyState } from '@/components/empty-state';
 import { Logo } from '@/components/logo';
 import { C } from '@/lib/theme';
 import {
-  CHAT_ATTACHMENT_PLACEHOLDER,
   useDriverChatConversations,
   type ChatConversationView,
 } from '@/lib/api/chat';
@@ -21,7 +20,11 @@ import { Appear } from '@/components/appear';
 const messagePreview = (conversation: ChatConversationView) =>
   conversation.lastMessageKind === 'TEXT' || conversation.lastMessageKind === 'SYSTEM'
     ? conversation.lastMessagePreview ?? 'Message'
-    : CHAT_ATTACHMENT_PLACEHOLDER;
+    : conversation.lastMessageKind === 'IMAGE'
+      ? 'Image'
+      : conversation.lastMessageKind === 'VOICE'
+        ? 'Voice message'
+        : 'File';
 
 const displayTime = (epochMs: number) => {
   const date = new Date(epochMs);

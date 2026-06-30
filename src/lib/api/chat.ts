@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { apiFetch } from './client';
+import { API_URL } from './config';
+import { appendMultipartFile, type MultipartUploadFile } from './endpoints';
+import { getToken } from './token-store';
 import { useApiQuery, type ApiQueryResult } from './use-api-query';
 
 export type ChatSenderType = 'DRIVER' | 'OFFICE' | 'SYSTEM';
 export type ChatMessageKind = 'TEXT' | 'IMAGE' | 'FILE' | 'VOICE' | 'SYSTEM';
-export const CHAT_ATTACHMENT_PLACEHOLDER = '📎 Attachment';
 
 export type ChatMessageView = {
   id: number;
@@ -37,6 +39,22 @@ export type ChatConversationView = {
   mineLast: boolean;
 };
 
+export type ChatAttachmentView = {
+  fileId: number;
+  fileName: string;
+  fileSizeBytes: number;
+  mime: string;
+};
+
+export type SendDriverChatRequest = {
+  kind: Exclude<ChatMessageKind, 'SYSTEM'>;
+  body?: string;
+  fileId?: number;
+  fileName?: string;
+  fileSizeBytes?: number;
+  durationSeconds?: number;
+};
+
 const ROUTE = '/api/driver/chat';
 const unreadListeners = new Set<() => void>();
 
@@ -54,11 +72,44 @@ export function getDriverChatMessages(
   return apiFetch(`${ROUTE}/${loadId}/messages?${params.join('&')}`);
 }
 
-export function sendDriverChatMessage(loadId: number, body: string): Promise<ChatMessageView> {
+export function sendDriverChatMessage(
+  loadId: number,
+  request: SendDriverChatRequest,
+): Promise<ChatMessageView> {
   return apiFetch(`${ROUTE}/${loadId}/messages`, {
     method: 'POST',
-    body: { kind: 'TEXT', body },
+    body: request,
   });
+}
+
+export async function uploadDriverChatAttachment(
+  loadId: number,
+  file: MultipartUploadFile,
+): Promise<ChatAttachmentView> {
+  const form = new FormData();
+  await appendMultipartFile(form, 'file', file);
+  return apiFetch(`${ROUTE}/${loadId}/file`, {
+    method: 'POST',
+    body: form,
+    multipart: true,
+  });
+}
+
+export function getDriverChatAttachmentUrl(loadId: number, fileId: number): string {
+  return `${API_URL}${ROUTE}/${loadId}/file/${fileId}`;
+}
+
+export function getDriverChatAttachmentHeaders(): Record<string, string> {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export async function getDriverChatAttachmentBlob(loadId: number, fileId: number): Promise<Blob> {
+  const response = await fetch(getDriverChatAttachmentUrl(loadId, fileId), {
+    headers: getDriverChatAttachmentHeaders(),
+  });
+  if (!response.ok) throw new Error(`Attachment download failed (${response.status})`);
+  return response.blob();
 }
 
 export function markDriverChatRead(loadId: number): Promise<void> {

@@ -1,28 +1,101 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Send } from 'lucide-react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { Client } from '@stomp/stompjs';
+import { ArrowLeft, FileText, ImageIcon, Pause, Play, Send } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import {
+  getDriverChatAttachmentHeaders,
+  getDriverChatAttachmentUrl,
   getDriverChatMessages,
-  CHAT_ATTACHMENT_PLACEHOLDER,
   markDriverChatRead,
   notifyDriverChatUnreadChanged,
   sendDriverChatMessage,
+  uploadDriverChatAttachment,
   useDriverChatConversations,
   useDriverChatThread,
   type ChatMessageView,
 } from '@/lib/api/chat';
+import { API_URL } from '@/lib/api/config';
+import { getToken } from '@/lib/api/token-store';
+import { useAuth } from '@/lib/auth/auth';
 import { useNotifications } from '@/lib/notifications';
 import { C } from '@/lib/theme';
 
 const QUICK_REPLIES = ['On my way', 'Arrived', 'Loaded', 'Running ~30 min late', 'Delivered'];
 const messageText = (message: ChatMessageView) =>
-  message.kind === 'TEXT' || message.kind === 'SYSTEM'
-    ? message.body ?? 'Message'
-    : CHAT_ATTACHMENT_PLACEHOLDER;
+  message.body ?? (message.kind === 'SYSTEM' ? 'Message' : '');
+
+const attachmentKind = (mime: string): 'IMAGE' | 'VOICE' | 'FILE' => {
+  if (mime.startsWith('image/')) return 'IMAGE';
+  if (mime.startsWith('audio/')) return 'VOICE';
+  return 'FILE';
+};
+
+const formatFileSize = (bytes: number | null) => {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+};
+
+function VoiceAttachment({ message }: { message: ChatMessageView }) {
+  const player = useAudioPlayer({
+    uri: getDriverChatAttachmentUrl(message.loadId, message.fileId!),
+    headers: getDriverChatAttachmentHeaders(),
+    name: message.fileName ?? undefined,
+  });
+  const status = useAudioPlayerStatus(player);
+  return (
+    <Pressable
+      onPress={() => (status.playing ? player.pause() : player.play())}
+      className="min-w-48 flex-row items-center gap-3"
+      accessibilityRole="button"
+      accessibilityLabel={status.playing ? 'Pause voice attachment' : 'Play voice attachment'}
+    >
+      {status.playing ? <Pause size={20} color={C.foreground} /> : <Play size={20} color={C.foreground} />}
+      <View className="flex-1">
+        <Text className="font-sans-medium text-sm text-foreground">{message.fileName || 'Voice message'}</Text>
+        <Text className="font-sans text-xs text-muted-foreground">{formatFileSize(message.fileSizeBytes)}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+function AttachmentContent({ message }: { message: ChatMessageView }) {
+  if (message.fileId === null) return <Text className="font-sans text-sm text-foreground">Attachment unavailable</Text>;
+  if (message.kind === 'IMAGE') {
+    return (
+      <View className="gap-2">
+        <Image
+          source={{
+            uri: getDriverChatAttachmentUrl(message.loadId, message.fileId),
+            headers: getDriverChatAttachmentHeaders(),
+          }}
+          className="h-44 w-56 rounded-2xl bg-muted"
+          resizeMode="contain"
+        />
+        {message.body ? <Text className="font-sans text-base text-foreground">{message.body}</Text> : null}
+      </View>
+    );
+  }
+  if (message.kind === 'VOICE') return <VoiceAttachment message={message} />;
+  return (
+    <View className="min-w-48 flex-row items-center gap-3">
+      <FileText size={22} color={C.foreground} />
+      <View className="min-w-0 flex-1">
+        <Text numberOfLines={1} className="font-sans-medium text-sm text-foreground">{message.fileName || 'Attachment'}</Text>
+        <Text className="font-sans text-xs text-muted-foreground">{formatFileSize(message.fileSizeBytes)}</Text>
+        {message.body ? <Text className="mt-1 font-sans text-sm text-foreground">{message.body}</Text> : null}
+      </View>
+    </View>
+  );
+}
 
 function MessageBubble({ message }: { message: ChatMessageView }) {
   const text = messageText(message);
@@ -46,7 +119,11 @@ function MessageBubble({ message }: { message: ChatMessageView }) {
           borderBottomLeftRadius: message.mine ? 24 : 6,
         }}
       >
-        <Text className="font-sans text-base" style={{ color: message.mine ? C.primaryForeground : C.foreground }}>{text}</Text>
+        {message.kind === 'TEXT' ? (
+          <Text className="font-sans text-base" style={{ color: message.mine ? C.primaryForeground : C.foreground }}>{text}</Text>
+        ) : (
+          <AttachmentContent message={message} />
+        )}
       </View>
       <Text className="mt-1 px-1 font-sans text-[11px] text-muted-foreground">
         {new Date(message.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
@@ -72,6 +149,8 @@ export default function Chat() {
   const lastReadInboundId = useRef<number | null>(null);
   const skipNextAutoScroll = useRef(false);
   const { notify } = useNotifications();
+  const { driver } = useAuth();
+  const driverId = driver?.driverId ?? null;
 
   useEffect(() => {
     if (!thread.data || loadId === null) return;
@@ -114,22 +193,50 @@ export default function Chat() {
     });
   }, [markRead, messages]);
 
-  useFocusEffect(
-    useCallback(() => {
-      thread.refetch();
-      const poll = setInterval(() => {
-        thread.refetch();
-      }, 12_000);
-      return () => clearInterval(poll);
-    }, [thread.refetch]),
-  );
+  useEffect(() => {
+    if (loadId === null || driverId === null) return;
+    const token = getToken();
+    if (!token) return;
+    const auth = { Authorization: `Bearer ${token}` };
+    const wsBase = API_URL.replace(/^http/, 'ws').replace(/\/$/, '');
+    const client = new Client({
+      webSocketFactory: () => new WebSocket(`${wsBase}/websocket-endpoint/websocket`),
+      connectHeaders: auth,
+      reconnectDelay: 5_000,
+      onConnect: () => {
+        client.subscribe(
+          `/topic/chat/driver/${driverId}/${loadId}`,
+          (frame) => {
+            try {
+              const incoming = JSON.parse(frame.body) as ChatMessageView;
+              const message = {
+                ...incoming,
+                mine: incoming.senderType === 'DRIVER' && incoming.senderDriverId === driverId,
+              };
+              setMessages((current) => current.some((item) => item.id === message.id)
+                ? current
+                : [...current, message].sort((a, b) => a.createdAt - b.createdAt));
+            } catch {
+              console.error('[chat] Ignored malformed STOMP frame');
+            }
+          },
+          auth,
+        );
+      },
+      onStompError: (frame) => console.error('[chat] STOMP error', frame.headers.message),
+    });
+    client.activate();
+    return () => {
+      void client.deactivate();
+    };
+  }, [driverId, loadId]);
 
   const send = async (value = text) => {
     const body = value.trim();
     if (!body || loadId === null || sending) return;
     setSending(true);
     try {
-      const sent = await sendDriverChatMessage(loadId, body);
+      const sent = await sendDriverChatMessage(loadId, { kind: 'TEXT', body });
       setMessages((items) => items.some((item) => item.id === sent.id) ? items : [...items, sent]);
       setText('');
       conversations.refetch();
@@ -140,6 +247,55 @@ export default function Chat() {
     } finally {
       setSending(false);
     }
+  };
+
+  const sendAttachment = async (file: { uri: string; name: string; mime: string }) => {
+    if (loadId === null || sending) return;
+    setSending(true);
+    try {
+      const uploaded = await uploadDriverChatAttachment(loadId, file);
+      const sent = await sendDriverChatMessage(loadId, {
+        kind: attachmentKind(uploaded.mime),
+        body: text.trim() || undefined,
+        fileId: uploaded.fileId,
+        fileName: uploaded.fileName,
+        fileSizeBytes: uploaded.fileSizeBytes,
+      });
+      setMessages((items) => items.some((item) => item.id === sent.id) ? items : [...items, sent]);
+      setText('');
+      conversations.refetch();
+      notifyDriverChatUnreadChanged();
+      scrollDown();
+    } catch {
+      notify({ type: 'alert', title: 'Attachment not sent', body: 'Check your connection and try again.' });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+    });
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    await sendAttachment({
+      uri: asset.uri,
+      name: asset.fileName || `chat-image-${Date.now()}.jpg`,
+      mime: asset.mimeType || 'image/jpeg',
+    });
+  };
+
+  const pickFile = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true });
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    await sendAttachment({
+      uri: asset.uri,
+      name: asset.name,
+      mime: asset.mimeType || 'application/octet-stream',
+    });
   };
 
   const loadEarlier = async () => {
@@ -197,6 +353,8 @@ export default function Chat() {
         </View>
         <SafeAreaView edges={['bottom']} className="bg-background">
           <View className="m-3 flex-row items-end gap-2">
+            <Pressable onPress={pickImage} disabled={sending} accessibilityRole="button" accessibilityLabel="Attach image" className="size-12 items-center justify-center rounded-full border border-border bg-background"><ImageIcon size={20} color={C.foreground} /></Pressable>
+            <Pressable onPress={pickFile} disabled={sending} accessibilityRole="button" accessibilityLabel="Attach file" className="size-12 items-center justify-center rounded-full border border-border bg-background"><FileText size={20} color={C.foreground} /></Pressable>
             <View className="min-h-11 flex-1 justify-center rounded-2xl bg-accent px-4 py-2">
               <TextInput className="font-sans text-base text-foreground" style={{ paddingVertical: 0 }} placeholder="Message" placeholderTextColor={C.mutedForeground} value={text} onChangeText={setText} multiline editable={!sending} />
             </View>

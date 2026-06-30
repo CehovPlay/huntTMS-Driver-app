@@ -56,6 +56,13 @@
         {
           "photosPermission": "Allow huntTMS to access your photos to upload documents."
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
       ]
     ],
     "experiments": {
