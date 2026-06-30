@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 
 import { TabBar } from '@/components/tab-bar';
 
-// Chat and HuntBot routes remain in the tree but are hidden until backend support exists.
+// HuntBot remains hidden until backend support exists.
 export default function TabsLayout() {
   return (
     <Tabs
@@ -16,7 +16,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="map" options={{ title: 'Map' }} />
       <Tabs.Screen name="notifications" options={{ title: 'Notifications' }} />
       <Tabs.Screen name="copilot" options={{ href: null }} />
-      <Tabs.Screen name="messages" options={{ href: null }} />
+      <Tabs.Screen name="messages" options={{ title: 'Messages' }} />
     </Tabs>
   );
 }
