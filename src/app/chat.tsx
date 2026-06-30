@@ -7,6 +7,7 @@ import { ArrowLeft, Send } from 'lucide-react-native';
 import { Pressable } from '@/components/pressable';
 import {
   getDriverChatMessages,
+  CHAT_ATTACHMENT_PLACEHOLDER,
   markDriverChatRead,
   notifyDriverChatUnreadChanged,
   sendDriverChatMessage,
@@ -19,7 +20,9 @@ import { C } from '@/lib/theme';
 
 const QUICK_REPLIES = ['On my way', 'Arrived', 'Loaded', 'Running ~30 min late', 'Delivered'];
 const messageText = (message: ChatMessageView) =>
-  message.kind === 'TEXT' || message.kind === 'SYSTEM' ? message.body ?? 'Message' : 'Attachment';
+  message.kind === 'TEXT' || message.kind === 'SYSTEM'
+    ? message.body ?? 'Message'
+    : CHAT_ATTACHMENT_PLACEHOLDER;
 
 function MessageBubble({ message }: { message: ChatMessageView }) {
   const text = messageText(message);
@@ -66,6 +69,7 @@ export default function Chat() {
   const [loadingEarlier, setLoadingEarlier] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const initializedLoadId = useRef<number | null>(null);
+  const lastReadInboundId = useRef<number | null>(null);
   const skipNextAutoScroll = useRef(false);
   const { notify } = useNotifications();
 
@@ -87,26 +91,37 @@ export default function Chat() {
   const scrollDown = () => requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
 
   const markRead = useCallback(async () => {
-    if (loadId === null) return;
+    if (loadId === null) return false;
     try {
       await markDriverChatRead(loadId);
       notifyDriverChatUnreadChanged();
       conversations.refetch();
+      return true;
     } catch {
       // Keep the thread usable; the next focus/poll retries the read cursor.
+      return false;
     }
   }, [conversations.refetch, loadId]);
+
+  useEffect(() => {
+    const latestInboundId = messages.reduce<number | null>(
+      (latest, message) => (!message.mine && (latest === null || message.id > latest) ? message.id : latest),
+      null,
+    );
+    if (latestInboundId === null || latestInboundId === lastReadInboundId.current) return;
+    void markRead().then((marked) => {
+      if (marked) lastReadInboundId.current = latestInboundId;
+    });
+  }, [markRead, messages]);
 
   useFocusEffect(
     useCallback(() => {
       thread.refetch();
-      void markRead();
       const poll = setInterval(() => {
         thread.refetch();
-        void markRead();
-      }, 30_000);
+      }, 12_000);
       return () => clearInterval(poll);
-    }, [markRead, thread.refetch]),
+    }, [thread.refetch]),
   );
 
   const send = async (value = text) => {

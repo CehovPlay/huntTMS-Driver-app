@@ -5,6 +5,7 @@ import { useApiQuery, type ApiQueryResult } from './use-api-query';
 
 export type ChatSenderType = 'DRIVER' | 'OFFICE' | 'SYSTEM';
 export type ChatMessageKind = 'TEXT' | 'IMAGE' | 'FILE' | 'VOICE' | 'SYSTEM';
+export const CHAT_ATTACHMENT_PLACEHOLDER = '📎 Attachment';
 
 export type ChatMessageView = {
   id: number;
