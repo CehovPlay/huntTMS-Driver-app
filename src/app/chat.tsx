@@ -67,23 +67,30 @@ function VoiceAttachment({ message }: { message: ChatMessageView }) {
   );
 }
 
+function ImageAttachment({ message }: { message: ChatMessageView }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return <Text className="font-sans text-sm text-muted-foreground">Image unavailable</Text>;
+  }
+  return (
+    <View className="gap-2">
+      <Image
+        source={{
+          uri: getDriverChatAttachmentUrl(message.loadId, message.fileId!),
+          headers: getDriverChatAttachmentHeaders(),
+        }}
+        className="h-44 w-56 rounded-2xl bg-muted"
+        resizeMode="contain"
+        onError={() => setFailed(true)}
+      />
+      {message.body ? <Text className="font-sans text-base text-foreground">{message.body}</Text> : null}
+    </View>
+  );
+}
+
 function AttachmentContent({ message }: { message: ChatMessageView }) {
   if (message.fileId === null) return <Text className="font-sans text-sm text-foreground">Attachment unavailable</Text>;
-  if (message.kind === 'IMAGE') {
-    return (
-      <View className="gap-2">
-        <Image
-          source={{
-            uri: getDriverChatAttachmentUrl(message.loadId, message.fileId),
-            headers: getDriverChatAttachmentHeaders(),
-          }}
-          className="h-44 w-56 rounded-2xl bg-muted"
-          resizeMode="contain"
-        />
-        {message.body ? <Text className="font-sans text-base text-foreground">{message.body}</Text> : null}
-      </View>
-    );
-  }
+  if (message.kind === 'IMAGE') return <ImageAttachment message={message} />;
   if (message.kind === 'VOICE') return <VoiceAttachment message={message} />;
   return (
     <View className="min-w-48 flex-row items-center gap-3">
@@ -230,6 +237,17 @@ export default function Chat() {
       void client.deactivate();
     };
   }, [driverId, loadId]);
+
+  // Safety-net poll: STOMP delivers instantly, but if the raw-WS can't connect (RN/SockJS edge cases) the
+  // thread would otherwise only refresh on mount. A low-frequency refetch backstops it; the merge effect is
+  // id-deduped, so this never double-renders messages STOMP already delivered.
+  useEffect(() => {
+    if (loadId === null) return;
+    const poll = setInterval(() => {
+      void thread.refetch();
+    }, 30_000);
+    return () => clearInterval(poll);
+  }, [loadId, thread.refetch]);
 
   const send = async (value = text) => {
     const body = value.trim();

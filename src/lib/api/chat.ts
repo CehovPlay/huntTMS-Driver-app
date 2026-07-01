@@ -104,14 +104,6 @@ export function getDriverChatAttachmentHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export async function getDriverChatAttachmentBlob(loadId: number, fileId: number): Promise<Blob> {
-  const response = await fetch(getDriverChatAttachmentUrl(loadId, fileId), {
-    headers: getDriverChatAttachmentHeaders(),
-  });
-  if (!response.ok) throw new Error(`Attachment download failed (${response.status})`);
-  return response.blob();
-}
-
 export function markDriverChatRead(loadId: number): Promise<void> {
   return apiFetch(`${ROUTE}/${loadId}/read`, { method: 'POST' });
 }
