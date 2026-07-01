@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
+import { File, Paths } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Client } from '@stomp/stompjs';
-import { ArrowLeft, FileText, ImageIcon, Pause, Play, Send } from 'lucide-react-native';
+import { ArrowLeft, Download, FileText, ImageIcon, Pause, Play, Send } from 'lucide-react-native';
 
 import { Pressable } from '@/components/pressable';
 import {
@@ -79,8 +82,8 @@ function ImageAttachment({ message }: { message: ChatMessageView }) {
           uri: getDriverChatAttachmentUrl(message.loadId, message.fileId!),
           headers: getDriverChatAttachmentHeaders(),
         }}
-        className="h-44 w-56 rounded-2xl bg-muted"
-        resizeMode="contain"
+        style={{ width: 224, height: 176, borderRadius: 16, backgroundColor: C.accent }}
+        contentFit="contain"
         onError={() => setFailed(true)}
       />
       {message.body ? <Text className="font-sans text-base text-foreground">{message.body}</Text> : null}
@@ -88,20 +91,66 @@ function ImageAttachment({ message }: { message: ChatMessageView }) {
   );
 }
 
+function FileAttachment({ message }: { message: ChatMessageView }) {
+  const [busy, setBusy] = useState(false);
+  const { notify } = useNotifications();
+
+  const download = async () => {
+    if (busy || message.fileId === null) return;
+    setBusy(true);
+    try {
+      const url = getDriverChatAttachmentUrl(message.loadId, message.fileId);
+      const name = message.fileName || `attachment-${message.fileId}`;
+      // Prefix with the fileId so distinct attachments don't collide in the cache dir.
+      const destination = new File(Paths.cache, `${message.fileId}-${name}`);
+      try {
+        if (destination.exists) destination.delete();
+      } catch {
+        // A stale cache entry that can't be cleared shouldn't block the fresh download.
+      }
+      const task = File.createDownloadTask(url, destination, {
+        headers: getDriverChatAttachmentHeaders(),
+      });
+      const downloaded = await task.downloadAsync();
+      if (!downloaded) throw new Error('download returned no file');
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloaded.uri, { dialogTitle: name });
+      } else {
+        notify({ type: 'alert', title: 'Saved', body: `Downloaded ${name}.` });
+      }
+    } catch {
+      notify({ type: 'alert', title: 'Download failed', body: 'Could not open this file. Try again.' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Pressable
+      onPress={download}
+      disabled={busy}
+      className="min-w-48 flex-row items-center gap-3"
+      accessibilityRole="button"
+      accessibilityLabel={`Download ${message.fileName || 'attachment'}`}
+    >
+      <FileText size={22} color={C.foreground} />
+      <View className="min-w-0 flex-1">
+        <Text numberOfLines={1} className="font-sans-medium text-sm text-foreground">{message.fileName || 'Attachment'}</Text>
+        <Text className="font-sans text-xs text-muted-foreground">
+          {busy ? 'Downloading…' : formatFileSize(message.fileSizeBytes)}
+        </Text>
+        {message.body ? <Text className="mt-1 font-sans text-sm text-foreground">{message.body}</Text> : null}
+      </View>
+      <Download size={18} color={C.mutedForeground} />
+    </Pressable>
+  );
+}
+
 function AttachmentContent({ message }: { message: ChatMessageView }) {
   if (message.fileId === null) return <Text className="font-sans text-sm text-foreground">Attachment unavailable</Text>;
   if (message.kind === 'IMAGE') return <ImageAttachment message={message} />;
   if (message.kind === 'VOICE') return <VoiceAttachment message={message} />;
-  return (
-    <View className="min-w-48 flex-row items-center gap-3">
-      <FileText size={22} color={C.foreground} />
-      <View className="min-w-0 flex-1">
-        <Text numberOfLines={1} className="font-sans-medium text-sm text-foreground">{message.fileName || 'Attachment'}</Text>
-        <Text className="font-sans text-xs text-muted-foreground">{formatFileSize(message.fileSizeBytes)}</Text>
-        {message.body ? <Text className="mt-1 font-sans text-sm text-foreground">{message.body}</Text> : null}
-      </View>
-    </View>
-  );
+  return <FileAttachment message={message} />;
 }
 
 function MessageBubble({ message }: { message: ChatMessageView }) {
@@ -207,7 +256,9 @@ export default function Chat() {
     const auth = { Authorization: `Bearer ${token}` };
     const wsBase = API_URL.replace(/^http/, 'ws').replace(/\/$/, '');
     const client = new Client({
-      webSocketFactory: () => new WebSocket(`${wsBase}/websocket-endpoint/websocket`),
+      // Plain WebSocket endpoint (backend registers /ws without SockJS); a raw stompjs client
+      // can't parse SockJS framing, which is why /websocket-endpoint silently never connected.
+      webSocketFactory: () => new WebSocket(`${wsBase}/ws`),
       connectHeaders: auth,
       reconnectDelay: 5_000,
       onConnect: () => {
